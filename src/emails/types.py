@@ -3,6 +3,7 @@ from enum import StrEnum
 from typing import TypedDict
 
 from src.extrequests.models import SelfOrganisedSubmission
+from src.fiscal.models import Partnership
 from src.recruitment.models import InstructorRecruitmentSignup
 from src.workshops.models import (
     Award,
@@ -132,6 +133,14 @@ class NewMembershipOnboardingKwargs(TypedDict):
 
 class NewMembershipOnboardingContext(TypedDict):
     membership: Membership
+
+
+class NewPartnershipOnboardingKwargs(TypedDict):
+    partnership: Partnership
+
+
+class NewPartnershipOnboardingContext(TypedDict):
+    partnership: Partnership
 
 
 class HostInstructorsIntroductionContext(TypedDict):

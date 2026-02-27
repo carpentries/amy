@@ -5,6 +5,8 @@ from rest_framework import serializers
 
 from src.emails.models import MAX_LENGTH, Attachment, EmailTemplate, ScheduledEmail
 from src.extrequests.models import SelfOrganisedSubmission
+from src.fiscal.models import Consortium, Partnership, PartnershipTier
+from src.offering.models import Account
 from src.recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
 from src.trainings.models import Involvement
 from src.workshops.models import (
@@ -221,6 +223,51 @@ class MembershipSerializer(serializers.ModelSerializer[Membership]):
             "inhouse_instructor_training_seats_total",
             "inhouse_instructor_training_seats_utilized",
             "inhouse_instructor_training_seats_remaining",
+        )
+
+
+class ConsortiumSerializer(serializers.ModelSerializer[Consortium]):
+    organizations = serializers.SlugRelatedField[Organization](many=True, read_only=True, slug_field="domain")
+
+    class Meta:
+        model = Consortium
+        fields = (
+            "pk",
+            "name",
+            "description",
+            "organizations",
+            "created_at",
+            "last_updated_at",
+        )
+
+
+class PartnershipSerializer(serializers.ModelSerializer[Partnership]):
+    tier = serializers.StringRelatedField[PartnershipTier](read_only=True)
+    account = serializers.PrimaryKeyRelatedField[Account](read_only=True)
+    rolled_to_partnership = serializers.SlugRelatedField[Partnership](read_only=True, slug_field="name")
+    partner_consortium = serializers.PrimaryKeyRelatedField[Account](read_only=True)
+    partner_organisation = serializers.PrimaryKeyRelatedField[Account](read_only=True)
+
+    class Meta:
+        model = Partnership
+        fields = (
+            "pk",
+            "name",
+            "tier",
+            "credits",
+            "credits_extensions",
+            "account",
+            "agreement_start",
+            "agreement_end",
+            "extensions",
+            "rolled_to_partnership",
+            "agreement_link",
+            "registration_code",
+            "public_status",
+            "partner_consortium",
+            "partner_organisation",
+            "created_at",
+            "last_updated_at",
         )
 
 

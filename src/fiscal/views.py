@@ -22,6 +22,10 @@ from src.emails.actions.new_membership_onboarding import (
     new_membership_onboarding_strategy,
     run_new_membership_onboarding_strategy,
 )
+from src.emails.actions.new_partnership_onboarding import (
+    new_partnership_onboarding_strategy,
+    run_new_partnership_onboarding_strategy,
+)
 from src.emails.signals import (
     MEMBERSHIP_QUARTERLY_3_MONTHS_SIGNAL_NAME,
     MEMBERSHIP_QUARTERLY_6_MONTHS_SIGNAL_NAME,
@@ -1042,11 +1046,29 @@ class PartnershipUpdate(
     form_class = PartnershipForm
     model = Partnership
     object: Partnership
+    request: AuthenticatedHttpRequest
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["title"] = str(self.object)
         return context
+
+    def form_valid(self, form: PartnershipForm) -> HttpResponse:
+        result = super().form_valid(form)
+
+        try:
+            run_new_partnership_onboarding_strategy(
+                new_partnership_onboarding_strategy(self.object),
+                request=self.request,
+                partnership=self.object,
+            )
+        except EmailStrategyException as exc:
+            messages.error(
+                self.request,
+                f"Error when creating or updating scheduled email. {exc}",
+            )
+
+        return result
 
 
 class PartnershipDelete(
@@ -1057,6 +1079,21 @@ class PartnershipDelete(
     flag_name = REQUIRED_FLAG_NAME
     permission_required = ["fiscal.delete_partnership"]
     model = Partnership
+    object: Partnership
+    request: AuthenticatedHttpRequest
+
+    def before_delete(self, *args: Any, **kwargs: Any) -> None:
+        try:
+            run_new_partnership_onboarding_strategy(
+                StrategyEnum.CANCEL,  # choosing the strategy manually
+                request=self.request,
+                partnership=self.object,
+            )
+        except EmailStrategyException as exc:
+            messages.error(
+                self.request,
+                f"Error when running new partnership onboarding strategy. {exc}",
+            )
 
     def get_success_url(self) -> str:
         return reverse("partnership-list")
@@ -1182,6 +1219,7 @@ class PartnershipRollOver(
     model = Partnership
     object: Partnership
     form_class = PartnershipRollOverForm
+    request: AuthenticatedHttpRequest
     success_message = (
         'Partnership "{partnership}" was successfully rolled-over to a new partnership "{new_partnership}"'
     )
@@ -1231,6 +1269,18 @@ class PartnershipRollOver(
 
         self.partnership.rolled_to_partnership = self.object
         self.partnership.save()
+
+        try:
+            run_new_partnership_onboarding_strategy(
+                new_partnership_onboarding_strategy(self.object),
+                request=self.request,
+                partnership=self.object,
+            )
+        except EmailStrategyException as exc:
+            messages.error(
+                self.request,
+                f"Error when creating or updating scheduled email. {exc}",
+            )
 
         return HttpResponseRedirect(self.get_success_url())
 

@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 from typing import Any
 
+from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db.models import Prefetch, QuerySet
 from django.forms import BaseModelFormSet, modelformset_factory
@@ -10,6 +11,11 @@ from django.urls import reverse
 from flags.views import FlaggedViewMixin  # type: ignore[import-untyped]
 
 from src.communityroles.models import CommunityRole
+from src.emails.actions.exceptions import EmailStrategyException
+from src.emails.actions.new_partnership_onboarding import (
+    new_partnership_onboarding_strategy,
+    run_new_partnership_onboarding_strategy,
+)
 from src.fiscal.models import Partnership
 from src.offering.base_views import AccountFormsetView
 from src.offering.filters import AccountBenefitFilter, AccountFilter, BenefitFilter
@@ -197,6 +203,24 @@ class AccountOwnersUpdate(
         if "title" not in kwargs:
             kwargs["title"] = f"Change owners for {self.account}"
         return super().get_context_data(**kwargs)
+
+    def form_valid(self, formset: BaseModelFormSet[AccountOwner, AccountOwnerForm]) -> HttpResponse:
+        result = super().form_valid(formset)
+
+        for partnership in Partnership.objects.filter(account=self.account):
+            try:
+                run_new_partnership_onboarding_strategy(
+                    new_partnership_onboarding_strategy(partnership),
+                    request=self.request,
+                    partnership=partnership,
+                )
+            except EmailStrategyException as exc:
+                messages.error(
+                    self.request,
+                    f"Error when creating or updating scheduled email. {exc}",
+                )
+
+        return result
 
 
 # -----------------------------------------------------------------

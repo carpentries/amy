@@ -18,10 +18,12 @@ from rest_framework.serializers import ModelSerializer
 
 from src.api.v2.serializers import (
     AwardSerializer,
+    ConsortiumSerializer,
     EventSerializer,
     InstructorRecruitmentSignupSerializer,
     MembershipSerializer,
     OrganizationSerializer,
+    PartnershipSerializer,
     PersonSerializer,
     SelfOrganisedSubmissionSerializer,
     TaskSerializer,
@@ -31,6 +33,7 @@ from src.api.v2.serializers import (
 from src.emails.models import ScheduledEmail
 from src.emails.signals import Signal
 from src.extrequests.models import SelfOrganisedSubmission
+from src.fiscal.models import Consortium, Partnership
 from src.recruitment.models import InstructorRecruitmentSignup
 from src.workshops.models import (
     Award,
@@ -254,10 +257,12 @@ def map_single_api_uri_to_serialized_model(uri: str) -> dict[str, Any]:
 
     ModelToSerializerMapper: dict[type[_MT], type[ModelSerializer[_MT]]] = {  # type: ignore
         Award: AwardSerializer,
+        Consortium: ConsortiumSerializer,
         Organization: OrganizationSerializer,
         Event: EventSerializer,
         InstructorRecruitmentSignup: InstructorRecruitmentSignupSerializer,
         Membership: MembershipSerializer,
+        Partnership: PartnershipSerializer,
         Person: PersonSerializer,
         ScheduledEmail: ScheduledEmailSerializer,
         Task: TaskSerializer,
