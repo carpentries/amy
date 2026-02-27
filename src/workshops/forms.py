@@ -12,6 +12,7 @@ from django.core.exceptions import ValidationError
 from django.db.models import QuerySet
 from django.dispatch import receiver
 from django.forms import CheckboxSelectMultiple, Form, SelectMultiple, TextInput
+from django.urls import reverse
 from django_comments.models import Comment
 from django_countries import Countries
 from django_countries.fields import CountryField
@@ -22,6 +23,7 @@ from src.dashboard.models import Continent
 
 # this is used instead of Django Autocomplete Light widgets
 # see issue #1330: https://github.com/swcarpentry/amy/issues/1330
+from src.workshops.consts import ACCOUNT_BENEFIT_FILTER_WHITELIST
 from src.workshops.fields import (
     AirportSelect2Widget,
     ModelSelect2MultipleWidget,
@@ -697,6 +699,20 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm[Task]):
         failed_trainings = kwargs.pop("failed_trainings", False)
         show_allocated_benefit = kwargs.pop("show_allocated_benefit", False)
         super().__init__(*args, **kwargs)
+
+        # Filter `allocated_benefit` options to benefits related to the event tags.
+        initial_event = kwargs.get("initial", {}).get("event")
+        event_tags = initial_event.tags.values_list("name", flat=True) if initial_event else []
+        # Use only whitelisted tags.
+        if common_tags := (set(event_tags) & ACCOUNT_BENEFIT_FILTER_WHITELIST.keys()):
+            benefit_filter = next(iter(common_tags))
+            url = reverse(self.fields["allocated_benefit"].widget.data_view, query={"benefit": benefit_filter})
+            self.fields["allocated_benefit"].widget.attrs["data-ajax--url"] = url
+            self.fields["allocated_benefit"].help_text = (
+                f'Showing only "{ACCOUNT_BENEFIT_FILTER_WHITELIST[benefit_filter]}" benefits as the event'
+                f' has "{benefit_filter}" tag.'
+            )
+
         bootstrap_kwargs = {
             "add_cancel_button": False,
             "form_tag": form_tag,

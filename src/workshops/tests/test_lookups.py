@@ -8,7 +8,9 @@ from django.test import RequestFactory, override_settings
 from django.urls import reverse
 
 from src.fiscal.models import Consortium
+from src.offering.models import Account, AccountBenefit, Benefit
 from src.workshops.lookups import (
+    AccountBenefitSeatsLookupView,
     AwardLookupView,
     EventLookupForAwardsView,
     EventLookupView,
@@ -27,6 +29,7 @@ from src.workshops.models import (
     KnowledgeDomain,
     Lesson,
     Membership,
+    Organization,
     Person,
     Role,
     Tag,
@@ -711,3 +714,72 @@ class TestOfferingAccountRelation(TestViewPermissionsMixin, TestBase):
             partial_function.keywords["content_type"],  # type: ignore[attr-defined]
             ContentType.objects.get_for_model(Consortium).pk,
         )
+
+
+class TestAccountBenefitsLookupView(TestBase):
+    def setUp(self) -> None:
+        super().setUp()
+        partner = Organization.objects.create(fullname="Test Partner", domain="testpartner.org")
+        account = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=partner,
+        )
+        self.benefit_it = Benefit.objects.create(
+            name="Instructor Training",
+            description="Instructor Training benefit",
+            unit_type="seat",
+            credits=10,
+        )
+        self.benefit_other = Benefit.objects.create(
+            name="Other Benefit",
+            description="Other benefit",
+            unit_type="seat",
+            credits=5,
+        )
+        self.ab_it = AccountBenefit.objects.create(
+            account=account,
+            benefit=self.benefit_it,
+            start_date=date(2025, 1, 1),
+            end_date=date(2025, 12, 31),
+            allocation=10,
+        )
+        self.ab_other = AccountBenefit.objects.create(
+            account=account,
+            benefit=self.benefit_other,
+            start_date=date(2025, 1, 1),
+            end_date=date(2025, 12, 31),
+            allocation=5,
+        )
+
+    def setUpView(self, term: str = "", benefit: str = "") -> AccountBenefitSeatsLookupView:
+        url = f"/?benefit={benefit}" if benefit else "/"
+        request = RequestFactory().get(url)
+        view = AccountBenefitSeatsLookupView(request=request, term=term)
+        return view
+
+    def test_get_queryset_no_filter(self) -> None:
+        # Arrange
+        view = self.setUpView()
+        # Act
+        queryset = view.get_queryset()
+        # Assert
+        self.assertIn(self.ab_it, queryset)
+        self.assertIn(self.ab_other, queryset)
+
+    def test_get_queryset_benefit_ttt(self) -> None:
+        # Arrange
+        view = self.setUpView(benefit="TTT")
+        # Act
+        queryset = view.get_queryset()
+        # Assert
+        self.assertIn(self.ab_it, queryset)
+        self.assertNotIn(self.ab_other, queryset)
+
+    def test_get_queryset_benefit_unknown_value(self) -> None:
+        # Arrange
+        view = self.setUpView(benefit="UNKNOWN")
+        # Act
+        queryset = view.get_queryset()
+        # Assert - unknown value is not in the whitelist, so no extra filtering
+        self.assertIn(self.ab_it, queryset)
+        self.assertIn(self.ab_other, queryset)

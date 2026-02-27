@@ -22,7 +22,7 @@ from src.fiscal.models import Consortium, MembershipPersonRole, Partnership
 from src.offering.models import Account, AccountBenefit, Benefit
 from src.workshops import models
 from src.workshops.base_views import AuthenticatedHttpRequest
-from src.workshops.consts import COUNTRIES, IATA_AIRPORTS, airport_option_label
+from src.workshops.consts import ACCOUNT_BENEFIT_FILTER_WHITELIST, COUNTRIES, IATA_AIRPORTS, airport_option_label
 from src.workshops.utils.access import LoginNotRequiredMixin, OnlyForAdminsNoRedirectMixin
 
 logger = logging.getLogger("amy")
@@ -577,6 +577,10 @@ class AccountBenefitsLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
 
         if self.unit_type in ("seat", "event"):
             results = results.filter(benefit__unit_type=self.unit_type)
+
+        benefit_filter = self.request.GET.get("benefit", "")
+        if benefit_filter in ACCOUNT_BENEFIT_FILTER_WHITELIST:
+            results = results.filter(benefit__name=ACCOUNT_BENEFIT_FILTER_WHITELIST[benefit_filter])
 
         if self.term:
             results = results.filter(

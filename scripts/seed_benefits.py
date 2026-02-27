@@ -28,6 +28,30 @@ BENEFITS: list[BenefitDef] = [
         "unit_type": "seat",
         "credits": 1,
     },
+    {
+        "active": True,
+        "id": UUID("c1baac28-e3ba-4a0b-8420-f483b89be125"),
+        "name": "Instructor Trainer Training",
+        "description": "Instructor Trainer Training default benefit",
+        "unit_type": "seat",
+        "credits": 1,
+    },
+    {
+        "active": True,
+        "id": UUID("829320e4-76b7-43c6-9647-d25d7cbbc9ef"),
+        "name": "Collaborative Lesson Development Training",
+        "description": "Collaborative Lesson Development Training default benefit",
+        "unit_type": "seat",
+        "credits": 1,
+    },
+    {
+        "active": True,
+        "id": UUID("a7b57542-ad84-45c9-b983-ecdfde0c62f2"),
+        "name": "Skillup",
+        "description": "Skillup default benefit",
+        "unit_type": "seat",
+        "credits": 1,
+    },
 ]
 
 # --------------------------------------------------------------------------------------

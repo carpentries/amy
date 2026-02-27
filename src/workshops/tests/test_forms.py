@@ -1,6 +1,7 @@
 from typing import Any
 
 from django.test import TestCase
+from django.urls import reverse
 
 from src.communityroles.models import (
     CommunityRole,
@@ -8,7 +9,7 @@ from src.communityroles.models import (
     CommunityRoleInactivation,
 )
 from src.workshops.forms import TaskForm
-from src.workshops.models import Event, Organization, Person, Role
+from src.workshops.models import Event, Organization, Person, Role, Tag
 
 
 class TestTaskForm(TestCase):
@@ -166,3 +167,32 @@ class TestTaskForm(TestCase):
         result = form.is_valid()
         # Assert
         self.assertTrue(result)
+
+
+class TestTaskFormAllocatedBenefitFilter(TestCase):
+    def setUp(self) -> None:
+        host = Organization.objects.create(fullname="Test Host", domain="host.org")
+        self.event_no_ttt = Event.objects.create(slug="no-ttt-event", host=host)
+        self.event_with_ttt = Event.objects.create(slug="with-ttt-event", host=host)
+        ttt_tag = Tag.objects.create(name="TTT", details="Instructor Training")
+        self.event_with_ttt.tags.add(ttt_tag)
+
+    def test_init_no_initial__widget_url_not_set(self) -> None:
+        # Arrange / Act
+        form = TaskForm()
+        # Assert
+        self.assertNotIn("data-ajax--url", form.fields["allocated_benefit"].widget.attrs)
+
+    def test_init_event_without_ttt_tag__widget_url_not_set(self) -> None:
+        # Arrange / Act
+        form = TaskForm(initial={"event": self.event_no_ttt})
+        # Assert
+        self.assertNotIn("data-ajax--url", form.fields["allocated_benefit"].widget.attrs)
+
+    def test_init_event_with_ttt_tag__widget_url_set(self) -> None:
+        # Arrange / Act
+        form = TaskForm(initial={"event": self.event_with_ttt})
+        # Assert
+        widget_url = form.fields["allocated_benefit"].widget.attrs.get("data-ajax--url")
+        expected_url = reverse("account-benefit-seats-lookup") + "?benefit=TTT"
+        self.assertEqual(widget_url, expected_url)
