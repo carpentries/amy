@@ -406,12 +406,7 @@ class TestTrainingRequestsListView(TestBase):
             account_type=Account.AccountTypeChoices.ORGANISATION,
             generic_relation=self.org,
         )
-        benefit = Benefit.objects.create(
-            unit_type="seat",
-            name="Instructor Training",
-            description="Benefit for instructor training seat",
-            credits=1,
-        )
+        benefit = Benefit.objects.get(name="Instructor Training")
         account_benefit = AccountBenefit.objects.create(
             account=account,
             benefit=benefit,
@@ -698,12 +693,7 @@ class TestTrainingRequestsListView(TestBase):
             partner_organisation=self.org,
         )
         # Create benefit and account benefit for the account
-        benefit = Benefit.objects.create(
-            unit_type="seat",
-            name="Instructor Training",
-            description="Benefit for instructor training seat",
-            credits=1,
-        )
+        benefit = Benefit.objects.get(name="Instructor Training")
         account_benefit = AccountBenefit.objects.create(
             account=account,
             benefit=benefit,
@@ -813,12 +803,7 @@ class TestTrainingRequestsListView(TestBase):
             partner_organisation=self.org,
         )
         # Create benefit
-        benefit = Benefit.objects.create(
-            unit_type="seat",
-            name="Instructor Training",
-            description="",
-            credits=1,
-        )
+        benefit = Benefit.objects.get(name="Instructor Training")
 
         req = create_training_request("p", self.ironman, open_review=False, reg_code=shared_code)
 
@@ -909,12 +894,7 @@ class TestTrainingRequestsListView(TestBase):
             public_status="public",
             partner_organisation=self.org,
         )
-        benefit = Benefit.objects.create(
-            unit_type="seat",
-            name="Instructor Training",
-            description="Benefit for instructor training seat",
-            credits=1,
-        )
+        benefit = Benefit.objects.get(name="Instructor Training")
         # First benefit: fully allocated
         benefit1 = AccountBenefit.objects.create(
             account=account,
@@ -976,12 +956,7 @@ class TestTrainingRequestsListView(TestBase):
             public_status="public",
             partner_organisation=self.org,
         )
-        benefit = Benefit.objects.create(
-            unit_type="seat",
-            name="Instructor Training",
-            description="Benefit for instructor training seat",
-            credits=1,
-        )
+        benefit = Benefit.objects.get(name="Instructor Training")
         # Only benefit: fully allocated
         account_benefit = AccountBenefit.objects.create(
             account=account,
