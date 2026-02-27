@@ -1,5 +1,5 @@
 import re
-from datetime import date
+from datetime import date, timedelta
 
 from django.core.exceptions import ValidationError
 
@@ -16,7 +16,7 @@ class MemberCodeValidationError(ValidationError):
     pass
 
 
-def member_code_valid(code: str, date: date, grace_before: int = 0, grace_after: int = 0) -> bool:
+def membership_code_valid(code: str, date: date, grace_before: int = 0, grace_after: int = 0) -> bool:
     """Returns True if `code` matches an Membership that is active on `date`,
     including a grace period of `grace_before` days before
     and `grace_after` days after the Membership dates.
@@ -38,12 +38,12 @@ def member_code_valid(code: str, date: date, grace_before: int = 0, grace_after:
     return True
 
 
-def member_code_valid_training(code: str, date: date, grace_before: int = 0, grace_after: int = 0) -> bool:
+def membership_code_valid_training(code: str, date: date, grace_before: int = 0, grace_after: int = 0) -> bool:
     """Returns True if `code` matches an active Membership with training seats
     remaining. If there is no match, raises an Exception with a detailed error."""
     # first ensure the code matches an active membership
     try:
-        member_code_valid(code=code, date=date, grace_before=grace_before, grace_after=grace_after)
+        membership_code_valid(code=code, date=date, grace_before=grace_before, grace_after=grace_after)
     except MemberCodeValidationError:
         raise
 
@@ -56,6 +56,28 @@ def member_code_valid_training(code: str, date: date, grace_before: int = 0, gra
         <= 0
     ):
         raise MemberCodeValidationError("Membership has no training seats remaining.")
+
+    return True
+
+
+def partnership_code_valid(code: str, date: date, grace_before: int = 0, grace_after: int = 0) -> bool:
+    """Returns True if `code` matches a Partnership that is active on `date`,
+    including a grace period of `grace_before` days before
+    and `grace_after` days after the Partnership dates.
+    If there is no match, raises an Exception with a detailed error.
+    """
+    try:
+        partnership = Partnership.objects.get(registration_code=code)
+    except Partnership.DoesNotExist as e:
+        raise MemberCodeValidationError(f'No partnership found for code "{code}".') from e
+
+    start_date = partnership.agreement_start - timedelta(days=grace_before)
+    end_date = partnership.agreement_end + timedelta(days=grace_after)
+
+    if not (start_date <= date <= end_date):
+        raise MemberCodeValidationError(
+            f"Partnership is inactive (start {partnership.agreement_start}, end {partnership.agreement_end})."
+        )
 
     return True
 

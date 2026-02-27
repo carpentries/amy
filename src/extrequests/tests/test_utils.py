@@ -11,8 +11,8 @@ from src.extrequests.utils import (
     get_eventbrite_id_from_url_or_return_input,
     get_membership_or_none_from_code,
     get_membership_warnings_after_match,
-    member_code_valid,
-    member_code_valid_training,
+    membership_code_valid,
+    membership_code_valid_training,
 )
 from src.fiscal.models import Partnership, PartnershipTier
 from src.offering.models import Account, AccountBenefit, Benefit
@@ -67,7 +67,7 @@ class TestMemberCodeValid(TestBase):
         code = self.valid_code
 
         # Act
-        result = member_code_valid(
+        result = membership_code_valid(
             code=code,
             date=self.date,
         )
@@ -82,7 +82,7 @@ class TestMemberCodeValid(TestBase):
 
         # Act & Assert
         with self.assertRaises(MemberCodeValidationError, msg='No membership found for code "invalid".'):
-            member_code_valid(
+            membership_code_valid(
                 code=code,
                 date=self.date,
             )
@@ -105,7 +105,7 @@ class TestMemberCodeValid(TestBase):
                 f"end {self.membership.agreement_end})."
             ),
         ):
-            member_code_valid(
+            membership_code_valid(
                 code=code,
                 date=test_date,
             )
@@ -128,7 +128,7 @@ class TestMemberCodeValid(TestBase):
                 f"end {self.membership.agreement_end})."
             ),
         ):
-            member_code_valid(
+            membership_code_valid(
                 code=code,
                 date=test_date,
             )
@@ -144,7 +144,7 @@ class TestMemberCodeValid(TestBase):
         code = self.valid_code
 
         # Act
-        result = member_code_valid(code=code, date=self.date, grace_before=30)
+        result = membership_code_valid(code=code, date=self.date, grace_before=30)
 
         # Assert
         self.assertTrue(result)
@@ -160,7 +160,7 @@ class TestMemberCodeValid(TestBase):
         code = self.valid_code
 
         # Act
-        result = member_code_valid(code=code, date=self.date, grace_after=30)
+        result = membership_code_valid(code=code, date=self.date, grace_after=30)
 
         # Assert
         self.assertTrue(result)
@@ -184,7 +184,7 @@ class TestMemberCodeValid(TestBase):
                 f"end {self.membership.agreement_end})."
             ),
         ):
-            member_code_valid(code=code, date=self.date, grace_before=30)
+            membership_code_valid(code=code, date=self.date, grace_before=30)
 
     def test_code_valid_beyond_grace_after(self) -> None:
         """Code used outside a grace period should not pass."""
@@ -205,7 +205,7 @@ class TestMemberCodeValid(TestBase):
                 f"end {self.membership.agreement_end})."
             ),
         ):
-            member_code_valid(code=code, date=self.date, grace_after=30)
+            membership_code_valid(code=code, date=self.date, grace_after=30)
 
     def test_code_no_seats_remaining(self) -> None:
         """Code with no seats remaining should not pass."""
@@ -216,7 +216,7 @@ class TestMemberCodeValid(TestBase):
 
         # Act & Assert
         with self.assertRaises(MemberCodeValidationError, msg="Membership has no training seats remaining."):
-            member_code_valid_training(code=code, date=self.date)
+            membership_code_valid_training(code=code, date=self.date)
 
     def test_code_only_public_seats_remaining(self) -> None:
         """Code with only public seats remaining should pass."""
@@ -227,7 +227,7 @@ class TestMemberCodeValid(TestBase):
         code = self.valid_code
 
         # Act
-        result = member_code_valid_training(
+        result = membership_code_valid_training(
             code=code,
             date=self.date,
         )
@@ -244,7 +244,7 @@ class TestMemberCodeValid(TestBase):
         code = self.valid_code
 
         # Act
-        result = member_code_valid_training(
+        result = membership_code_valid_training(
             code=code,
             date=self.date,
         )
