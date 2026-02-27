@@ -19,6 +19,9 @@ COUNTRIES = dict(countries)
 # This is independent from the benefit unit type.
 ACCOUNT_BENEFIT_FILTER_WHITELIST: dict[str, str] = {
     "TTT": "Instructor Training",
+    "ITT": "Instructor Trainer Training",
+    "CLDT": "Collaborative Lesson Development Training",
+    "SKILL": "Skillup",
 }
 
 
