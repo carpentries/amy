@@ -9,7 +9,9 @@ from django.urls import reverse
 
 from src.consents.models import Term, TermOptionChoices
 from src.extforms.views import TrainingRequestCreate
-from src.workshops.models import Event, Membership, Role, Tag, Task, TrainingRequest
+from src.fiscal.models import Partnership, PartnershipTier
+from src.offering.models import Account
+from src.workshops.models import Event, Membership, Organization, Role, Tag, Task, TrainingRequest
 from src.workshops.tests.base import TestBase
 
 
@@ -70,6 +72,26 @@ class TestTrainingRequestForm(TestBase):
             registration_code="valid123",
             public_instructor_training_seats=1,
             inhouse_instructor_training_seats=1,
+        )
+
+    def setUpPartnership(self) -> None:
+        partner = Organization.objects.create(fullname="Beta Organization", domain="beta.example.org")
+        partnership_tier = PartnershipTier.objects.create(name="gold", credits=100)
+        account = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=partner,
+        )
+        self.partnership = Partnership.objects.create(
+            name="Beta Partnership",
+            tier=partnership_tier,
+            agreement_start=date.today() - timedelta(weeks=26),
+            agreement_end=date.today() + timedelta(weeks=26),
+            agreement_link="http://example.com/agreement.pdf",
+            registration_code="partner123",
+            public_status="public",
+            partner_organisation=partner,
+            credits=100,
+            account=account,
         )
 
     def setUpUsedSeats(self) -> None:
@@ -513,3 +535,96 @@ class TestTrainingRequestForm(TestBase):
         self.assertEqual(rv.status_code, 200)
         self.assertIn("code_of_conduct_agreement", errors)
         self.assertListEqual(errors["code_of_conduct_agreement"], ["This field is required."])
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__partnership_code_valid(self) -> None:
+        """Valid partnership code should pass."""
+        # Arrange
+        self.setUpPartnership()
+        data = {
+            "review_process": "preapproved",
+            "member_code": "partner123",
+        }
+
+        # Act
+        rv = self.client.post(reverse("training_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertNotContains(rv, self.INVALID_MEMBER_CODE_ERROR)
+        # test that override field is not visible
+        self.assertEqual(
+            rv.context["form"].fields["member_code_override"].widget.__class__,
+            HiddenInput,
+        )
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__partnership_code_inactive_early(self) -> None:
+        """Partnership code used >90 days before partnership start should not pass."""
+        # Arrange
+        self.setUpPartnership()
+        self.partnership.agreement_start = date.today() + timedelta(days=91)
+        self.partnership.save()
+        data = {
+            "review_process": "preapproved",
+            "member_code": "partner123",
+        }
+
+        # Act
+        rv = self.client.post(reverse("training_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertContains(rv, self.INVALID_MEMBER_CODE_ERROR)
+        # test that override field is visible
+        self.assertEqual(
+            rv.context["form"].fields["member_code_override"].widget.__class__,
+            CheckboxInput,
+        )
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__partnership_code_inactive_late(self) -> None:
+        """Partnership code used >90 days after partnership end should not pass."""
+        # Arrange
+        self.setUpPartnership()
+        self.partnership.agreement_end = date.today() - timedelta(days=91)
+        self.partnership.save()
+        data = {
+            "review_process": "preapproved",
+            "member_code": "partner123",
+        }
+
+        # Act
+        rv = self.client.post(reverse("training_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertContains(rv, self.INVALID_MEMBER_CODE_ERROR)
+        # test that override field is visible
+        self.assertEqual(
+            rv.context["form"].fields["member_code_override"].widget.__class__,
+            CheckboxInput,
+        )
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__partnership_code_valid_override(self) -> None:
+        """Override should be quietly hidden if a valid partnership code is used."""
+        # Arrange
+        self.setUpPartnership()
+        data = {
+            "review_process": "preapproved",
+            "member_code": "partner123",
+            "member_code_override": True,
+        }
+
+        # Act
+        rv = self.client.post(reverse("training_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertNotContains(rv, self.INVALID_MEMBER_CODE_ERROR)
+        # test that override field is not visible
+        self.assertEqual(
+            rv.context["form"].fields["member_code_override"].widget.__class__,
+            HiddenInput,
+        )

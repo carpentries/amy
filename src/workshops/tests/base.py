@@ -151,8 +151,10 @@ class TestBase(SuperuserMixin, TestCase):
             name="dc-instructor",
             defaults=dict(title="Data Carpentry Instructor", criteria="Worked hard for this"),
         )
-        # lc-instructor is provided via a migration
-        self.lc_instructor = Badge.objects.get(name="lc-instructor")
+        self.lc_instructor, _ = Badge.objects.get_or_create(
+            name="lc-instructor",
+            defaults=dict(title="Library Carpentry Instructor", criteria="Worked hard for this"),
+        )
 
         self.instructor_badge, _ = Badge.objects.get_or_create(
             name="instructor",
