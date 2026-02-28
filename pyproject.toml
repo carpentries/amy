@@ -1,6 +1,6 @@
 [project]
 name = "amy"
-version = "4.8.0-dev"
+version = "4.9.0-dev"
 description = "A web-based workshop administration application built using Django."
 authors = [{ name = "Carpentries Team", email = "team@carpentries.org" }]
 license = { text = "MIT" }
