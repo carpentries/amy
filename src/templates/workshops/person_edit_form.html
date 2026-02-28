@@ -1,0 +1,258 @@
+{% extends "base_nav.html" %}
+
+{% load crispy_forms_tags %}
+{% load links %}
+{% load dates %}
+{% load communityroles %}
+
+{% block content %}
+<nav class="col-12">
+  <ul class="nav nav-tabs" role="tablist" id="tabs">
+    <li role="presentation" class="nav-item"><a class="nav-link active" href="#person" role="tab" data-toggle="tab" aria-controls="person" aria-selected="true" id="person-tab">Person</a></li>
+    <li role="presentation" class="nav-item"><a class="nav-link" href="#awards" role="tab" data-toggle="tab" aria-controls="awards">Awards</a></li>
+    <li role="presentation" class="nav-item"><a class="nav-link" href="#tasks" role="tab" data-toggle="tab" aria-controls="tasks">Tasks</a></li>
+    <li role="presentation" class="nav-item"><a class="nav-link" href="#consents" role="tab" data-toggle="tab" aria-controls="consents">Consents</a></li>
+    <li role="presentation" class="nav-item"><a class="nav-link" href="#communityroles" role="tab" data-toggle="tab" aria-controls="communityroles">Community Roles</a></li>
+  </ul>
+</nav>
+
+<div class="col-12 tab-content">
+  <div class="tab-pane active" role="tabpanel" aria-labelledby="person-tab" id="person">
+    {% crispy form %}
+  </div>
+  <div class="tab-pane" role="tabpanel" aria-labelledby="awards-tab" id="awards">
+    {% if perms.workshops.add_awards %}
+      {% if person.airport_iata %}
+      <form class="form-horizontal" role="form" method="POST" action="{% url 'award_add' %}?next={{ request.get_full_path|urlencode }}#awards">
+        {% crispy award_form %}
+      </form>
+      {% else %}
+      <p>Add missing person airport information to enable award form.</p>
+      {% endif %}
+    {% endif %}
+
+    {% if awards %}
+    <table class="table table-striped">
+      <caption><h2>All awards</h2></caption>
+      <thead>
+        <tr>
+          <th>Badge</th>
+          <th>Awarded</th>
+          <th>Event</th>
+          <th>Awarded by</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for award in awards %}
+        <tr>
+          <td><a href="{{ award.badge.get_absolute_url }}">{{ award.badge.title }}</a></td>
+          <td>{{ award.awarded }}</td>
+          <td>{% if award.event %}<a href="{{ award.event.get_absolute_url }}">{{ award.event }}</a>{% else %}—{% endif %}</td>
+          <td>{% if award.awarded_by %}<a href="{{ award.awarded_by.get_absolute_url }}">{{ award.awarded_by.full_name }}</a>{% else %}—{% endif %}</td>
+          <td>
+            {% if perms.workshops.delete_award %}
+            <form action="{% url 'award_delete' pk=award.id %}?next={{ request.get_full_path|urlencode }}#awards" onsubmit='return confirm("Are you sure you wish to drop award \"{{ award.badge.title }}\" from \"{{ award.person }}\"?")' method="POST">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-danger">Delete</button>
+            </form>
+            {% else %}
+            <button class="btn btn-danger disabled">Delete</button>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p>No awards.</p>
+    {% endif %}
+  </div>
+  <div class="tab-pane" role="tabpanel" aria-labelledby="tasks-tab" id="tasks">
+    {% if perms.workshops.add_tasks %}
+      {% if person.airport_iata %}
+      <form class="form-horizontal" role="form" method="POST" action="{% url 'task_add' %}?next={{ request.get_full_path|urlencode }}#tasks">
+        {% crispy task_form %}
+      </form>
+      {% else %}
+      <p>Add missing person airport information to enable task form.</p>
+      {% endif %}
+    {% endif %}
+
+    {% if tasks %}
+    <table class="table table-striped">
+      <caption><h2>All tasks</h2></caption>
+      <tr>
+        <th>Event</th>
+        <th>Role</th>
+        <th>Member site seat <i class="fas fa-question-circle" data-toggle="tooltip" title="Applies only to TTT events"></i></th>
+        <th>Open applicant <i class="fas fa-question-circle" data-toggle="tooltip" title="Applies only to TTT events with open applications"></i></th>
+        <th class="additional-links-wider"></th>
+      </tr>
+      {% for t in tasks %}
+      <tr>
+        <td><a href="{{ t.event.get_absolute_url }}">{{ t.event.slug }}</a></td>
+        <td>{{ t.role.name }}</td>
+        <td>
+          {% if t.seat_membership %}
+            <a href="{{ t.seat_membership.get_absolute_url }}">{{ t.seat_membership }}</a><br>
+            <small>{{ t.get_seat_public_display }}</small>
+          {% else %}&mdash;{% endif %}
+        </td>
+        <td>{{ t.seat_open_training|yesno }}</td>
+        <td>
+          <a href="{% url 'task_details' t.pk %}" title="View {{ t }}"><i class="fas fa-info-circle"></i></a>
+          &nbsp;
+          {% if perms.workshops.change_task %}
+          <a href="{% url 'task_edit' t.pk %}" title="Edit {{ t }}"><i class="fas fa-edit"></i></a>
+          {% endif %}
+          <form class="amy-form-inline" action="{% url 'task_delete' t.id %}?next={{ request.get_full_path|urlencode }}#tasks" onsubmit='return confirm("Are you sure you wish to remove \"{{ t }}\" from {{ t.event.slug }}?")' method="POST">
+            {% csrf_token %}
+            <button type="submit" class="no-btn"><i class="fas fa-times"></i></button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% else %}
+    <p>No tasks.</p>
+    {% endif %}
+  </div>
+  <div class="tab-pane" role="tabpanel" aria-labelledby="consents-tab" id="consents">
+    {% if consents_form.terms %}
+      {% if person.airport_iata %}
+        <form class="form-horizontal" role="form" method="POST" action="{% url 'consents_add' person.id %}?next={{ request.get_full_path|urlencode }}#consents">
+        {% crispy consents_form %}
+        </form>
+      {% else %}
+      <p>Add missing person airport information to enable consent form.</p>
+      {% endif %}
+    {% else %}
+      <p>No Terms.</p>
+    {% endif %}
+
+    {% if consents %}
+    <table class="table table-striped">
+      <caption><h2>All consents</h2></caption>
+      <thead>
+        <tr>
+          <th>Term</th>
+          <th>Option</th>
+          <th>Date created</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for consent in consents %}
+        <tr>
+          <td>{{ consent.term.short_description }}</td>
+          <td>{{ consent.term_option }}</td>
+          <td>{{ consent.created_at }}</td>
+          <td>{% if consent.is_active %}Active{% else %}Archived {{ consent.archived_at }}{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p>No consents set.</p>
+    {% endif %}
+
+  </div>
+  <div class="tab-pane" role="tabpanel" aria-labelledby="communityroles-tab" id="communityroles">
+    {% if perms.communityroles.add_communityroles %}
+      {% if person.airport_iata %}
+      <form class="form-horizontal" role="form" method="POST" action="{% url 'communityrole_add' %}?next={{ request.get_full_path|urlencode }}#communityroles">
+        {% crispy communityrole_form %}
+      </form>
+      {% else %}
+      <p>Add missing person airport information to enable community roles form.</p>
+      {% endif %}
+    {% endif %}
+
+    {% if community_roles %}
+    <table class="table table-striped">
+      <caption><h2>All community roles</h2></caption>
+      <tr>
+        <th>Role</th>
+        <th>Dates</th>
+        <th>Award</th>
+        <th>Inactive?</th>
+        <th>Membership</th>
+        <th>Partnership</th>
+        <th>URL</th>
+        <th>Related object</th>
+        <th class="additional-links-wider"></th>
+      </tr>
+      {% for role in community_roles.all %}
+      <tr>
+        <td>{{ role.config }}</td>
+        <td>
+          {% if role.start %}
+          {% community_role_human_dates role %}
+          {% else %}
+          &mdash;
+          {% endif %}
+        </td>
+        <td>
+          {{ role.award|default_if_none:"&mdash;" }}
+        </td>
+        <td>{{ role.inactivation|default_if_none:"&mdash;" }}</td>
+        <td>
+          {% if role.membership %}
+          <a href="{{ role.membership.get_absolute_url }}">{{ role.membership }}</a>
+          {% else %}
+          &mdash;
+          {% endif %}
+        </td>
+        <td>
+          {% if role.partnership %}
+          <a href="{{ role.partnership.get_absolute_url }}">{{ role.partnership }}</a>
+          {% else %}
+          &mdash;
+          {% endif %}
+        </td>
+        <td>{{ role.url|default:"&mdash;"|urlize_newtab }}</td>
+        <td>
+          {% if role.config.generic_relation_content_type and role.generic_relation %}
+          {{ role.generic_relation|title }}
+          {% else %}
+          &mdash;
+          {% endif %}
+        </td>
+        <td>
+          <a href="{% url 'communityrole_details' role.pk %}" title="View {{ role }}"><i class="fas fa-info-circle"></i></a>
+          &nbsp;
+          {% if perms.communityroles.change_communityrole %}
+          <a href="{% url 'communityrole_edit' role.pk %}" title="Edit {{ role }}"><i class="fas fa-edit"></i></a>
+          {% endif %}
+          {% if perms.communityroles.delete_communityrole %}
+          <form class="amy-form-inline" action="{% url 'communityrole_delete' role.pk %}?next={{ request.get_full_path|urlencode }}#communityroles" onsubmit='return confirm("Are you sure you wish to remove role \"{{ role.config }}\" from user \"{{ role.person }}\"?")' method="POST">
+            {% csrf_token %}
+            <button type="submit" class="no-btn"><i class="fas fa-times"></i></button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% else %}
+    <p>No community roles.</p>
+    {% endif %}
+  </div>
+</div>
+
+{% include "includes/comments.html" with object=object %}
+
+{% endblock %}
+
+{% block extrajs %}
+<script type="text/javascript">
+  $(document).ready(function() {
+    $("#id_award-awarded").datepicker({
+      format: "yyyy-mm-dd",
+      todayHighlight: true
+    });
+    $('#tabs').stickyTabs();
+  });
+</script>
+{% endblock extrajs %}

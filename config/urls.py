@@ -19,32 +19,33 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.contrib.contenttypes.views import shortcut
-from django.urls import include, path
+from django.urls import URLPattern, URLResolver, include, path
 from django.views.generic import RedirectView
 from django_comments.views.comments import comment_done, post_comment
 from markdownx.views import ImageUploadView, MarkdownifyView
 
-from workshops.utils.access import login_required
-from workshops.views import logout_then_login_with_msg
+from src.workshops.utils.access import login_required
+from src.workshops.views import logout_then_login_with_msg
 
-urlpatterns = [
+urlpatterns: list[URLPattern | URLResolver] = [
     path("", RedirectView.as_view(pattern_name="dispatch")),
     path(settings.ADMIN_URL, admin.site.urls),  # {% url 'admin:index' %}
-    path("api/v1/", include("api.v1.urls")),  # REST API v1
-    path("api/v2/", include("api.v2.urls")),  # REST API v2
+    path("api/v1/", include("src.api.v1.urls")),  # REST API v1
+    path("api/v2/", include("src.api.v2.urls")),  # REST API v2
     path("api/auth/", include("knox.urls")),
-    path("dashboard/", include("dashboard.urls")),
-    path("requests/", include("extrequests.urls")),
-    path("forms/", include("extforms.urls")),  # external, anonymous user-accessible forms
-    path("fiscal/", include("fiscal.urls")),
-    path("reports/", include("reports.urls")),
-    path("trainings/", include("trainings.urls")),
-    path("workshops/", include("workshops.urls")),
-    path("select_lookups/", include("workshops.lookups")),  # autocomplete lookups
-    path("terms/", include("consents.urls")),
-    path("communityroles/", include("communityroles.urls")),
-    path("recruitment/", include("recruitment.urls")),
-    path("emails/", include("emails.urls")),
+    path("dashboard/", include("src.dashboard.urls")),
+    path("requests/", include("src.extrequests.urls")),
+    path("forms/", include("src.extforms.urls")),  # external, anonymous user-accessible forms
+    path("fiscal/", include("src.fiscal.urls")),
+    path("reports/", include("src.reports.urls")),
+    path("trainings/", include("src.trainings.urls")),
+    path("workshops/", include("src.workshops.urls")),
+    path("select_lookups/", include("src.workshops.lookups")),  # autocomplete lookups
+    path("terms/", include("src.consents.urls")),
+    path("communityroles/", include("src.communityroles.urls")),
+    path("recruitment/", include("src.recruitment.urls")),
+    path("emails/", include("src.emails.urls")),
+    path("offering/", include("src.offering.urls")),
     # for webhooks from Mailgun
     # path('mail_hooks/', include('anymail.urls')),
     # django views for authentication
@@ -124,7 +125,9 @@ urlpatterns = [
             ]
         ),
     ),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+]
+
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 redirect_urlpatterns = [
     path("workshops/", RedirectView.as_view(pattern_name="dispatch")),

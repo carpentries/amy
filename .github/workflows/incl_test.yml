@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ '3.12' ]
+        python-version: [ '3.14' ]
         test-type: ["Unit", "Migration"]
       fail-fast: false
 
@@ -32,8 +32,8 @@ jobs:
     - name: Check out code
       uses: actions/checkout@v4
 
-    - name: Install poetry
-      run: pipx install poetry
+    - name: Install uv
+      run: pipx install uv
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
@@ -41,14 +41,16 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Install dependencies
-      run: poetry sync
+      run: |
+        sudo apt-get install -y libjpeg-dev
+        uv sync
 
     - name: Install NodeJS dependencies
       run: npm install
 
     - name: Check migrations
       run: |
-        poetry run python manage.py makemigrations --dry-run --check;
+        uv run python manage.py makemigrations --dry-run --check;
         if [[ $? != "0" ]]; then
           exit 1;
         fi;
@@ -61,7 +63,7 @@ jobs:
 
     - name: Create cache tables
       run: |
-        poetry run python manage.py createcachetable
+        uv run python manage.py createcachetable
       env:
         AMY_DATABASE_HOST: localhost
         AMY_DATABASE_PORT: 5432
@@ -71,13 +73,13 @@ jobs:
 
     - name: Collect static files
       run: |
-        poetry run python manage.py collectstatic --no-input;
+        uv run python manage.py collectstatic --no-input;
         if [[ $? != "0" ]]; then
           exit 1;
         fi;
 
     - name: Unit tests
-      run: poetry run make test
+      run: uv run make test
       env:
         AMY_DATABASE_HOST: localhost
         AMY_DATABASE_PORT: 5432
@@ -87,7 +89,7 @@ jobs:
       if: matrix.test-type == 'Unit'
 
     - name: Migration tests
-      run: poetry run make test_migrations
+      run: uv run make test_migrations
       env:
         AMY_DATABASE_HOST: localhost
         AMY_DATABASE_PORT: 5432

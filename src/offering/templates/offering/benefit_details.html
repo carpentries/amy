@@ -1,0 +1,56 @@
+{% extends "base_nav.html" %}
+{% load revisions %}
+
+{% block content %}
+{% last_modified object %}
+
+<div class="edit-object">
+  {% if perms.offering.change_benefit %}
+    <a class="btn btn-primary" href="{% url 'benefit-update' object.pk %}">Edit</a>
+  {% else %}
+    <a class="btn btn-primary disabled" disabled href="#">Edit</a>
+  {% endif %}
+  <div class="float-right">
+    {% if perms.offering.delete_benefit %}
+    <form action="{% url 'benefit-delete' object.pk %}" onsubmit='return confirm("Are you sure you wish to remove this benefit?")' method="POST">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Delete</button>
+    </form>
+    {% else %}
+    <a class="btn btn-danger disabled" disabled href="#">Delete</a>
+    {% endif %}
+  </div>
+</div>
+
+<table class="table table-striped">
+  <tr>
+    <th>Name:</th>
+    <td>{{ object.name }}</td>
+  </tr>
+  <tr>
+    <th>Description:</th>
+    <td>{{ object.description }}</td>
+  </tr>
+  <tr>
+    <th>Unit type:</th>
+    <td>{{ object.get_unit_type_display }}</td>
+  </tr>
+  <tr>
+    <th>Credits:</th>
+    <td>{{ object.credits }}</td>
+  </tr>
+  <tr>
+    <th>Active:</th>
+    <td>{{ object.active|yesno }}</td>
+  </tr>
+  <tr>
+    <th>Created at:</th>
+    <td>{{ object.created_at }}</td>
+  </tr>
+  <tr>
+    <th>Last updated at:</th>
+    <td>{{ object.last_updated_at }}</td>
+  </tr>
+</table>
+
+{% endblock %}

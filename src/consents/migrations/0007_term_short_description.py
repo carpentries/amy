@@ -1,0 +1,37 @@
+# Written by @elichad 2023-03-15
+
+from django.db import migrations, models
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
+
+term_descriptions = {
+    "may-contact": "May contact",
+    "public-profile": "Consent to making profile public",
+    "may-publish-name": "Consent to include name when publishing lessons",
+    "privacy-policy": "Privacy policy agreement",
+}
+
+
+def set_term_descriptions(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
+    Term = apps.get_model("consents", "Term")
+    for term in Term.objects.all():
+        term.short_description = term_descriptions.get(term.slug, term.slug.replace("-", " ").capitalize())
+        term.save(update_fields=["short_description"])
+
+
+class Migration(migrations.Migration):
+    dependencies = [
+        ("consents", "0006_auto_20210614_1234"),
+    ]
+
+    operations = [
+        # add field
+        migrations.AddField(
+            model_name="term",
+            name="short_description",
+            field=models.CharField(default="", max_length=100),
+            preserve_default=False,
+        ),
+        # set descriptions for existing terms
+        migrations.RunPython(set_term_descriptions, reverse_code=migrations.RunPython.noop),
+    ]

@@ -1,0 +1,16 @@
+# reusable workflow
+
+on:
+  workflow_call
+
+jobs:
+  build_container:
+    name: Build container image
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v4
+
+    - name: Build Docker container image
+      run: docker build .

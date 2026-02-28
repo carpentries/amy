@@ -1,0 +1,181 @@
+{% load state %}
+{% load utils %}
+{% load eventbrite %}
+<table class="table table-striped">
+  <tbody>
+    <tr><th>Submission date:</th>
+        <td>{{ object.created_at }}</td></tr>
+{% if admin %}
+    <tr><th>State:</th>
+        <td><span class="{% state_label object %}">{{ object.get_state_display }}</span></td></tr>
+    <tr><th>Matched person:</th>
+        <td>
+          {% if object.person %}
+            <a href="{% url 'person_details' object.person.pk %}">
+              {{ object.person.full_name }}</a>
+            {% if object.person.email %}&lt;{{ object.person.email|urlize }}&gt;{% endif %}
+          {% else %}&mdash;{% endif %}
+        </td></tr>
+    <tr><th>Application score:</th>
+        <td>Automatic: {{ object.score_auto }} pts. <br>
+            Manual: {% if object.score_manual is not None %}{{ object.score_manual }} pts.{% else %}not scored{% endif %} <br>
+            <b>Total: {{ object.score_total }} pts.</b></td></tr>
+    <tr><th>Manual score notes:</th>
+        <td>{% if object.score_notes %}<pre>{{ object.score_notes }}</pre>{% else %}&mdash;{% endif %}</td></tr>
+{% endif %}
+    <tr><th>Application Type:</th>
+        <td>{{ object.get_review_process_display|default:"&mdash;" }}</td></tr>
+    <tr><th>Registration Code:</th>
+        <td>{{ object.member_code|default:"&mdash;" }}</td></tr>
+{% if admin or object.member_code_override %}
+    <tr><th>Continue with registration code marked as invalid:</th>
+        <td>{{ object.member_code_override|yesno }}</td></tr>
+{% endif %}
+    <tr><th>Eventbrite URL:</th>
+        <td>{{ object.eventbrite_url|default:"&mdash;" }}
+        {% url_matches_eventbrite_format object.eventbrite_url as url_format_valid %}
+        {% if object.eventbrite_url and not url_format_valid %}
+        <div class="alert alert-warning">
+            This URL doesn't match known Eventbrite URLs. Please use caution if copying this link.
+        </div>
+        {% endif %}
+        </td></tr>
+    <tr><th>Personal name:</th>
+        <td>{{ object.personal }}</td></tr>
+    <tr><th>Middle name:</th>
+        <td>{{ object.middle }}</td></tr>
+    <tr><th>Family name:</th>
+        <td>{{ object.family}}</td></tr>
+    <tr><th>Email:</th>
+        <td>{{ object.email|urlize }}</td></tr>
+    <tr><th>Github:</th>
+        <td>{{ object.github|default:"&mdash;" }}</td></tr>
+    <tr><th>Occupation:</th>
+        <td>{{ object.get_occupation_display }} {{ object.occupation_other }}</td></tr>
+    <tr><th>Affiliation:</th>
+        <td>{{ object.affiliation }}</td></tr>
+    <tr><th>Location:</th>
+        <td>{{ object.location}}</td></tr>
+    <tr><th>Country:</th>
+        <td>{{ object.get_country_display }}</td></tr>
+    <tr><th>Nearest major airport:</th>
+        <td>{{ object.airport_iata|default:"&mdash;" }}</td></tr>
+    <tr><th>This is a small, remote, or under-resourced institution:</th>
+        <td>{{ object.underresourced|yesno }}</td></tr>
+    <tr><th>Areas of expertise:</th>
+        <td>
+            {% if object.domains.all %}
+            <ul>
+            {% for domain in object.domains.all %}
+                <li>{{ domain }}</li>
+            {% endfor %}
+            </ul>
+            {% else %}
+            No areas of expertise.
+            {% endif %}
+        </td></tr>
+    <tr><th>Other areas of expertise:</th>
+        <td>{{ object.domains_other|default:"&mdash;" }}</td></tr>
+    <tr><th>I self-identify as a member of a group that is under-represented in research and/or computing:</th>
+        <td>{{ object.get_underrepresented_display }}</td></tr>
+    <tr><th>If you are comfortable doing so, please share more details.</th>
+        <td>
+            {% if object.underrepresented_details %}
+            {{ object.underrepresented_details }}
+            {% else %}
+            &mdash;
+            {% endif %}
+        </td></tr>
+    <tr><th> I have been an active contributor to other volunteer or non-profit groups with significant teaching or training components.</th>
+        <td>{{ object.nonprofit_teaching_experience|default:"&mdash;" }}</td></tr>
+    <tr><th>In which of the following ways have you been involved with The Carpentries:</th>
+        <td>
+            {% if object.previous_involvement.all %}
+            <ul>
+            {% for involvement in object.previous_involvement.all %}
+                <li>{{ involvement }}</li>
+            {% endfor %}
+            </ul>
+            {% else %}
+            No previous involvement.
+            {% endif %}
+        </td></tr>
+    </tr>
+    <tr><th>Previous formal training as a teacher or instructor:</th>
+        <td>
+            {{ object.get_previous_training_display }}
+            {% if object.previous_training_other %}
+            {{ object.previous_training_other }}
+            {% endif %}
+        </td></tr>
+    <tr><th>Description of your previous training in teaching:</th>
+        <td>
+            {% if object.previous_training_explanation %}
+            <pre>{{ object.previous_training_explanation }}</pre>
+            {% else %}
+            &mdash;
+            {% endif %}
+        </td></tr>
+    <tr><th>Previous experience in teaching:</th>
+        <td>
+            {{ object.get_previous_experience_display }}
+            {% if object.previous_experience_other %}
+            {{ object.previous_experience_other }}
+            {% endif %}
+        </td></tr>
+    <tr><th>Description of your previous experience in teaching:</th>
+        <td>
+            {% if object.previous_experience_explanation %}
+            <pre>{{ object.previous_experience_explanation }}</pre>
+            {% else %}
+            &mdash;
+            {% endif %}
+        </td></tr>
+    <tr><th>How frequently do you work with the tools that The Carpentries teach, such as R, Python, MATLAB, Perl, SQL, Git, OpenRefine, and the Unix Shell?</th>
+        <td>{{ object.get_programming_language_usage_frequency_display }}</td></tr>
+    <tr><th>Do you intend to complete The Carpentries checkout process to be certified as a Carpentries Instructor?</th>
+        <td>{{ object.get_checkout_intent_display }}</td></tr>
+    <tr><th>Do you intend to teach Carpentries workshops within the next 12 months?</th>
+        <td>{{ object.get_teaching_intent_display }}</td></tr>
+    <tr><th>How often would you expect to teach Carpentries workshops (of any kind) after this training?</th>
+        <td>
+            {{ object.get_teaching_frequency_expectation_display }}
+            {% if object.teaching_frequency_expectation_other %}
+            {{ object.teaching_frequency_expectation_other}}
+            {% endif %}
+        </td></tr>
+    <tr><th>How frequently would you be able to travel to teach such classes?:</th>
+        <td>
+            {{ object.get_max_travelling_frequency_display }}
+            {% if object.max_travelling_frequency_other %}
+            {{ object.max_travelling_frequency_other }}
+            {% endif %}
+        </td></tr>
+    <tr><th>Why do you want to attend this training course?:</th>
+        <td><pre>{{ object.reason }}</pre></td></tr>
+    <tr><th>Additional notes:</th>
+        <td>
+            {% if object.user_notes %}
+            <pre>{{ object.user_notes }}</pre>
+            {% else %}
+            &mdash;
+            {% endif %}
+        </td></tr>
+    <tr><th><span class="badge badge-secondary">(Deprecated)</span> Data privacy agreement:</th>
+        <td>{{ object.data_privacy_agreement|yesno }}</td></tr>
+    <tr><th>Code of Conduct agreement:</th>
+        <td>{{ object.code_of_conduct_agreement|yesno }}</td></tr>
+    <tr>
+      <th>{{ consents_content.may_contact }}</th>
+      <td>{% if consents.may_contact %}{{ consents.may_contact.term_option }}{% else %}Unset{% endif %}</td>
+    </tr>
+    <tr>
+      <th>{{ consents_content.privacy_policy|safe }}</th>
+      <td>{% if consents.privacy_policy %}{{ consents.privacy_policy.term_option }}{% else %}Unset{% endif %}</td>
+    </tr>
+    <tr>
+      <th>{{ consents_content.public_profile }}</th>
+      <td>{% if consents.public_profile %}{{ consents.public_profile.term_option }}{% else %}Unset{% endif %}</td>
+    </tr>
+  </tbody>
+</table>

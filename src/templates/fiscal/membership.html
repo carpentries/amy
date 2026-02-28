@@ -1,0 +1,267 @@
+{% extends "base_nav.html" %}
+
+{% load links %}
+{% load revisions %}
+{% load attrs %}
+
+{% block content %}
+{% last_modified membership %}
+
+{% comment %} To check if "rolled_from_membership" exists we have to use a custom filter `one2one_exists`. {% endcomment %}
+{% if membership|one2one_exists:"rolled_from_membership" %}
+<div class="alert alert-info" role="alert">
+  Rolled over from <a href="{{ membership.rolled_from_membership.get_absolute_url }}">{{ membership.rolled_from_membership }}</a>.
+</div>
+{% endif %}
+{% if membership.rolled_to_membership %}
+<div class="alert alert-info" role="alert">
+  Rolled over to <a href="{{ membership.rolled_to_membership.get_absolute_url }}">{{ membership.rolled_to_membership }}</a>.
+</div>
+{% endif %}
+
+<p class="edit-object">
+  {% if perms.workshops.change_membership %}
+  <a href="{% url 'membership_edit' membership.id %}" class="btn btn-primary">Edit</a>
+  {% else %}
+  <a href="{% url 'membership_edit' membership.id %}" class="btn btn-primary disabled">Edit</a>
+  {% endif %}
+</p>
+<table class="table table-striped">
+  <tr><th width="30%">Name:</th><td colspan="2">{{ membership.name }}</td></tr>
+  <tr><th>Consortium:</th><td colspan="2">{{ membership.consortium|yesno|title }}</td></tr>
+  <tr><th>Organisations (members):</th>
+      <td colspan="2">
+        {% if membership.member_set.all %}
+          <ul>
+          {% for member in membership.member_set.all %}
+            <li><a href="{{ member.organization.get_absolute_url }}">{{ member.organization }}</a> (role: {{ member.role }})</li>
+          {% endfor %}
+          </ul>
+        {% else %}
+          <em>No organisation added.</em>
+        {% endif %}
+        <a href="{% url 'membership_members' membership.pk %}">Edit</a>
+      </td></tr>
+  <tr><th>Status:</th><td colspan="2">{{ membership.get_public_status_display }}</td></tr>
+  <tr><th>Variant:</th><td colspan="2">{{ membership.get_variant_display }}</td></tr>
+  <tr><th>Start date:</th><td colspan="2">{{ membership.agreement_start }}</td></tr>
+  <tr><th>End date:</th>
+      <td colspan="2">
+        {{ membership.agreement_end }}
+        {% if membership.extensions %}
+        <p class="small m-0">Includes extensions:</p>
+        <ul class="small m-0">
+          {% for extension in membership.extensions %}
+          <li>{{ extension }} day(s)</li>
+          {% endfor %}
+        </ul>
+        <p class="small">...for cumulative value of {{ membership_extensions_sum }} days.</p>
+        {% endif %}
+      </td></tr>
+  <tr><th>Contribution type:</th><td colspan="2">{{ membership.get_contribution_type_display }}</td></tr>
+  <tr><th>Registration Code:</th><td colspan="2">{{ membership.registration_code }}</td></tr>
+  <tr><th>Agreement Document:</th>
+      <td colspan="2">{% if membership.agreement_link %}{{ membership.agreement_link|urlize }}{% else %}&mdash;{% endif %}</td></tr>
+  <tr><th>Persons:</th>
+      <td colspan="2">
+        {% if membership.membershiptask_set.all %}
+          <ul>
+          {% for person_task in membership.membershiptask_set.all %}
+            <li><a href="{{ person_task.person.get_absolute_url }}">{{ person_task.person }}</a> (role: {{ person_task.role }})</li>
+          {% endfor %}
+          </ul>
+        {% else %}
+          <em>No persons added.</em>
+        {% endif %}
+        <a href="{% url 'membership_tasks' membership.pk %}">Edit</a>
+      </td></tr>
+  <tr>
+    <th rowspan="4">Workshops without fee per agreement duration</th>
+    <th>Allowed:</th>
+    <td width="60%">
+      {{ membership.workshops_without_admin_fee_total_allowed|default:"&mdash;" }}
+      <p class="small">
+        Includes {{ membership.workshops_without_admin_fee_rolled_from_previous|default_if_none:0 }} workshops rolled from previous membership.
+      </p>
+    </td>
+  </tr>
+  <tr>
+    <th>Completed:</th>
+    <td>{{ membership.workshops_without_admin_fee_completed|default:"&mdash;" }}</td>
+  </tr>
+  <tr>
+    <th>Planned:</th>
+    <td>{{ membership.workshops_without_admin_fee_planned|default:"&mdash;" }}</td>
+  </tr>
+  <tr>
+    <th>Remaining:</th>
+    <td>
+      {{ membership.workshops_without_admin_fee_remaining|default:"&mdash;" }}
+      <p class="small">
+        {{ membership.workshops_without_admin_fee_rolled_over|default:"None" }} were rolled over to following membership.
+      </p>
+    </td>
+  </tr>
+  <tr>
+    <th rowspan="2">Discounted workshops</th>
+    <th>Completed:</th>
+    <td>{{ membership.workshops_discounted_completed|default:"&mdash;" }}</td>
+  </tr>
+  <tr>
+    <th>Planned:</th>
+    <td>{{ membership.workshops_discounted_planned|default:"&mdash;" }}</td>
+  </tr>
+  <tr>
+    <th rowspan="2">Self-organized workshops</th>
+    <th>Completed:</th>
+    <td>{{ membership.self_organized_workshops_completed|default:"&mdash;" }}</td>
+  </tr>
+  <tr>
+    <th>Planned:</th>
+    <td>{{ membership.self_organized_workshops_planned|default:"&mdash;" }}</td>
+  </tr>
+  <tr>
+    <th rowspan="3" width="30%">Public instructor training seats</th>
+    <th>Allowed:</th>
+    <td>
+      {{ membership.public_instructor_training_seats_total }}
+      <p class="small">
+        Includes {{ membership.additional_public_instructor_training_seats }} additional seats.<br>
+        Includes {{ membership.public_instructor_training_seats_rolled_from_previous|default_if_none:0 }} seats rolled from previous membership.
+      </p>
+    </td>
+  </tr>
+  <tr>
+    <th>Utilized:</th>
+    <td>{{ membership.public_instructor_training_seats_utilized }}</td>
+  </tr>
+  <tr {% if membership.public_instructor_training_seats_remaining <= 0 and membership.public_instructor_training_seats_total > 0 or membership.public_instructor_training_seats_remaining < 0 and membership.public_instructor_training_seats_total == 0 %}class="table-danger"{% endif %}>
+    <th>Remaining:</th>
+    <td>
+      {{ membership.public_instructor_training_seats_remaining }}
+      <p class="small">
+        {{ membership.public_instructor_training_seats_rolled_over|default:"None" }} were rolled over to following membership.
+      </p>
+    </td>
+  </tr>
+  <tr>
+    <th rowspan="3" width="30%">In-house instructor training seats</th>
+    <th>Allowed:</th>
+    <td>
+      {{ membership.inhouse_instructor_training_seats_total }}
+      <p class="small">
+        Includes {{ membership.additional_inhouse_instructor_training_seats }} additional seats.<br>
+        Includes {{ membership.inhouse_instructor_training_seats_rolled_from_previous|default_if_none:0 }} seats rolled from previous membership.
+      </p>
+    </td>
+  </tr>
+  <tr>
+    <th>Utilized:</th>
+    <td>{{ membership.inhouse_instructor_training_seats_utilized }}</td>
+  </tr>
+  <tr {% if membership.inhouse_instructor_training_seats_remaining <= 0 and membership.inhouse_instructor_training_seats_total > 0 or membership.inhouse_instructor_training_seats_remaining < 0 and membership.inhouse_instructor_training_seats_total == 0 %}class="table-danger"{% endif %}>
+    <th>Remaining:</th>
+    <td>
+      {{ membership.inhouse_instructor_training_seats_remaining }}
+      <p class="small">
+        {{ membership.inhouse_instructor_training_seats_rolled_over|default:"None" }} were rolled over to following membership.
+      </p>
+    </td>
+  </tr>
+  <tr>
+    <th>Instructor training seats:</th>
+    <td colspan="2">
+      {% if membership.task_set.all %}
+      <table class="w-100">
+        <tr>
+          <th>Event</th>
+          <th>Person</th>
+          <th>Awards</th>
+          <th>Type</th>
+        </tr>
+        {% for t in membership.task_set.all %}
+        <tr>
+          <td><a href="{{ t.event.get_absolute_url }}">{{ t.event }}</a></td>
+          <td><a href="{{ t.person.get_absolute_url }}">{{ t.person }}</a></td>
+          <td>
+            {% for award in t.person.award_set.all %}
+            {{ award.badge }} ({{ award.awarded }}){% if not forloop.last %},<br>{% endif %}
+            {% empty %}&mdash;
+            {% endfor %}
+          </td>
+          <td>{{ t.get_seat_public_display }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+      {% else %}
+      No entries.
+      {% endif %}
+    </td>
+  </tr>
+  <tr><th>Emergency contact:</th>
+      <td colspan="2">{% if membership.emergency_contact %}<pre>{{ membership.emergency_contact }}</pre>{% else %}&mdash;{% endif %}</td></tr>
+  <tr>
+    <th>Related scheduled emails:</th>
+    <td colspan="2">
+      {% include "includes/related_scheduled_emails.html" with object=membership %}
+    </td>
+  </tr>
+</table>
+
+<div class="clearfix">
+  <div class="edit-object float-left">
+    <div class="btn-group" role="group">
+      {% if perms.workshops.change_membership %}
+      <a href="{% url 'membership_edit' membership.id %}" class="btn btn-primary">Edit</a>
+      <a href="{% url 'membership_extend' membership.id %}" class="btn btn-secondary">Extend</a>
+      {% else %}
+      <a class="btn btn-primary disabled" aria-disabled="true">Edit</a>
+      <a class="btn btn-secondary disabled" aria-disabled="true">Extend</a>
+      {% endif %}
+      {% if perms.workshops.create_membership and perms.workshops.change_membership and membership.rolled_to_membership is None %}
+      <a href="{% url 'membership_create_roll_over' membership.id %}" class="btn btn-success">Create new &amp; roll-over</a>
+      {% else %}
+      <a class="btn btn-success disabled" aria-disabled="true">Create new &amp; roll-over</a>
+      {% endif %}
+    </div>
+  </div>
+  <div class="delete-object float-right">
+    {% if perms.workshops.delete_membership %}
+    <form action="{% url 'membership_delete' membership.id %}" onsubmit='return confirm("Are you sure you wish to remove  \"{{ membership }}\"?")' method="POST">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Delete membership</button>
+    </form>
+    {% else %}
+    <button class="btn btn-danger disabled" aria-disabled="true">Delete membership</button>
+    {% endif %}
+  </div>
+</div>
+
+
+{% if membership.event_set.all %}
+<h2>Events</h2>
+<table class="table table-striped">
+  <tr>
+    <th>Slug</th>
+    <th>Tags</th>
+    <th>Start date</th>
+    <th>End date</th>
+    <th>URL</th>
+  </tr>
+  {% for e in membership.event_set.all %}
+  <tr>
+    <td><a href="{{ e.get_absolute_url }}">{{ e.slug }}</a></td>
+    <td>{{ e.tags.all | join:", " }}</td>
+    <td>{{ e.start }}</td>
+    <td>{{ e.end }}</td>
+    <td>{{ e.url|urlize_newtab }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p>No events.</p>
+{% endif %}
+
+{% include "includes/comments.html" with object=membership %}
+
+{% endblock %}

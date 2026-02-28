@@ -1,16 +1,15 @@
 [project]
 name = "amy"
-version = "4.7.2"
+version = "4.8.0"
 description = "A web-based workshop administration application built using Django."
 authors = [{ name = "Carpentries Team", email = "team@carpentries.org" }]
 license = { text = "MIT" }
 readme = "README.md"
-requires-python = ">=3.12,<4.0"
+requires-python = ">=3.14,<4.0"
 dependencies = [
   "argon2-cffi (>=23.1.0,<24.0.0)",
-  "black",
   "crispy-bootstrap4 (>=2024.10,<2025.0)",
-  "django (>=4.2,<5.0)",
+  "django (>=5.2,<6.0)",
   "django-anymail (>=12.0,<13.0)",
   "django-better-admin-arrayfield (>=1.4.2,<2.0.0)",
   "django-contrib-comments (>=2.2.0,<3.0.0)",
@@ -30,16 +29,12 @@ dependencies = [
   "django-select2 (>=8.2.3,<9.0.0)",
   "django-stubs",
   "django-test-migrations (>=1.4.0,<2.0.0)",
-  "django-webtest (>=1.9.12,<2.0.0)",
   "djangorestframework (>=3.15.2,<4.0.0)",
   "djangorestframework-csv (>=3.0.2,<4.0.0)",
   "djangorestframework-stubs",
   "drf-nested-routers (>=0.94.1,<0.95.0)",
   "faker (>=33.3.1,<34.0.0)",
-  "fakeredis (>=2.26.2,<3.0.0)",                     # TODO: remove in #2755
-  "flake8",
   "gunicorn (>=23.0.0,<24.0.0)",
-  "isort",
   "jinja2 (>=3.1.5,<4.0.0)",
   "mkdocs (>=1.6.1,<2.0.0)",
   "mkdocs-material (>=9.5.49,<10.0.0)",
@@ -59,43 +54,38 @@ dependencies = [
   "boto3 (>=1.36.25,<2.0.0)",
   "boto3-stubs (>=1.36.26,<2.0.0)",
   "cairosvg (>=2.7.1,<3.0.0)",
+  "airportsdata (==20250909)",
+  "pytz (>=2025.2,<2026.0)",
+  "types-pytz (>=2025.2.0.20250809,<2026.0.0.0)",
+  "ruff (>=0.14.10,<0.15.0)",
+  "types-django-filter>=25.2.0.20251010",
 ]
 
-[build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.poetry]
-package-mode = false
-
-[tool.black]
+[tool.ruff]
 line-length = 120
-force-exclude = "migrations"
 
-[tool.isort]
-profile = "black"
-force_sort_within_sections = true
-skip_gitignore = true
-known_first_party = [
-  "api",
-  "autoemails",
-  "consents",
-  "communityroles",
-  "dashboard",
-  "emails",
-  "extcomments",
-  "extforms",
-  "extrequests",
-  "fiscal",
-  "recruitment",
-  "reports",
-  "trainings",
-  "workshops",
+[tool.ruff.lint]
+select = [
+  # pycodestyle
+  "E",
+  # pyflakes
+  "F",
+  # pyupgrade
+  "UP",
+  # flake8-bugbear
+  "B",
+  # flake8-simplify
+  "SIM",
+  # isort
+  "I",
 ]
+
+[tool.ruff.lint.isort]
+known-first-party = ["src"]
 
 [tool.mypy]
 plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
-python_version = "3.12"
+python_version = "3.14"
 show_error_codes = true
 strict = true
 mypy_path = "amy"
@@ -104,11 +94,19 @@ mypy_path = "amy"
 module = [
   "anymail.*",
   "cairosvg.*",
+  "crispy_forms.*",
+  "debug_toolbar.*",
+  "django_better_admin_arrayfield.*",
+  "django_recaptcha.*",
+  "django_comments.*",
   "django_filters.*",
-  "flags.*",
+  "django_select2.*",
+  "knox.*",
   "markdownx.*",
   "reversion.*",
+  "reversion_compare.*",
   "social_django.*",
+  "social_core.exceptions.*",
 ]
 follow_untyped_imports = true
 

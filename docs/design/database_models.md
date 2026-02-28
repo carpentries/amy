@@ -337,7 +337,7 @@ events, it works for The Carpentries' community.
 
 ## Automated Emails (v1, 2019) application - `autoemails/models.py`
 
-Deprecated since 2024.
+Deprecated since 2024. Deleted from codebase in January 2026.
 
 ### `EmailTemplate`
 Represents email template to be used by a triggered email action.

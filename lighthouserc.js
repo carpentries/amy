@@ -50,8 +50,6 @@ module.exports = {
                 'http://127.0.0.1:8000/trainings/trainees/',
                 "http://127.0.0.1:8000/trainings/trainings/",
                 "http://127.0.0.1:8000/trainings/training_progress/1/edit/",
-                "http://127.0.0.1:8000/workshops/airport/ALC/",
-                "http://127.0.0.1:8000/workshops/airports/",
                 "http://127.0.0.1:8000/workshops/badges/",
                 'http://127.0.0.1:8000/workshops/events/',
                 'http://127.0.0.1:8000/workshops/persons/',
@@ -71,7 +69,7 @@ module.exports = {
                 "http://127.0.0.1:8000/workshops/workshop_staff/",
                 "http://127.0.0.1:8000/account/logout/"
             ],
-            startServerCommand: 'poetry run make serve',
+            startServerCommand: 'uv run make serve',
             puppeteerScript: 'puppeteer-script.js',
             numberOfRuns: 1
         },

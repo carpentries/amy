@@ -12,10 +12,10 @@ This document acts as a reference for where certain design patterns can be found
 
 **Method:** It's not possible to make these dynamic updates using Django without submitting the form. Instead, we must use JavaScript.
 
-1. Use JavaScript to change the request that is used to get the available choices for the dynamically changing field. Add the dependent field as a parameter in the request. (e.g. `$("#id_communityrole-award").select2({...})` in [/static/communityrole_form.js](../../amy/static/communityrole_form.js))
-2. In the relevant form, ensure that the JS file is included under the `Media` metaclass (e.g. `CommunityRoleForm` in [/communityroles/forms.py](../../amy/communityroles/forms.py))
-3. In the relevant lookup view, check for the presence of the extra parameters and use them to filter the results as needed (e.g. `AwardLookupView` in [/workshops/lookups.py](../../amy/workshops/lookups.py))
-4. Write tests using different parameter settings (e.g. `TestAwardLookupView` in [/workshops/tests/test_lookups.py](../../amy/workshops/tests/test_lookups.py))
+1. Use JavaScript to change the request that is used to get the available choices for the dynamically changing field. Add the dependent field as a parameter in the request. (e.g. `$("#id_communityrole-award").select2({...})` in [/static/communityrole_form.js](../../src/static/communityrole_form.js))
+2. In the relevant form, ensure that the JS file is included under the `Media` metaclass (e.g. `CommunityRoleForm` in [/communityroles/forms.py](../../src/communityroles/forms.py))
+3. In the relevant lookup view, check for the presence of the extra parameters and use them to filter the results as needed (e.g. `AwardLookupView` in [/workshops/lookups.py](../../src/workshops/lookups.py))
+4. Write tests using different parameter settings (e.g. `TestAwardLookupView` in [/workshops/tests/test_lookups.py](../../src/workshops/tests/test_lookups.py))
 
 ### Make a field required/not required according to another field's value
 
@@ -23,9 +23,9 @@ This document acts as a reference for where certain design patterns can be found
 
 **Method:** It's not possible to make these dynamic updates using Django without submitting the form. Instead, we must use JavaScript.
 
-1. Use JavaScript to set the `required` property on the dynamically changing field when the dependent field is updated. (e.g. in [/static/communityrole_form.js](../../amy/static/communityrole_form.js))
-2. In the relevant form, ensure that the JS file is included under the `Media` metaclass (e.g. `CommunityRoleForm` in [/communityroles/forms.py](../../amy/communityroles/forms.py))
-3. Ensure that the relevant form/model has validation that matches the dynamic behaviour (e.g. `CommunityRoleForm.clean()` in [/communityroles/forms.py](../../amy/communityroles/forms.py))
+1. Use JavaScript to set the `required` property on the dynamically changing field when the dependent field is updated. (e.g. in [/static/communityrole_form.js](../../src/static/communityrole_form.js))
+2. In the relevant form, ensure that the JS file is included under the `Media` metaclass (e.g. `CommunityRoleForm` in [/communityroles/forms.py](../../src/communityroles/forms.py))
+3. Ensure that the relevant form/model has validation that matches the dynamic behaviour (e.g. `CommunityRoleForm.clean()` in [/communityroles/forms.py](../../src/communityroles/forms.py))
 
 ### Autofill some form fields when creating one object using data from another
 
@@ -46,9 +46,9 @@ This document acts as a reference for where certain design patterns can be found
 **Method**:
 
 1. Add a field `<fieldname>-override` to the relevant model. This should be a `BooleanField` defaulting to `False`.
-2. On `Form`s connected to the model, manipulate the `helper.layout` to show/hide the new field according to the value of the field you're implementing soft validation on (e.g. the `validate_member_code` method of `TrainingRequestForm` in [`/extforms/forms.py`](../../amy/extforms/forms.py) shows and hides the `member_code_override` field according to the validity of the `member_code`).
+2. On `Form`s connected to the model, manipulate the `helper.layout` to show/hide the new field according to the value of the field you're implementing soft validation on (e.g. the `validate_member_code` method of `TrainingRequestForm` in [`/extforms/forms.py`](../../src/extforms/forms.py) shows and hides the `member_code_override` field according to the validity of the `member_code`).
 3. Build validation carefully for the override and the field it relates to. The override should only be required and `True` if the related field is invalid. In other cases, it should be `False` - this may require updating the value during validation (e.g. the `validate_member_code` method again).
-4. Consider adding a filter to help admins find objects where the override was used. Beware that the default `django_filters.BooleanFilter` is not quite appropriate - typically you will want *all* results to be shown when the filter is `False`, and only results that use the override to be shown when the filter is `True` (e.g. `invalid_member_code` filter in `TrainingRequestFilter` in [/extrequests/filters.py](../../amy/extrequests/filters.py)).
+4. Consider adding a filter to help admins find objects where the override was used. Beware that the default `django_filters.BooleanFilter` is not quite appropriate - typically you will want *all* results to be shown when the filter is `False`, and only results that use the override to be shown when the filter is `True` (e.g. `invalid_member_code` filter in `TrainingRequestFilter` in [/extrequests/filters.py](../../src/extrequests/filters.py)).
 
 **Reference files**:
 
@@ -60,4 +60,4 @@ This document acts as a reference for where certain design patterns can be found
 
 ### Migration tests
 
-Use the `django_test_migrations` package, e.g. [/workshops/tests/test_migrations.py](../../amy/workshops/tests/test_migrations.py)
+Use the `django_test_migrations` package, e.g. [/workshops/tests/test_migrations.py](../../src/workshops/tests/test_migrations.py)

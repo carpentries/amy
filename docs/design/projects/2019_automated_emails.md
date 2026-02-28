@@ -1,5 +1,7 @@
 # Automated emails v1 (2019)
 
+*Note*: This application is deprecated and removed from the codebase.
+
 GitHub project link unavailable.
 
 This project aims to automate sending repetitive emails, for example:

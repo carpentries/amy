@@ -1,0 +1,41 @@
+{% extends "base_nav_sidebar.html" %}
+{% load pagination %}
+
+{% block content %}
+  {% if object_list %}
+    <table class="table table-striped">
+      <tr>
+        <th>Account</th>
+        <th>Partnership</th>
+        <th>Benefit</th>
+        <th>Used / allocated</th>
+        <th>Discount</th>
+        <th>Curriculum</th>
+        <th>Dates</th>
+        <th>Active</th>
+        <th>Created at</th>
+        <th>Last updated at</th>
+      </tr>
+      {% for object in object_list %}
+      <tr>
+        <td><a href="{% url 'account-benefit-details' object.pk %}">{{ object.account.generic_relation }}</a></td>
+        <td>{{ object.partnership|default_if_none:"&mdash;" }}</td>
+        <td><a href="{{ object.benefit.get_absolute_url }}">{{ object.benefit.name }} ({{ object.benefit.unit_type }})</a></td>
+        <td>{{ object.allocation_used }} / {{ object.allocation }}</td>
+        <td>{{ object.discount|default:"&mdash;" }}</td>
+        <td>{{ object.curriculum|default_if_none:"&mdash;" }}</td>
+        <td>{{ object.human_daterange }}</td>
+        <td>
+          {{ object.active|yesno }}
+          {% if object.frozen %}(frozen){% endif %}
+        </td>
+        <td>{{ object.created_at }}</td>
+        <td>{{ object.last_updated_at }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% pagination object_list %}
+  {% else %}
+    <p>No account benefits.</p>
+  {% endif %}
+{% endblock %}

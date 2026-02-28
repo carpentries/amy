@@ -100,7 +100,6 @@
             ]
         },
         "http://127.0.0.1:8000/trainings/training_progress/1/edit/",
-        "http://127.0.0.1:8000/workshops/airport/ALC/",
         {
             "url": "http://127.0.0.1:8000/workshops/badges/",
             "actions": [

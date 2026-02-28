@@ -16,3 +16,7 @@ jobs:
   test:
     uses: ./.github/workflows/incl_test.yml
     needs: lint
+
+  build_container:
+    uses: ./.github/workflows/incl_build_container_image.yml
+    needs: test

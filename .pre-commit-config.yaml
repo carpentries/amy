@@ -1,30 +1,23 @@
 repos:
   - repo: local
     hooks:
-      - id: black
-        name: Python Black
-        entry: poetry run black
+      - id: ruff-format
+        name: Ruff Format
+        entry: uv run ruff format
         require_serial: true
         language: system
         types: [python]
 
-      - id: flake8
-        name: Python Flake8
-        entry: poetry run flake8
-        require_serial: true
-        language: system
-        types: [python]
-
-      - id: isort
-        name: Python isort
-        entry: poetry run isort
+      - id: ruff-linter
+        name: Ruff Linter
+        entry: uv run ruff check --fix
         require_serial: true
         language: system
         types: [python]
 
       - id: mypy
         name: Python Typing (mypy) strict
-        entry: poetry run mypy --follow-imports=silent
+        entry: uv run mypy
         require_serial: true
         language: system
         types: [python]

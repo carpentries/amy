@@ -7,6 +7,9 @@ jobs:
   lint:
     name: Lint Code Base
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ '3.14' ]
 
     permissions:
       contents: read
@@ -15,21 +18,24 @@ jobs:
       statuses: write
 
     steps:
-      - name: Checkout Code
+      - name: Check out code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Lint Code Base
-        uses: super-linter/super-linter/slim@v7
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          LINTER_RULES_PATH: /
-          PYTHON_BLACK_CONFIG_FILE: pyproject.toml
-          PYTHON_ISORT_CONFIG_FILE: pyproject.toml
-          PYTHON_FLAKE8_CONFIG_FILE: .flake8
-          FILTER_REGEX_EXCLUDE: (.*/migrations/.*)
-          VALIDATE_ALL_CODEBASE: false
-          VALIDATE_PYTHON_BLACK: true
-          VALIDATE_PYTHON_FLAKE8: true
-          VALIDATE_PYTHON_ISORT: true
+      - name: Install uv
+        run: pipx install uv
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get install -y libjpeg-dev
+          uv sync
+
+      - name: Run Ruff
+        run: uv run ruff check --output-format=github .
+
+      - name: Run Mypy
+        run: uv run mypy .

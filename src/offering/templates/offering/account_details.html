@@ -1,0 +1,142 @@
+{% extends "base_nav.html" %}
+{% load links %}
+{% load communityroles %}
+{% load revisions %}
+
+{% block content %}
+{% last_modified object %}
+
+<div class="edit-object">
+  {% if perms.offering.change_account %}
+    <a class="btn btn-primary" href="{% url 'account-update' object.pk %}">Edit</a>
+  {% else %}
+    <a class="btn btn-primary disabled" disabled href="#">Edit</a>
+  {% endif %}
+  <div class="float-right">
+    {% if perms.offering.delete_account %}
+    <form action="{% url 'account-delete' object.pk %}" onsubmit='return confirm("Are you sure you wish to remove this account?")' method="POST">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Delete</button>
+    </form>
+    {% else %}
+    <a class="btn btn-danger disabled" disabled href="#">Delete</a>
+    {% endif %}
+  </div>
+</div>
+
+<table class="table table-striped">
+  <tr>
+    <th>Account type:</th>
+    <td>{{ object.account_type }}</td>
+  </tr>
+  <tr>
+    <th>Name:</th>
+    <td><a href="{{ object.generic_relation.get_absolute_url }}">{{ object.generic_relation }}</a></td>
+  </tr>
+  <tr>
+    <th>Account owners:</th>
+    <td>
+      {% if owners %}
+        <ol>
+        {% for owner in owners %}
+          <li>{{ owner.get_permission_type_display }}: <a href="{{ owner.person.get_absolute_url }}">{{ owner.person }}</a></li>
+        {% endfor %}
+        </ol>
+      {% else %}
+        <p>&mdash;</p>
+      {% endif %}
+      {% if object.account_type != "individual" %}
+      <a href="{% url 'account-owners-update' object.pk %}">Edit</a>
+      {% endif %}
+    </td>
+  </tr>
+</table>
+
+{% if object.account_type != "individual" %}
+<h4>Partnerships:</h4>
+
+{% include "offering/includes/partnerships.html" with object_list=partnerships %}
+{% if perms.fiscal.add_partnership %}
+<a href="{% url 'partnership-create' %}" class="btn btn-success">Add partnership</a>
+{% else %}
+<a href="#" class="btn btn-success disabled">Add partnership</a>
+{% endif %}
+<p></p>
+{% endif %}
+
+<h4>Linked account benefits:</h4>
+
+{% include "offering/includes/account_benefits.html" with object_list=account_benefits show_partnership_column=True %}
+
+{% if perms.offering.add_account %}
+<a href="{% url 'account-benefit-create' %}?account_pk={{ object.pk }}&next={{request.get_full_path|urlencode}}" class="btn btn-success">Add account benefit to this account</a>
+{% else %}
+<a href="#" class="btn btn-success disabled">Add account benefit to this account</a>
+{% endif %}
+
+<p></p>
+
+{% if object.account_type != "individual" %}
+<h4>Community roles related to partnerships linked to this account:</h4>
+
+<table class="table table-striped">
+  <tr>
+    <th>Person</th>
+    <th>Role</th>
+    <th>Dates</th>
+    <th>Award</th>
+    <th>Partnership</th>
+    <th>Inactive?</th>
+    <th>URL</th>
+    <th>Related object</th>
+    <th class="additional-links-wider"></th>
+  </tr>
+  {% for role in community_roles.all %}
+  <tr>
+    <td><a href="{{role.person.get_absolute_url}}">{{ role.person.full_name }}</a></td>
+    <td>{{ role.config }}</td>
+    <td>
+      {% if role.start %}
+      {% community_role_human_dates role %}
+      {% else %}
+      &mdash;
+      {% endif %}
+    </td>
+    <td>
+      {{ role.award|default_if_none:"&mdash;" }}
+    </td>
+    <td>
+      {% if role.partnership %}
+      <a href="{{ role.partnership.get_absolute_url }}">{{ role.partnership }}</a>
+      {% else %}
+      &mdash;
+      {% endif %}
+    </td>
+    <td>{{ role.inactivation|default_if_none:"&mdash;" }}</td>
+    <td>{{ role.url|default:"&mdash;"|urlize_newtab }}</td>
+    <td>
+      {% if role.config.generic_relation_content_type and role.generic_relation %}
+      {{ role.generic_relation|title }}
+      {% else %}
+      &mdash;
+      {% endif %}
+    </td>
+    <td>
+      <a href="{% url 'communityrole_details' role.pk %}" title="View {{ role }}"><i class="fas fa-info-circle"></i></a>
+      &nbsp;
+      {% if perms.communityroles.change_communityrole %}
+      <a href="{% url 'communityrole_edit' role.pk %}" title="Edit {{ role }}"><i class="fas fa-edit"></i></a>
+      {% endif %}
+      {% if perms.communityroles.delete_communityrole %}
+      <form class="amy-form-inline" action="{% url 'communityrole_delete' role.pk %}?next={{ request.get_full_path|urlencode }}#communityroles" onsubmit='return confirm("Are you sure you wish to remove role \"{{ role.config }}\" from user \"{{ role.person }}\"?")' method="POST">
+        {% csrf_token %}
+        <button type="submit" class="no-btn"><i class="fas fa-times"></i></button>
+      </form>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
+
+{% endblock %}

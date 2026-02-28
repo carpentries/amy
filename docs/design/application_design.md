@@ -18,7 +18,7 @@ very difficult when it came to move the underlying model to another app.
 The new application structure contains:
 
 * `api` - for CRUD API interface provided by [DRF](https://www.django-rest-framework.org/),
-* `autoemails` - for [automated emails application](./projects/2019_automated_emails.md) (v1, 2019) - now being deprecated,
+* `autoemails` - for [automated emails application](./projects/2019_automated_emails.md) (v1, 2019) - now being deprecated and removed from codebase,
 * `communityroles` - for community roles project application,
 * `consents` - for consents project application,
 * `dashboard` - for admin and instructor dashboard views,

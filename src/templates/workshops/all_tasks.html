@@ -1,0 +1,49 @@
+{% extends "base_nav_sidebar.html" %}
+
+{% load pagination %}
+{% load links %}
+{% load consents %}
+
+{% block content %}
+    {% if perms.workshops.add_task %}
+    <p><a href="{% url 'task_add' %}" class="btn btn-success">New task</a></p>
+    {% else %}
+    <p><a href="{% url 'task_add' %}" class="btn btn-success disabled">New task</a></p>
+    {% endif %}
+{% if all_tasks %}
+    <table class="table table-striped">
+        <tr>
+            <th>Event</th>
+            <th>Person</th>
+            <th>Role</th>
+            <th class="additional-links"></th>
+        </tr>
+    {% for task in all_tasks %}
+        <tr>
+            <td><a href="{{ task.event.get_absolute_url }}">{{ task.event }}</a></td>
+            <td>
+                <a href="{{ task.person.get_absolute_url }}">{{ task.person.full_name }}</a>
+                {% consent_agreed task.person.active_consents TermEnum.MAY_CONTACT as may_contact %}
+                {% if task.person.email and may_contact %} &lt;{{ task.person.email|urlize }}&gt;{% endif %}
+            </td>
+            <td>{{ task.role }}</td>
+            <td>
+                <a href="{% url 'task_details' task.id %}" title="View {{ task }}"><i class="fas fa-info-circle"></i></a>
+                &nbsp;
+                {% if perms.workshops.change_task %}
+                <a href="{% url 'task_edit' task.id %}" title="Edit {{ task }}"><i class="fas fa-edit"></i></a>
+                {% endif %}
+            </td>
+        </tr>
+    {% endfor %}
+    </table>
+    {% pagination all_tasks %}
+    {% if perms.workshops.add_task %}
+    <p><a href="{% url 'task_add' %}" class="btn btn-success">New task</a></p>
+    {% else %}
+    <p><a href="{% url 'task_add' %}" class="btn btn-success disabled">New task</a></p>
+    {% endif %}
+{% else %}
+    <p>No tasks.</p>
+{% endif %}
+{% endblock %}

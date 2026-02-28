@@ -1,0 +1,15 @@
+from django.db import migrations, models
+
+
+class Migration(migrations.Migration):
+    dependencies = [
+        ("workshops", "0019_knowledgedomain"),
+    ]
+
+    operations = [
+        migrations.AddField(
+            model_name="person",
+            name="domains",
+            field=models.ManyToManyField(to="workshops.KnowledgeDomain"),
+        ),
+    ]

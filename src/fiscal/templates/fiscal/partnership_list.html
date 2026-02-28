@@ -1,0 +1,17 @@
+{% extends "base_nav_sidebar.html" %}
+{% load pagination %}
+
+{% block content %}
+  {% if perms.fiscal.add_partnership %}
+  <p><a href="{% url 'partnership-create' %}" class="btn btn-success">New partnership</a></p>
+  {% else %}
+  <p><a href="#" class="btn btn-success disabled">New partnership</a></p>
+  {% endif %}
+
+  {% if object_list %}
+    {% include "offering/includes/partnerships.html" with object_list=object_list %}
+    {% pagination object_list %}
+  {% else %}
+    <p>No partnerships.</p>
+  {% endif %}
+{% endblock %}

@@ -1,0 +1,676 @@
+import datetime
+import typing
+from collections.abc import Generator, Iterable, Sequence
+from contextlib import contextmanager
+from typing import Any
+
+from django import forms
+from django.contrib.auth.models import Group, Permission
+from django.contrib.sites.models import Site
+from django.core.exceptions import ValidationError
+from django.db import models
+from django.test import TestCase
+from requests import Response
+
+from src.communityroles.models import CommunityRole, CommunityRoleConfig
+from src.consents.models import Consent, Term, TermOption
+from src.workshops.models import (
+    Award,
+    Badge,
+    Event,
+    KnowledgeDomain,
+    Language,
+    Lesson,
+    Organization,
+    Person,
+    Qualification,
+    Role,
+    Tag,
+)
+from src.workshops.utils.dates import universal_date_format
+
+if typing.TYPE_CHECKING:
+    _T = TestCase
+else:
+    _T = object
+
+
+def consent_to_all_required_consents(person: Person) -> None:
+    """
+    Helper function shared by SuperuserMixin and TestBase
+    """
+    terms = Term.objects.filter(required_type=Term.PROFILE_REQUIRE_TYPE).active().prefetch_active_options()
+    old_consents = Consent.objects.filter(person=person, term__in=terms).active()
+    old_consents_by_term_id = {consent.term_id: consent for consent in old_consents}
+    for term in terms:
+        old_consent = old_consents_by_term_id[term.id]
+        Consent.reconsent(old_consent, term.options[0])  # type: ignore
+
+
+class SuperuserMixin(_T):
+    def _setUpSuperuser(self) -> None:
+        """Set up admin account that can log into the website."""
+        self.admin_password = "admin"
+        self.admin = Person.objects.create_superuser(
+            username="admin",
+            personal="Super",
+            family="User",
+            email="sudo@example.org",
+            password=self.admin_password,
+        )
+        self._superUserConsent()
+        self.admin.save()
+
+    def _superUserConsent(self) -> None:
+        """Super user consents to required Terms"""
+        consent_to_all_required_consents(self.admin)
+
+    def _logSuperuserIn(self) -> None:
+        """Log in superuser (administrator) account."""
+        self.client.login(username=self.admin.username, password=self.admin_password)
+
+
+class TestBase(SuperuserMixin, TestCase):
+    """Base class for AMY test cases."""
+
+    def setUp(self) -> None:
+        """Create standard objects."""
+
+        self._setUpOrganizations()
+        self._setUpLessons()
+        self._setUpBadges()
+        self._setUpInstructors()
+        self._setUpNonInstructors()
+        self._setUpPermissions()
+        self._setUpSites()
+
+    def _setUpSites(self) -> None:
+        """Sometimes (depending on the test execution order) tests, using
+        `Site.objects.get_current()`, would throw error:
+
+          ValueError: Cannot assign "<Site: Site object (2)>": "Comment.site" must be
+          a "Site" instance.
+
+        Possibly some junk site was residing in the cache. Since the test execution
+        order may not be a deterministic one (especially when running tests in parallel)
+        we need to clear the cache whenever Sites framework is used.
+        """
+        from django.conf import settings
+
+        Site.objects.clear_cache()
+        self.current_site, _ = Site.objects.get_or_create(
+            pk=settings.SITE_ID,
+            defaults=dict(domain="amy.carpentries.org", name="AMY server"),
+        )
+
+    def _setUpLessons(self) -> None:
+        """Set up lesson objects."""
+
+        # we have some lessons in the database because of the migration
+        # '0012_auto_20150612_0807.py'
+        self.git, _ = Lesson.objects.get_or_create(name="swc/git")
+        self.sql, _ = Lesson.objects.get_or_create(name="dc/sql")
+        self.matlab, _ = Lesson.objects.get_or_create(name="swc/matlab")
+        self.r, _ = Lesson.objects.get_or_create(name="swc/r")
+
+    def _setUpOrganizations(self) -> None:
+        """Set up organization objects."""
+
+        self.org_alpha = Organization.objects.create(domain="alpha.edu", fullname="Alpha Organization", country="AZ")
+
+        self.org_beta = Organization.objects.create(domain="beta.com", fullname="Beta Organization", country="BR")
+
+    def _setUpLanguages(self) -> None:
+        """Set up language objects."""
+
+        self.english, _ = Language.objects.get_or_create(name="English")
+        self.french, _ = Language.objects.get_or_create(name="French")
+        self.latin, _ = Language.objects.get_or_create(name="Latin")
+
+    def _setUpDomains(self) -> None:
+        """Set up knowledge domain objects."""
+
+        self.chemistry, _ = KnowledgeDomain.objects.get_or_create(
+            name="Chemistry",
+        )
+        self.medicine, _ = KnowledgeDomain.objects.get_or_create(
+            name="Medicine",
+        )
+        self.humanities, _ = KnowledgeDomain.objects.get_or_create(
+            name="Humanities",
+        )
+
+    def _setUpBadges(self) -> None:
+        """Set up badge objects."""
+
+        self.swc_instructor, _ = Badge.objects.get_or_create(
+            name="swc-instructor",
+            defaults=dict(title="Software Carpentry Instructor", criteria="Worked hard for this"),
+        )
+        self.dc_instructor, _ = Badge.objects.get_or_create(
+            name="dc-instructor",
+            defaults=dict(title="Data Carpentry Instructor", criteria="Worked hard for this"),
+        )
+        self.lc_instructor, _ = Badge.objects.get_or_create(
+            name="lc-instructor",
+            defaults=dict(title="Library Carpentry Instructor", criteria="Worked hard for this"),
+        )
+
+        self.instructor_badge, _ = Badge.objects.get_or_create(
+            name="instructor",
+            defaults=dict(title="Instructor"),
+        )
+
+    def _setUpInstructors(self) -> None:
+        """Set up person objects representing instructors."""
+
+        self.hermione = Person.objects.create(
+            personal="Hermione",
+            family="Granger",
+            email="hermione@granger.co.uk",
+            gender="F",
+            airport_iata="CDG",
+            github="herself",
+            twitter="herself",
+            bluesky="@herself.bsky.social",
+            mastodon="",
+            url="http://hermione.org",
+            username="granger_hermione",
+            country="FR",
+        )
+
+        # Hermione is additionally a qualified Data Carpentry instructor
+        Award.objects.create(
+            person=self.hermione,
+            badge=self.swc_instructor,
+            awarded=datetime.date(2014, 1, 1),
+        )
+        Award.objects.create(
+            person=self.hermione,
+            badge=self.dc_instructor,
+            awarded=datetime.date(2014, 1, 1),
+        )
+        Award.objects.create(
+            person=self.hermione,
+            badge=self.lc_instructor,
+            awarded=datetime.date(2018, 12, 25),
+        )
+        Qualification.objects.create(person=self.hermione, lesson=self.git)
+        Qualification.objects.create(person=self.hermione, lesson=self.sql)
+
+        self.harry = Person.objects.create(
+            personal="Harry",
+            family="Potter",
+            email="harry@hogwarts.edu",
+            gender="M",
+            airport_iata="LAX",
+            github="hpotter",
+            twitter=None,
+            username="potter_harry",
+            country="PL",
+        )
+
+        # Harry is additionally a qualified Data Carpentry instructor
+        Award.objects.create(
+            person=self.harry,
+            badge=self.swc_instructor,
+            awarded=datetime.date(2014, 5, 5),
+        )
+        Award.objects.create(
+            person=self.harry,
+            badge=self.dc_instructor,
+            awarded=datetime.date(2014, 5, 5),
+        )
+        Qualification.objects.create(person=self.harry, lesson=self.sql)
+
+        self.ron = Person.objects.create(
+            personal="Ron",
+            family="Weasley",
+            email="rweasley@ministry.gov.uk",
+            gender="M",
+            airport_iata="KRK",
+            github=None,
+            twitter=None,
+            url="http://geocities.com/ron_weas",
+            username="weasley_ron",
+            country="GB",
+        )
+
+        Award.objects.create(
+            person=self.ron,
+            badge=self.swc_instructor,
+            awarded=datetime.date(2014, 11, 11),
+        )
+        Qualification.objects.create(person=self.ron, lesson=self.git)
+
+    def _setUpNonInstructors(self) -> None:
+        """Set up person objects representing non-instructors."""
+
+        self.spiderman = Person.objects.create(
+            personal="Peter",
+            middle="Q.",
+            family="Parker",
+            email="peter@webslinger.net",
+            gender="O",
+            gender_other="Spider",
+            username="spiderman",
+            airport_iata="WAW",
+            country="US",
+        )
+
+        self.ironman = Person.objects.create(
+            personal="Tony",
+            family="Stark",
+            email="me@stark.com",
+            gender="M",
+            username="ironman",
+            airport_iata="KRK",
+            country="US",
+        )
+
+        self.blackwidow = Person.objects.create(
+            personal="Natasha",
+            family="Romanova",
+            email=None,
+            gender="F",
+            username="blackwidow",
+            airport_iata="CDG",
+        )
+
+    def _setUpUsersAndLogin(self) -> None:
+        """Log superuser in."""
+        self._setUpSuperuser()  # creates self.admin
+        # log admin in
+        # this user will be authenticated for all self.client requests
+        return self._logSuperuserIn()
+
+    def _setUpPermissions(self) -> None:
+        """Set up permission objects for consistent form selection."""
+        badge_admin = Group.objects.create(name="Badge Admin")
+        badge_admin.permissions.add(*Permission.objects.filter(codename__endswith="_badge"))
+        add_badge = Permission.objects.get(codename="add_badge")
+        self.ironman.groups.add(badge_admin)
+        self.ironman.user_permissions.add(add_badge)
+        self.ron.groups.add(badge_admin)
+        self.ron.user_permissions.add(add_badge)
+        self.spiderman.groups.add(badge_admin)
+        self.spiderman.user_permissions.add(add_badge)
+
+    def _setUpTags(self) -> None:
+        """Set up tags (the same as in production database, minus some added
+        via migrations)."""
+        Tag.objects.bulk_create(
+            [
+                Tag(name="TTT", details=""),
+                Tag(name="WiSE", details=""),
+                Tag(name="LC", details=""),
+                Tag(name="DC", details=""),
+                Tag(name="SWC", details=""),
+            ]
+        )
+
+    def _setUpEvents(self) -> None:
+        """Set up a bunch of events and record some statistics."""
+
+        today = datetime.date.today()
+
+        # Create a test host
+        test_host = Organization.objects.create(domain="example.com", fullname="Test Organization")
+
+        # Create one new published event for each day in the next 10 days.
+        for t in range(1, 11):
+            event_start = today + datetime.timedelta(days=t)
+            date_string = universal_date_format(event_start)
+            slug = f"{date_string}-upcoming"
+            url = "http://example.org/" + (f"{t}" * 20)
+            e = Event.objects.create(
+                start=event_start,
+                slug=slug,
+                host=test_host,
+                url=url,
+                country="US",
+                venue="School",
+                address="Overthere",
+                latitude=1,
+                longitude=2,
+            )
+
+        # Create one new event for each day from 10 days ago to 3 days ago
+        for t in range(3, 11):
+            event_start = today + datetime.timedelta(days=-t)
+            date_string = universal_date_format(event_start)
+            Event.objects.create(
+                start=event_start,
+                slug=f"{date_string}-past",
+                host=test_host,
+            )
+
+        # create a past event that has no admin fee specified
+        event_start = today + datetime.timedelta(days=-4)
+        Event.objects.create(
+            start=event_start,
+            end=today + datetime.timedelta(days=-1),
+            slug=f"{universal_date_format(event_start)}-past-uninvoiced",
+            host=test_host,
+        )
+
+        # Create an event that started yesterday and ends tomorrow
+        # with no fee
+        event_start = today + datetime.timedelta(days=-1)
+        event_end = today + datetime.timedelta(days=1)
+        Event.objects.create(
+            start=event_start,
+            end=event_end,
+            slug="ends-tomorrow-ongoing",
+            host=test_host,
+            url="http://example.org/ends-tomorrow-ongoing",
+            country="US",
+            venue="School",
+            address="Overthere",
+            latitude=1,
+            longitude=2,
+        )
+
+        # Create an event that ends today with no fee
+        event_start = today + datetime.timedelta(days=-1)
+        event_end = today
+        Event.objects.create(
+            start=event_start,
+            end=event_end,
+            slug="ends-today-ongoing",
+            host=test_host,
+            url="http://example.org/ends-today-ongoing",
+            country="US",
+            venue="School",
+            address="Overthere",
+            latitude=1,
+            longitude=2,
+        )
+
+        # Create an event that starts today with a fee
+        event_start = today
+        event_end = today + datetime.timedelta(days=1)
+        Event.objects.create(
+            start=event_start,
+            end=event_end,
+            slug="starts-today-ongoing",
+            host=test_host,
+        )
+
+        # create a full-blown event that got cancelled
+        e = Event.objects.create(
+            start=event_start,
+            end=event_end,
+            slug="starts-today-cancelled",
+            url="http://example.org/cancelled-event",
+            latitude=-10.0,
+            longitude=10.0,
+            country="US",
+            venue="University",
+            address="Phenomenal Street",
+            host=test_host,
+        )
+        tags = Tag.objects.filter(name__in=["SWC", "cancelled"])
+        e.tags.set(tags)
+
+        # Record some statistics about events.
+        self.num_upcoming = 0
+        for e in Event.objects.all():
+            if e.url and e.start and (e.start > today):
+                self.num_upcoming += 1
+
+    def _setUpRoles(self) -> None:
+        """Before #626, we don't have a migration that introduces roles that
+        are currently in the database.  This is an auxiliary method for adding
+        them to the tests, should one need them."""
+        Role.objects.bulk_create(
+            [
+                Role(name="helper", verbose_name="Helper"),
+                Role(name="instructor", verbose_name="Instructor"),
+                Role(name="host", verbose_name="Host"),
+                Role(name="learner", verbose_name="Learner"),
+                Role(name="organizer", verbose_name="Organizer"),
+                Role(name="tutor", verbose_name="Tutor"),
+                Role(name="supporting-instructor", verbose_name="Supporting Instructor"),
+            ]
+        )
+
+    def _setUpSingleInstructorBadges(self) -> None:
+        """Add single Instructor Badges for Hermione, Harry and Ron."""
+        Award.objects.create(
+            person=self.hermione,
+            badge=self.instructor_badge,
+            awarded=datetime.date(2022, 7, 17),
+        )
+        Award.objects.create(
+            person=self.harry,
+            badge=self.instructor_badge,
+            awarded=datetime.date(2022, 7, 17),
+        )
+        Award.objects.create(
+            person=self.ron,
+            badge=self.instructor_badge,
+            awarded=datetime.date(2022, 7, 17),
+        )
+
+    def _setUpCommunityRoles(self) -> None:
+        """Add Instructor Community Roles to Hermione, Harry and Ron."""
+        instructor_config, _ = CommunityRoleConfig.objects.get_or_create(
+            name="instructor",
+            defaults=dict(
+                link_to_award=True,
+                award_badge_limit=self.instructor_badge,
+                link_to_membership=False,
+                link_to_partnership=False,
+                additional_url=False,
+            ),
+        )
+        CommunityRole.objects.create(
+            config=instructor_config,
+            person=self.hermione,
+            award=Award.objects.get(person=self.hermione, badge=self.instructor_badge),
+        )
+        CommunityRole.objects.create(
+            config=instructor_config,
+            person=self.harry,
+            award=Award.objects.get(person=self.harry, badge=self.instructor_badge),
+        )
+        CommunityRole.objects.create(
+            config=instructor_config,
+            person=self.ron,
+            award=Award.objects.get(person=self.ron, badge=self.instructor_badge),
+        )
+
+    def _setUpAdministrators(self) -> None:
+        """Adds administrator organizations to the database."""
+        Organization.objects.bulk_create(
+            [
+                Organization(domain="self-organized", fullname="Self-Organized"),
+                Organization(
+                    domain="software-carpentry.org",
+                    fullname="Software Carpentry",
+                ),
+                Organization(domain="datacarpentry.org", fullname="Data Carpentry"),
+                Organization(
+                    domain="librarycarpentry.org",
+                    fullname="Library Carpentry",
+                ),
+                Organization(domain="carpentries.org", fullname="Instructor Training"),
+                Organization(
+                    domain="carpentries.org/community-lessons/",
+                    fullname="Collaborative Lesson Development Training",
+                ),
+            ],
+            ignore_conflicts=True,
+        )
+
+    @staticmethod
+    def reconsent(person: Person, term: Term, term_option: TermOption) -> Consent:
+        consent = Consent.objects.get(person=person, term=term, archived_at__isnull=True)
+        return Consent.reconsent(consent, term_option)
+
+    def person_agree_to_terms(self, person: Person, terms: Iterable[Term]) -> None:
+        for term in terms:
+            self.reconsent(person=person, term_option=term.options[0], term=term)  # type: ignore
+
+    def person_consent_active_terms(self, person: Person) -> None:
+        terms = Term.objects.active().prefetch_active_options()
+        self.person_agree_to_terms(person, terms)
+
+    def person_consent_required_terms(self, person: Person) -> None:
+        consent_to_all_required_consents(person)
+
+    def save_response(self, response: Response, filename: str = "error.html") -> None:
+        content = response.content.decode("utf-8")
+        with open(filename, "w") as f:
+            f.write(content)
+
+    @contextmanager
+    def assertValidationErrors(self, fields: Sequence[str]) -> Generator[None]:
+        """
+        Assert that a validation error is raised, containing all the specified
+        fields, and only the specified fields.
+
+        Snippet by Senko Rašić
+        https://goodcode.io/articles/django-assert-raises-validationerror/
+
+        >>> with assertValidationErrors(["field1","field2"]):
+        >>>     p.full_clean()
+        """
+        try:
+            yield
+            raise AssertionError("ValidationError not raised")
+        except ValidationError as e:
+            self.assertEqual(set(fields), set(e.message_dict.keys()))
+
+    def passCaptcha(self, data_dictionary: dict[str, Any]) -> None:
+        """Extends provided `data_dictionary` with RECAPTCHA pass data."""
+        data_dictionary.update({"g-recaptcha-response": "PASSED"})  # to auto-pass RECAPTCHA
+
+
+class FormTestHelper(_T):
+    def _test_field_other[M: models.Model](
+        self,
+        Form: type[forms.ModelForm[M]],
+        first_name: str,
+        other_name: str,
+        valid_first: str,
+        valid_other: str,
+        empty_first: str = "",
+        empty_other: str = "",
+        first_when_other: str = "",
+        blank: bool = False,
+    ) -> None:
+        """Universal way of testing field `name` and it's "_other" counterpart
+        `other_name`.
+
+        4 test scenarios are implemented:
+        1) no data in either field - first field throws error if required by
+           `blank`
+        2) valid entry in first, requiring no input in the other
+        3) valid entry in second, requiring no input in the first one
+        4) both entries filled, error in the second"""
+
+        # 1: data required
+        data = {
+            first_name: empty_first,
+            other_name: empty_other,
+        }
+        form = Form(data)
+        if blank:
+            self.assertNotIn(first_name, form.errors)
+            self.assertNotIn(other_name, form.errors)
+        else:
+            self.assertIn(first_name, form.errors)
+            self.assertNotIn(other_name, form.errors)
+
+        # 2: valid entry (original field only)
+        data = {
+            first_name: valid_first,
+            other_name: empty_other,
+        }
+        form = Form(data)
+        self.assertNotIn(first_name, form.errors)
+        self.assertNotIn(other_name, form.errors)
+
+        # 3: valid entry ("other" field only)
+        data = {
+            first_name: first_when_other,
+            other_name: valid_other,
+        }
+        form = Form(data)
+        self.assertNotIn(first_name, form.errors)
+        self.assertNotIn(other_name, form.errors)
+
+        # 4: invalid entry, data in "other" is not needed
+        data = {
+            first_name: valid_first,
+            other_name: valid_other,
+        }
+        form = Form(data)
+        self.assertIn(first_name, form.errors)
+        self.assertNotIn(other_name, form.errors)
+
+
+if typing.TYPE_CHECKING:
+    _T2 = TestBase
+else:
+    _T2 = object
+
+
+class TestViewPermissionsMixin(_T2):
+    """
+    Simple mixin for testing a single view URL for specific permissions, admin/no-admin
+    access. Multiple HTTP methods supported.
+    """
+
+    view_url: str
+    permissions: list[str]
+    methods: list[str]
+    user: Person
+
+    def test_view_admin_accessible(self) -> None:
+        # Arrange
+        super()._setUpSuperuser()
+        super()._logSuperuserIn()
+
+        for method in self.methods:
+            with self.subTest(method=method):
+                # Act
+                result = self.client.generic(method.upper(), self.view_url)
+                # Assert
+                self.assertEqual(result.status_code, 200)
+
+    def test_view_unauthenticated_user_inaccessible(self) -> None:
+        for method in self.methods:
+            with self.subTest(method=method):
+                # Act
+                result = self.client.generic(method.upper(), self.view_url)
+                # Assert
+                self.assertEqual(result.status_code, 403)
+
+    def test_view_required_permissions_accessible(self) -> None:
+        for method in self.methods:
+            with self.subTest(method=method):
+                # Arrange
+                self.user.user_permissions.clear()
+                self.user.user_permissions.add(
+                    *[Permission.objects.get(codename=permission) for permission in self.permissions]
+                )
+                # Act
+                self.client.force_login(self.user)
+                result = self.client.generic(method.upper(), self.view_url)
+                # Assert
+                self.assertEqual(result.status_code, 200)
+
+    def test_view_other_permissions_inaccessible(self) -> None:
+        for method in self.methods:
+            with self.subTest(method=method):
+                # Arrange
+                self.user.user_permissions.clear()
+                self.user.user_permissions.set(Permission.objects.exclude(codename__in=self.permissions))
+                # Act
+                self.client.force_login(self.user)
+                result = self.client.generic(method.upper(), self.view_url)
+                # Assert
+                self.assertEqual(result.status_code, 403)

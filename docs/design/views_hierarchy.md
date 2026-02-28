@@ -20,6 +20,8 @@ A lot of them is used in AMY, too. Good resource to read about the views is
 
 ### `ActionManageMixin` (`amy/autoemails/base_views.py`)
 
+Note: no longer available in the codebase as `autoemails` application was removed.
+
 This mixin was designed to support triggering actions (from
 [automated emails](./projects/2019_automated_emails.md) project) by inheriting from it
 in class-based views, but as it turned out this is never used. Its `add` and `remove`
@@ -67,17 +69,17 @@ Used when URL slug field, needed to access the object represented by that field,
 contain characters requiring unquoting. This is used by 3 organisation-related views
 (details, update, delete).
 
-### `FormInvalidMessageMixin` (`amy/workshops/base_views.py`)
+### `FormInvalidMessageMixin` (`src/workshops/base_views.py`)
 
 Add an error message on invalid form submission.
 
-### `AMYDetailView` (`amy/workshops/base_views.py`)
+### `AMYDetailView` (`src/workshops/base_views.py`)
 
 Almost a direct, not extended descendant of [`DetailView`](https://ccbv.co.uk/DetailView),
 with one small exception: it contains type annotation for `object` attribute of the
 class.
 
-### `AMYCreateView` (`amy/workshops/base_views.py`)
+### `AMYCreateView` (`src/workshops/base_views.py`)
 
 Class-based view for creating objects that extends default template context by adding
 model class used in objects creation. Additionally defines default form template,
@@ -85,74 +87,74 @@ default
 [form helper](https://django-crispy-forms.readthedocs.io/en/latest/form_helper.html),
 default title, default success message, and default invalid form message.
 
-### `AMYUpdateView` (`amy/workshops/base_views.py`)
+### `AMYUpdateView` (`src/workshops/base_views.py`)
 
 Class-based view for updating objects that extends default template context by adding
 proper page title.
 
 Provides the same changes as [`AMYCreateView`](#amycreateview-amyworkshopsbase_viewspy).
 
-### `AMYDeleteView` (`amy/workshops/base_views.py`)
+### `AMYDeleteView` (`src/workshops/base_views.py`)
 
 Class-based view for deleting objects that additionally handles `ProtectedError`s (occur
 when attempting to delete a foreign-referenced object). Blocks `GET` requests.
 
-### `AMYFormView` (`amy/workshops/base_views.py`)
+### `AMYFormView` (`src/workshops/base_views.py`)
 
 Not used, should be removed.
 
-### `AMYListView` (`amy/workshops/base_views.py`)
+### `AMYListView` (`src/workshops/base_views.py`)
 
 Configures [`ListView`](https://ccbv.co.uk/ListView) with
 [filters](https://django-filter.readthedocs.io/en/stable/) (if provided), pagination
 using custom paginator, and some basic context.
 
-### `EmailSendMixin` (`amy/workshops/base_views.py`)
+### `EmailSendMixin` (`src/workshops/base_views.py`)
 
 Used for sending emails when forms pass validation upon `POST` request.
 
-### `RedirectSupportMixin` (`amy/workshops/base_views.py`)
+### `RedirectSupportMixin` (`src/workshops/base_views.py`)
 
 Implements a safe redirect after form is submitted.
 
-### `PrepopulationSupportMixin` (`amy/workshops/base_views.py`)
+### `PrepopulationSupportMixin` (`src/workshops/base_views.py`)
 
 Supports populating some form fields with values, e.g. from `GET` parameters.
 
-### `AutoresponderMixin` (`amy/workshops/base_views.py`)
+### `AutoresponderMixin` (`src/workshops/base_views.py`)
 
 Automatically emails the form sender.
 
-### `StateFilterMixin` (`amy/workshops/base_views.py`)
+### `StateFilterMixin` (`src/workshops/base_views.py`)
 
 Small mixin used to change default filter value for `state` field (sets it to pending).
 
-### `ChangeRequestStateView` (`amy/workshops/base_views.py`)
+### `ChangeRequestStateView` (`src/workshops/base_views.py`)
 
 Almost standalone view used by `WorkshopRequest`, `WorkshopInquiryRequest`, and
 `SelfOrganisedSubmission` to change request state (to accepted, discarded, or pending).
 
-### `AssignView` (`amy/workshops/base_views.py`)
+### `AssignView` (`src/workshops/base_views.py`)
 
 Almost standalone view used to assign specific person to `WorkshopRequest`,
 `WorkshopInquiryRequest`, `SelfOrganisedSubmission` or `Event`.
 
-### `ConditionallyEnabledMixin` (`amy/workshops/base_views.py`)
+### `ConditionallyEnabledMixin` (`src/workshops/base_views.py`)
 
 Mixin for enabling views based on feature flag.
 
-### OnlyForAdminsMixin (`amy/workshops/utils/access.py`)
+### OnlyForAdminsMixin (`src/workshops/utils/access.py`)
 
 Contains a pre-defined test function checking if user is authenticated and if user
 is considered an administrator.
 
-### OnlyForAdminsNoRedirectMixin (`amy/workshops/utils/access.py`)
+### OnlyForAdminsNoRedirectMixin (`src/workshops/utils/access.py`)
 
 Same as [`OnlyForAdminsMixin`](#onlyforadminsmixin-amyworkshopsutilsaccesspy), but will
 not redirect to the login page when test function fails, but instead will throw
 "permissions denied" exception.
 
-### LoginNotRequiredMixin (`amy/workshops/utils/access.py`)
+### LoginNotRequiredMixin (`src/workshops/utils/access.py`)
 
 Empty class to indicate that specific view is open to public, and doesn't need any
 permission checking.
