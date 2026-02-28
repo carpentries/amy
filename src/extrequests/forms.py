@@ -1345,7 +1345,7 @@ class TrainingRequestUpdateForm(forms.ModelForm[TrainingRequest]):
                 grace_before=90,
                 grace_after=90,
             )
-        except MemberCodeValidationError:
+        except MemberCodeValidationError as membership_error:
             try:
                 code_is_valid = partnership_code_valid(
                     member_code,
@@ -1353,10 +1353,13 @@ class TrainingRequestUpdateForm(forms.ModelForm[TrainingRequest]):
                     grace_before=90,
                     grace_after=90,
                 )
-            except MemberCodeValidationError as e:
+            except MemberCodeValidationError:
                 if not member_code_override:
                     # user must either correct the code or tick the override
-                    error_msg = f"This code is invalid: {e.message} Tick the checkbox below to ignore this message."
+                    error_msg = (
+                        f"This code is invalid: {membership_error.message} "
+                        "Tick the checkbox below to ignore this message."
+                    )
                     errors["member_code"] = ValidationError(error_msg)
 
         if code_is_valid and member_code_override:
