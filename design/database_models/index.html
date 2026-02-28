@@ -1,0 +1,3935 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../application_design/">
+      
+      
+        <link rel="next" href="../model_versioning/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
+    
+    
+      
+        <title>Database models - AMY documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#database-models" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="AMY documentation" class="md-header__button md-logo" aria-label="AMY documentation" data-md-component="logo">
+      
+  <img src="../../assets/TheCarpentries.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            AMY documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Database models
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/carpentries/amy/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="AMY documentation" class="md-nav__button md-logo" aria-label="AMY documentation" data-md-component="logo">
+      
+  <img src="../../assets/TheCarpentries.svg" alt="logo">
+
+    </a>
+    AMY documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/carpentries/amy/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    For Carpentries Community members
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    For Carpentries Community members
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../users_guide/community_index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AMY Community Users Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    For AMY Administrators
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    For AMY Administrators
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../users_guide/admin_index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Users Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../amy_database_structure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Database Structure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    For AMY Developers
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    For AMY Developers
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../application_design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Application design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Database models
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Database models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#mixins" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mixins
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Mixins">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#permissionsmixin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PermissionsMixin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#assignmentmixin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AssignmentMixin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#activemixin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ActiveMixin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#createdupdatedmixin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CreatedUpdatedMixin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#createdupdatedarchivedmixin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CreatedUpdatedArchivedMixin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dataprivacyagreementmixin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DataPrivacyAgreementMixin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cocagreementmixin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        COCAgreementMixin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hostresponsibilitiesmixin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HostResponsibilitiesMixin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#instructoravailabilitymixin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        InstructorAvailabilityMixin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eventlinkmixin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EventLinkMixin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#statemixin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        StateMixin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stateextendedmixin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        StateExtendedMixin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gendermixin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GenderMixin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#secondaryemailmixin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SecondaryEmailMixin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rqjobsmixin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RQJobsMixin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#commonrequest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CommonRequest
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#versioning-mechanism" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Versioning mechanism
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#auxiliary-functions-and-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Auxiliary functions and models
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#user-management-and-authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        User management and authentication
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-models-workshopsmodelspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core models - workshops/models.py
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Core models - workshops/models.py">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#organization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Organization
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memberrole" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MemberRole
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#member" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Member
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#membership" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Membership
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#airport" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Airport
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#person" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Person
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tag" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tag
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#language" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Language
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Event
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#role" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Role
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lesson" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lesson
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#qualification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Qualification
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#badge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Badge
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#award" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Award
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#knowledgedomain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        KnowledgeDomain
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trainingrequest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TrainingRequest
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trainingrequirement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TrainingRequirement
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trainingprogress" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TrainingProgress
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#curriculum" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Curriculum
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#academiclevel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AcademicLevel
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#computingexperiencelevel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ComputingExperienceLevel
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#infosource" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        InfoSource
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#commonrequest-see-mixins" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CommonRequest - see mixins
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#workshoprequest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WorkshopRequest
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fiscal-application-fiscalmodelspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fiscal application - fiscal/models.py
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Fiscal application - fiscal/models.py">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#membershippersonrole" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MembershipPersonRole
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#membershiptask" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MembershipTask
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#external-requests-application-extrequestsmodelspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        External requests application - extrequests/models.py
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="External requests application - extrequests/models.py">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#datavariant" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DataVariant
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#workshopinquiryrequest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WorkshopInquiryRequest
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#selforganisedsubmission" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SelfOrganisedSubmission
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dashboard-application-dashboardmodelspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dashboard application - dashboard/models.py
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Dashboard application - dashboard/models.py">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#criterium" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Criterium
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#continent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Continent
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recruitment-application-recruitmentmodelspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recruitment application - recruitment/models.py
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Recruitment application - recruitment/models.py">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#instructorrecruitment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        InstructorRecruitment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#instructorrecruitmentsignup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        InstructorRecruitmentSignup
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consents-application-consentsmodelspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consents application - consents/models.py
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consents application - consents/models.py">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#term" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Term
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#termoption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TermOption
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#consent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consent
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trainingrequestconsent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TrainingRequestConsent
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#community-roles-application-communityrolesmodelspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Community Roles application - communityroles/models.py
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Community Roles application - communityroles/models.py">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#communityroleconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CommunityRoleConfig
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#communityroleinactivation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CommunityRoleInactivation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#communityrole" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CommunityRole
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#automated-emails-v1-2019-application-autoemailsmodelspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Automated Emails (v1, 2019) application - autoemails/models.py
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Automated Emails (v1, 2019) application - autoemails/models.py">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#emailtemplate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EmailTemplate
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trigger" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trigger
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rqjob" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RQJob
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#training-application-trainingsmodelspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Training application - trainings/models.py
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Training application - trainings/models.py">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#involvement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Involvement
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#emails-v2-2023-application-emailsmodelspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Emails (v2, 2023) application - emails/models.py
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Emails (v2, 2023) application - emails/models.py">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#emailtemplate_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EmailTemplate
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scheduledemail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ScheduledEmail
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scheduledemaillog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ScheduledEmailLog
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../model_versioning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model versioning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../template_hierarchy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Templates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../views_hierarchy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Views
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../design_patterns/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Pattern Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../server_infrastructure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server Infrastructure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../database_backups/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Database backups
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../accessibility_testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accessibility Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_11" id="__nav_4_11_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deploying AMY
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deploying AMY
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../procedures/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Procedures
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cicd/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CI/CD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../releases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Releases
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual_deployment_steps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release-Specific Manual Deployment Steps
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_12" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_12" id="__nav_4_12_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Projects
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_12_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_12">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Projects
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../projects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Projects
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../projects/2019_automated_emails/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Automated emails (2019)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_12_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_12_3" id="__nav_4_12_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Automated emails (2023)
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_12_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_12_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Automated emails (2023)
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../projects/2023_automated_emails/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../projects/2023_automated_emails/new_action_checklist/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    New email action checklist
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../projects/2023_automated_emails/email_controller/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Email controller
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../projects/2023_automated_emails/base_actions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Base actions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../projects/2021_memberships/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memberships
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../projects/2021_consents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Consents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../projects/2021_profile_archival/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Profile Archival
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../projects/2021_community_roles/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Community Roles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../projects/2021_instructor_selection/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Instructor Selection
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../projects/2021_single_instructor_badge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Single Instructor Badge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../projects/2023_instructor_checkout_changes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Instructor Checkout Changes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../projects/2023_member_code_enforcement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Member Code Enforcement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../feature_flags/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Feature flags
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    About The Carpentries
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    About The Carpentries
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://carpentries.org" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Carpentries
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://datacarpentry.org/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Carpentry
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://librarycarpentry.org/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Library Carpentry
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://software-carpentry.org/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Software Carpentry
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://amy.carpentries.org" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AMY
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#mixins" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mixins
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Mixins">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#permissionsmixin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PermissionsMixin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#assignmentmixin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AssignmentMixin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#activemixin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ActiveMixin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#createdupdatedmixin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CreatedUpdatedMixin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#createdupdatedarchivedmixin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CreatedUpdatedArchivedMixin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dataprivacyagreementmixin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DataPrivacyAgreementMixin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cocagreementmixin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        COCAgreementMixin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hostresponsibilitiesmixin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HostResponsibilitiesMixin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#instructoravailabilitymixin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        InstructorAvailabilityMixin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eventlinkmixin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EventLinkMixin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#statemixin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        StateMixin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stateextendedmixin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        StateExtendedMixin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gendermixin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GenderMixin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#secondaryemailmixin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SecondaryEmailMixin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rqjobsmixin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RQJobsMixin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#commonrequest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CommonRequest
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#versioning-mechanism" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Versioning mechanism
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#auxiliary-functions-and-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Auxiliary functions and models
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#user-management-and-authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        User management and authentication
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-models-workshopsmodelspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core models - workshops/models.py
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Core models - workshops/models.py">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#organization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Organization
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memberrole" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MemberRole
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#member" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Member
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#membership" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Membership
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#airport" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Airport
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#person" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Person
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tag" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tag
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#language" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Language
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Event
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#role" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Role
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lesson" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lesson
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#qualification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Qualification
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#badge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Badge
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#award" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Award
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#knowledgedomain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        KnowledgeDomain
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trainingrequest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TrainingRequest
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trainingrequirement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TrainingRequirement
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trainingprogress" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TrainingProgress
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#curriculum" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Curriculum
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#academiclevel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AcademicLevel
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#computingexperiencelevel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ComputingExperienceLevel
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#infosource" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        InfoSource
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#commonrequest-see-mixins" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CommonRequest - see mixins
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#workshoprequest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WorkshopRequest
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fiscal-application-fiscalmodelspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fiscal application - fiscal/models.py
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Fiscal application - fiscal/models.py">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#membershippersonrole" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MembershipPersonRole
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#membershiptask" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MembershipTask
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#external-requests-application-extrequestsmodelspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        External requests application - extrequests/models.py
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="External requests application - extrequests/models.py">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#datavariant" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DataVariant
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#workshopinquiryrequest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WorkshopInquiryRequest
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#selforganisedsubmission" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SelfOrganisedSubmission
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dashboard-application-dashboardmodelspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dashboard application - dashboard/models.py
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Dashboard application - dashboard/models.py">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#criterium" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Criterium
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#continent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Continent
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recruitment-application-recruitmentmodelspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recruitment application - recruitment/models.py
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Recruitment application - recruitment/models.py">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#instructorrecruitment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        InstructorRecruitment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#instructorrecruitmentsignup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        InstructorRecruitmentSignup
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consents-application-consentsmodelspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consents application - consents/models.py
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consents application - consents/models.py">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#term" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Term
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#termoption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TermOption
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#consent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consent
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trainingrequestconsent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TrainingRequestConsent
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#community-roles-application-communityrolesmodelspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Community Roles application - communityroles/models.py
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Community Roles application - communityroles/models.py">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#communityroleconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CommunityRoleConfig
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#communityroleinactivation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CommunityRoleInactivation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#communityrole" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CommunityRole
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#automated-emails-v1-2019-application-autoemailsmodelspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Automated Emails (v1, 2019) application - autoemails/models.py
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Automated Emails (v1, 2019) application - autoemails/models.py">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#emailtemplate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EmailTemplate
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trigger" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trigger
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rqjob" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RQJob
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#training-application-trainingsmodelspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Training application - trainings/models.py
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Training application - trainings/models.py">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#involvement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Involvement
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#emails-v2-2023-application-emailsmodelspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Emails (v2, 2023) application - emails/models.py
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Emails (v2, 2023) application - emails/models.py">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#emailtemplate_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EmailTemplate
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scheduledemail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ScheduledEmail
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scheduledemaillog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ScheduledEmailLog
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="database-models">Database models<a class="headerlink" href="#database-models" title="Permanent link">&para;</a></h1>
+<p>This document describes and summarizes roles of database models used in AMY. Models are
+stored in each of the applications, in <code>models.py</code> file, for example:
+<code>workshops/models.py</code>.</p>
+<hr />
+<h2 id="mixins">Mixins<a class="headerlink" href="#mixins" title="Permanent link">&para;</a></h2>
+<p>Following classes are used to extend models with some features:</p>
+<h3 id="permissionsmixin"><code>PermissionsMixin</code><a class="headerlink" href="#permissionsmixin" title="Permanent link">&para;</a></h3>
+<p>Django mechanism for extending custom user classes, see
+<a href="https://docs.djangoproject.com/en/dev/topics/auth/customizing/#django.contrib.auth.models.PermissionsMixin">documentation</a>.</p>
+<h3 id="assignmentmixin"><code>AssignmentMixin</code><a class="headerlink" href="#assignmentmixin" title="Permanent link">&para;</a></h3>
+<p>Adds <code>assigned_to</code> field to the model. Used to define which <a href="#person"><code>Person</code></a> is
+handling given model instance.</p>
+<h3 id="activemixin"><code>ActiveMixin</code><a class="headerlink" href="#activemixin" title="Permanent link">&para;</a></h3>
+<p>Adds <code>active</code> boolean field to the model. Determines if model instance is considered
+active (enabled) or inactive (disabled).</p>
+<h3 id="createdupdatedmixin"><code>CreatedUpdatedMixin</code><a class="headerlink" href="#createdupdatedmixin" title="Permanent link">&para;</a></h3>
+<p>Adds <code>created_at</code> and <code>last_updated_at</code> datetime fields to the model. <code>created_at</code> is
+updated to current timestamp only on model's creation, <code>last_updated_at</code> is updated on
+every model instance save.</p>
+<h3 id="createdupdatedarchivedmixin"><code>CreatedUpdatedArchivedMixin</code><a class="headerlink" href="#createdupdatedarchivedmixin" title="Permanent link">&para;</a></h3>
+<p>Extends <code>CreatedUpdatedMixin</code> with <code>archived_at</code> field, empty and nullable. This is
+used by <a href="../application_design/#consents">consents feature</a>.</p>
+<h3 id="dataprivacyagreementmixin"><code>DataPrivacyAgreementMixin</code><a class="headerlink" href="#dataprivacyagreementmixin" title="Permanent link">&para;</a></h3>
+<p>Adds boolean field for storing agreement to privacy policy. Used by <a href="#person"><code>Person</code></a>
+model, as well as all requests models (<a href="#trainingrequest"><code>TrainingRequest</code></a>,
+<a href="#workshoprequest"><code>WorkshopRequest</code></a>,
+<a href="#workshopinquiryrequest"><code>WorkshopInquiryRequest</code></a>,
+<a href="#selforganisedsubmission"><code>SelfOrganisedSubmission</code></a>).</p>
+<h3 id="cocagreementmixin"><code>COCAgreementMixin</code><a class="headerlink" href="#cocagreementmixin" title="Permanent link">&para;</a></h3>
+<p>Adds boolean field for storing agreement to code of conduct. Used by all requests models
+(<a href="#trainingrequest"><code>TrainingRequest</code></a>, <a href="#workshoprequest"><code>WorkshopRequest</code></a>,
+<a href="#workshopinquiryrequest"><code>WorkshopInquiryRequest</code></a>,
+<a href="#selforganisedsubmission"><code>SelfOrganisedSubmission</code></a>).</p>
+<h3 id="hostresponsibilitiesmixin"><code>HostResponsibilitiesMixin</code><a class="headerlink" href="#hostresponsibilitiesmixin" title="Permanent link">&para;</a></h3>
+<p>Adds boolean field for storing agreement to list of workshop host responsibilities. Used
+by all workshop requests models (<a href="#workshoprequest"><code>WorkshopRequest</code></a>,
+<a href="#workshopinquiryrequest"><code>WorkshopInquiryRequest</code></a>,
+<a href="#selforganisedsubmission"><code>SelfOrganisedSubmission</code></a>).</p>
+<h3 id="instructoravailabilitymixin"><code>InstructorAvailabilityMixin</code><a class="headerlink" href="#instructoravailabilitymixin" title="Permanent link">&para;</a></h3>
+<p>Adds boolean field for storing agreement to lack of guarantee to allocate instructors
+for a centrally-organised workshop. Used by <a href="#workshoprequest"><code>WorkshopRequest</code></a> and
+<a href="#workshopinquiryrequest"><code>WorkshopInquiryRequest</code></a>.</p>
+<h3 id="eventlinkmixin"><code>EventLinkMixin</code><a class="headerlink" href="#eventlinkmixin" title="Permanent link">&para;</a></h3>
+<p>Adds field to link model instance to a particular event. Used by workshop request
+models: <a href="#workshoprequest"><code>WorkshopRequest</code></a>,
+<a href="#workshopinquiryrequest"><code>WorkshopInquiryRequest</code></a>,
+<a href="#selforganisedsubmission"><code>SelfOrganisedSubmission</code></a>.</p>
+<h3 id="statemixin"><code>StateMixin</code><a class="headerlink" href="#statemixin" title="Permanent link">&para;</a></h3>
+<p>Adds a choice field with 3 options: "Pending", "Discarded" and "Accepted". Used for
+determining state of a particular request (usually). Used by
+<a href="#workshoprequest"><code>WorkshopRequest</code></a>,
+<a href="#workshopinquiryrequest"><code>WorkshopInquiryRequest</code></a>,
+<a href="#selforganisedsubmission"><code>SelfOrganisedSubmission</code></a>,
+<a href="#instructorrecruitmentsignup"><code>InstructorRecruitmentSignup</code></a>.</p>
+<h3 id="stateextendedmixin"><code>StateExtendedMixin</code><a class="headerlink" href="#stateextendedmixin" title="Permanent link">&para;</a></h3>
+<p>Extends <code>StateMixin</code> with new choice: "Withdrawn". Used only by
+<a href="#trainingrequest"><code>TrainingRequest</code></a>.</p>
+<h3 id="gendermixin"><code>GenderMixin</code><a class="headerlink" href="#gendermixin" title="Permanent link">&para;</a></h3>
+<p>Adds two fields. First with a list of available genders to choose from, including gender
+variant, undisclosed, and other. Second field allows for text entry of "other" gender
+value. Used by <a href="#person"><code>Person</code></a> model, but also appears in some forms for updating
+or creating <code>Person</code> model instances.</p>
+<h3 id="secondaryemailmixin"><code>SecondaryEmailMixin</code><a class="headerlink" href="#secondaryemailmixin" title="Permanent link">&para;</a></h3>
+<p>Adds an email field for storing alternative email address. Used by <a href="#person"><code>Person</code></a>,
+<a href="#trainingrequest"><code>TrainingRequest</code></a> and <a href="#commonrequest"><code>CommonRequest</code></a> mixin.</p>
+<h3 id="rqjobsmixin"><code>RQJobsMixin</code><a class="headerlink" href="#rqjobsmixin" title="Permanent link">&para;</a></h3>
+<p>Adds field to link model instance to <a href="#rqjob"><code>RQJob</code></a> instance. Usually this indicates
+that a particular model instance triggered and automated email (represented by <code>RQJob</code>
+instance). Used by <a href="#term"><code>Term</code></a>,
+<a href="#instructorrecruitmentsignup"><code>InstructorRecruitmentSignup</code></a>, <a href="#person"><code>Person</code></a>,
+<a href="#event"><code>Event</code></a>, <a href="#task"><code>Task</code></a> and <a href="#workshoprequest"><code>WorkshopRequest</code></a>.</p>
+<h3 id="commonrequest"><code>CommonRequest</code><a class="headerlink" href="#commonrequest" title="Permanent link">&para;</a></h3>
+<p>Adds multiple fields in common between workshop requests models
+(<a href="#workshoprequest"><code>WorkshopRequest</code></a>,
+<a href="#workshopinquiryrequest"><code>WorkshopInquiryRequest</code></a>,
+<a href="#selforganisedsubmission"><code>SelfOrganisedSubmission</code></a>).</p>
+<hr />
+<h2 id="versioning-mechanism">Versioning mechanism<a class="headerlink" href="#versioning-mechanism" title="Permanent link">&para;</a></h2>
+<p>Some of the models are using a <code>@reversion.register</code> decorator. This
+decorator comes from a <code>django-reversion</code>
+<a href="https://django-reversion.readthedocs.io/en/stable/">package</a> indended for
+storing and easily restoring of historic "versions" of model instances.</p>
+<p>See <a href="../model_versioning/">versioning</a> documentation for more.</p>
+<hr />
+<h2 id="auxiliary-functions-and-models">Auxiliary functions and models<a class="headerlink" href="#auxiliary-functions-and-models" title="Permanent link">&para;</a></h2>
+<p><code>django-countries</code>
+(<a href="https://pypi.python.org/pypi/django-countries">documentation</a>) is used for
+location purposes within <code>Airport</code>, <code>Organization</code> and
+<code>Event</code>-related models.</p>
+<p><a href="https://github.com/django/django-contrib-comments"><code>django-contrib-comments</code></a> is
+a package previously included in the Django itself. It's used as a comments framework.
+Comments can be added to any model instance.</p>
+<hr />
+<h2 id="user-management-and-authentication">User management and authentication<a class="headerlink" href="#user-management-and-authentication" title="Permanent link">&para;</a></h2>
+<p>A custom user model (<code>Person</code>) was defined according to Django documentation.</p>
+<hr />
+<h2 id="core-models-workshopsmodelspy">Core models - <code>workshops/models.py</code><a class="headerlink" href="#core-models-workshopsmodelspy" title="Permanent link">&para;</a></h2>
+<p>"Core" models are models defined inside <code>workshops</code> application, the oldest application
+in AMY. Originally it was created as a single application project, at some point it was
+split into more applications (modules).</p>
+<h3 id="organization"><code>Organization</code><a class="headerlink" href="#organization" title="Permanent link">&para;</a></h3>
+<p>Represents an organisation, academic or business entity.
+Multiple organisations can be linked (affiliated) together.</p>
+<h3 id="memberrole"><code>MemberRole</code><a class="headerlink" href="#memberrole" title="Permanent link">&para;</a></h3>
+<p>Simple model representing a role assigned to a member.</p>
+<h3 id="member"><code>Member</code><a class="headerlink" href="#member" title="Permanent link">&para;</a></h3>
+<p>An intermediate table for M2M between memberships and organisations.
+Allows to specify organisation's membership and role inside a <code>Membership</code> model.</p>
+<h3 id="membership"><code>Membership</code><a class="headerlink" href="#membership" title="Permanent link">&para;</a></h3>
+<p>Represents a membership of some organisation (or consortium of
+organisations) in The Carpentries project. Memberships can be paid. With
+each membership comes a number of fields defining perks like allowable
+number of centrally-organised workshops that don't need to pay fee.</p>
+<h3 id="airport"><code>Airport</code><a class="headerlink" href="#airport" title="Permanent link">&para;</a></h3>
+<p>Represents an airport (used for example to locate instructors).</p>
+<h3 id="person"><code>Person</code><a class="headerlink" href="#person" title="Permanent link">&para;</a></h3>
+<p>Represents a single person. This is an extension of Django's default
+<code>user</code> model, built with <a href="https://docs.djangoproject.com/en/dev/topics/auth/customizing/#django.contrib.auth.models.AbstractBaseUser"><code>AbstractBaseuser</code></a>.</p>
+<h3 id="tag"><code>Tag</code><a class="headerlink" href="#tag" title="Permanent link">&para;</a></h3>
+<p>Label for grouping events. In M2M relation with <a href="#event"><code>Event</code></a>.</p>
+<h3 id="language"><code>Language</code><a class="headerlink" href="#language" title="Permanent link">&para;</a></h3>
+<p>Represents a human language.
+Used to indicate a language used at an event. In relation with models:
+<a href="#event"><code>Event</code></a>, <a href="#workshoprequest"><code>WorkshopRequest</code></a>,
+<a href="#workshopinquiryrequest"><code>WorkshopInquiryRequest</code></a>,
+<a href="#selforganisedsubmission"><code>SelfOrganisedSubmission</code></a>.</p>
+<h3 id="event"><code>Event</code><a class="headerlink" href="#event" title="Permanent link">&para;</a></h3>
+<p>Represents a single event. The most important model of all.</p>
+<h3 id="role"><code>Role</code><a class="headerlink" href="#role" title="Permanent link">&para;</a></h3>
+<p>Simple model representing a role assinged to a person.</p>
+<h3 id="task"><code>Task</code><a class="headerlink" href="#task" title="Permanent link">&para;</a></h3>
+<p>An intermediate table for M2M between events and persons. Represents a task person had
+for a particular event. Links with a role to provide more detailed information.</p>
+<h3 id="lesson"><code>Lesson</code><a class="headerlink" href="#lesson" title="Permanent link">&para;</a></h3>
+<p>Simple model representing a lesson someone might teach.</p>
+<h3 id="qualification"><code>Qualification</code><a class="headerlink" href="#qualification" title="Permanent link">&para;</a></h3>
+<p>Intermediate table between person and a lesson. Nowadays probably not very much used.</p>
+<h3 id="badge"><code>Badge</code><a class="headerlink" href="#badge" title="Permanent link">&para;</a></h3>
+<p>Quite important model to represent a certain skill (badge).</p>
+<h3 id="award"><code>Award</code><a class="headerlink" href="#award" title="Permanent link">&para;</a></h3>
+<p>Intermediate table for M2M between persons and badges. Represents a badge that someone
+was awarded.</p>
+<h3 id="knowledgedomain"><code>KnowledgeDomain</code><a class="headerlink" href="#knowledgedomain" title="Permanent link">&para;</a></h3>
+<p>Represents a knowledge domain (like High Performance Computing) a person is engaged in.</p>
+<h3 id="trainingrequest"><code>TrainingRequest</code><a class="headerlink" href="#trainingrequest" title="Permanent link">&para;</a></h3>
+<p>Represents a request for instructor training. Usually these requests come from people
+who are not AMY users.</p>
+<p>This model falls into <code>external requests</code> domain, which also includes <code>WorkshopRequest</code>,
+<code>WorkshopInquiryRequest</code>, and <code>SelfOrganisedSubmission</code>.</p>
+<p>This model also falls into <code>trainings</code> domain.</p>
+<h3 id="trainingrequirement"><code>TrainingRequirement</code><a class="headerlink" href="#trainingrequirement" title="Permanent link">&para;</a></h3>
+<p>Represents a requirement that a prospect future instructor need to pass.</p>
+<p>This model also falls into <code>trainings</code> domain.</p>
+<h3 id="trainingprogress"><code>TrainingProgress</code><a class="headerlink" href="#trainingprogress" title="Permanent link">&para;</a></h3>
+<p>Intermediate table for M2M between <code>Person</code>, <code>TrainingRequirement</code>, and optionally
+<code>Involvement</code>. Indicates "pass",
+"fail", or "asked to repeat" progress of a person over a particular requirement.
+Once all required requirements are passed, person can become an instructor.</p>
+<h3 id="curriculum"><code>Curriculum</code><a class="headerlink" href="#curriculum" title="Permanent link">&para;</a></h3>
+<p>Represents a curriculum of a lesson taught at a workshop.</p>
+<h3 id="academiclevel"><code>AcademicLevel</code><a class="headerlink" href="#academiclevel" title="Permanent link">&para;</a></h3>
+<p>Simple model to represent academic (education) level, e.g. "staff" or "post-doctorate".
+Used in external requests / forms.</p>
+<h3 id="computingexperiencelevel"><code>ComputingExperienceLevel</code><a class="headerlink" href="#computingexperiencelevel" title="Permanent link">&para;</a></h3>
+<p>Simple model to represent computer proficiency (novice / intermediate / proficient).
+Used in external requests / forms.</p>
+<h3 id="infosource"><code>InfoSource</code><a class="headerlink" href="#infosource" title="Permanent link">&para;</a></h3>
+<p>Simple model to represent source of information about The Carpentries.
+Used in external requests / forms.</p>
+<h3 id="commonrequest-see-mixins"><code>CommonRequest</code> - see mixins<a class="headerlink" href="#commonrequest-see-mixins" title="Permanent link">&para;</a></h3>
+<p>A common ancestor for:</p>
+<ul>
+<li><a href="#workshoprequest"><code>WorkshopRequest</code></a></li>
+<li><a href="#workshopinquiryrequest"><code>WorkshopInquiryRequest</code></a></li>
+<li><a href="#selforganisedsubmission"><code>SelfOrganisedSubmission</code></a></li>
+</ul>
+<p>Since all these requests are used in external forms, and are very similar to each other,
+some common parts were extracted into <code>CommonRequest</code> abstract model (mixin).</p>
+<h3 id="workshoprequest"><code>WorkshopRequest</code><a class="headerlink" href="#workshoprequest" title="Permanent link">&para;</a></h3>
+<p>Represents a request for teaching a Carpentries workshop.</p>
+<p>This model falls into <code>external requests</code> domain.</p>
+<hr />
+<h2 id="fiscal-application-fiscalmodelspy">Fiscal application - <code>fiscal/models.py</code><a class="headerlink" href="#fiscal-application-fiscalmodelspy" title="Permanent link">&para;</a></h2>
+<h3 id="membershippersonrole"><code>MembershipPersonRole</code><a class="headerlink" href="#membershippersonrole" title="Permanent link">&para;</a></h3>
+<p>Simple model, represents person role within a membership (see
+<a href="#membership"><code>Membership</code></a> for more).</p>
+<h3 id="membershiptask"><code>MembershipTask</code><a class="headerlink" href="#membershiptask" title="Permanent link">&para;</a></h3>
+<p>Similar to <a href="#task"><code>Task</code></a> model, but it's for a person task within a membership. Links
+to <code>MembershipPersonRole</code>.</p>
+<hr />
+<h2 id="external-requests-application-extrequestsmodelspy">External requests application - <code>extrequests/models.py</code><a class="headerlink" href="#external-requests-application-extrequestsmodelspy" title="Permanent link">&para;</a></h2>
+<h3 id="datavariant"><code>DataVariant</code><a class="headerlink" href="#datavariant" title="Permanent link">&para;</a></h3>
+<p>Simple model represents a variant of data (e.g. tabular data, images, nucleotide
+sequence, unstructured text, etc.) that would be used in a workshop. The model
+is used only by <code>WorkshopInquiryRequest</code>.</p>
+<h3 id="workshopinquiryrequest"><code>WorkshopInquiryRequest</code><a class="headerlink" href="#workshopinquiryrequest" title="Permanent link">&para;</a></h3>
+<p>Represents an inquiry about teaching a Carpentries workshop.</p>
+<p>This model falls into <code>external requests</code> domain.</p>
+<h3 id="selforganisedsubmission"><code>SelfOrganisedSubmission</code><a class="headerlink" href="#selforganisedsubmission" title="Permanent link">&para;</a></h3>
+<p>Represents submission of a workshop that was self-organised (i.e. without help of The
+Carpentries).</p>
+<p>This model falls into <code>external requests</code> domain.</p>
+<hr />
+<h2 id="dashboard-application-dashboardmodelspy">Dashboard application - <code>dashboard/models.py</code><a class="headerlink" href="#dashboard-application-dashboardmodelspy" title="Permanent link">&para;</a></h2>
+<h3 id="criterium"><code>Criterium</code><a class="headerlink" href="#criterium" title="Permanent link">&para;</a></h3>
+<p>Represents a combination of countries and email associated with them. Used to direct
+emails to a specific admin (for example UK admin) mailbox.</p>
+<h3 id="continent"><code>Continent</code><a class="headerlink" href="#continent" title="Permanent link">&para;</a></h3>
+<p>Represents a group of countries. Used in some internal forms, e.g. for filtering events.</p>
+<hr />
+<h2 id="recruitment-application-recruitmentmodelspy">Recruitment application - <code>recruitment/models.py</code><a class="headerlink" href="#recruitment-application-recruitmentmodelspy" title="Permanent link">&para;</a></h2>
+<h3 id="instructorrecruitment"><code>InstructorRecruitment</code><a class="headerlink" href="#instructorrecruitment" title="Permanent link">&para;</a></h3>
+<p>Represents a recruitment of instructors for a given event (<a href="#event"><code>Event</code></a>).</p>
+<h3 id="instructorrecruitmentsignup"><code>InstructorRecruitmentSignup</code><a class="headerlink" href="#instructorrecruitmentsignup" title="Permanent link">&para;</a></h3>
+<p>Represents an application of a single instructor for a given instructor recruitment
+(<a href="#instructorrecruitment"><code>InstructorRecruitment</code></a>).</p>
+<hr />
+<h2 id="consents-application-consentsmodelspy">Consents application - <code>consents/models.py</code><a class="headerlink" href="#consents-application-consentsmodelspy" title="Permanent link">&para;</a></h2>
+<h3 id="term"><code>Term</code><a class="headerlink" href="#term" title="Permanent link">&para;</a></h3>
+<p>Represents a term people should give consent to.</p>
+<h3 id="termoption"><code>TermOption</code><a class="headerlink" href="#termoption" title="Permanent link">&para;</a></h3>
+<p>Represents a response for a <code>Term</code> with custom text and boolean <code>agree</code> / <code>decline</code>
+type.</p>
+<h3 id="consent"><code>Consent</code><a class="headerlink" href="#consent" title="Permanent link">&para;</a></h3>
+<p>Represents a consent person gives (or not) to a given term. Intermediate table for M2M
+between <code>Person</code> and <code>Term</code>, and <code>TermOption</code>.</p>
+<h3 id="trainingrequestconsent"><code>TrainingRequestConsent</code><a class="headerlink" href="#trainingrequestconsent" title="Permanent link">&para;</a></h3>
+<p>Represents a consent an instructor applicant gives (or not) to a given term. Intermediate table for M2M
+between <code>TrainingRequest</code> and <code>Term</code>, and <code>TermOption</code>.</p>
+<hr />
+<h2 id="community-roles-application-communityrolesmodelspy">Community Roles application - <code>communityroles/models.py</code><a class="headerlink" href="#community-roles-application-communityrolesmodelspy" title="Permanent link">&para;</a></h2>
+<h3 id="communityroleconfig"><code>CommunityRoleConfig</code><a class="headerlink" href="#communityroleconfig" title="Permanent link">&para;</a></h3>
+<p>Stores configuration enforced when creating entries in <code>CommunityRole</code>. Determines what
+"kind" of a role it is, for example "Instructor", or "Maintainer".</p>
+<h3 id="communityroleinactivation"><code>CommunityRoleInactivation</code><a class="headerlink" href="#communityroleinactivation" title="Permanent link">&para;</a></h3>
+<p>Simple model represents reason for making a <code>CommunityRole</code> inactive.</p>
+<h3 id="communityrole"><code>CommunityRole</code><a class="headerlink" href="#communityrole" title="Permanent link">&para;</a></h3>
+<p>Represents person's role in a community. It's an extension of <code>Task</code>, but instead of
+events, it works for The Carpentries' community.</p>
+<hr />
+<h2 id="automated-emails-v1-2019-application-autoemailsmodelspy">Automated Emails (v1, 2019) application - <code>autoemails/models.py</code><a class="headerlink" href="#automated-emails-v1-2019-application-autoemailsmodelspy" title="Permanent link">&para;</a></h2>
+<p>Deprecated since 2024. Deleted from codebase in January 2026.</p>
+<h3 id="emailtemplate"><code>EmailTemplate</code><a class="headerlink" href="#emailtemplate" title="Permanent link">&para;</a></h3>
+<p>Represents email template to be used by a triggered email action.</p>
+<h3 id="trigger"><code>Trigger</code><a class="headerlink" href="#trigger" title="Permanent link">&para;</a></h3>
+<p>Simple model linking template with an email action. Email actions aren't models, so the
+list of choices is maintained as <code>ACTION_CHOICES</code>.</p>
+<h3 id="rqjob"><code>RQJob</code><a class="headerlink" href="#rqjob" title="Permanent link">&para;</a></h3>
+<p>Represents a <a href="https://python-rq.org/"><code>python-rq</code></a> job. This job is identified by UUID
+and links to Redis entry maintained by RQ library.</p>
+<hr />
+<h2 id="training-application-trainingsmodelspy">Training application - <code>trainings/models.py</code><a class="headerlink" href="#training-application-trainingsmodelspy" title="Permanent link">&para;</a></h2>
+<h3 id="involvement"><code>Involvement</code><a class="headerlink" href="#involvement" title="Permanent link">&para;</a></h3>
+<p>Represents an activity that can be completed as part of the Get Involved step of
+Instructor Training checkout. Referenced by <a href="#trainingprogress"><code>TrainingProgress</code></a>.</p>
+<hr />
+<h2 id="emails-v2-2023-application-emailsmodelspy">Emails (v2, 2023) application - <code>emails/models.py</code><a class="headerlink" href="#emails-v2-2023-application-emailsmodelspy" title="Permanent link">&para;</a></h2>
+<h3 id="emailtemplate_1"><code>EmailTemplate</code><a class="headerlink" href="#emailtemplate_1" title="Permanent link">&para;</a></h3>
+<p>Represents email template to be used by a scheduled email.</p>
+<h3 id="scheduledemail"><code>ScheduledEmail</code><a class="headerlink" href="#scheduledemail" title="Permanent link">&para;</a></h3>
+<p>Model containing details of a scheduled email. This is used for queueing emails to be
+sent, as well as capturing any failed, locked, or cancelled emails.
+When accessed from AMY API, it can return a list of emails that should be attempted to
+be sent by the email worker.</p>
+<h3 id="scheduledemaillog"><code>ScheduledEmailLog</code><a class="headerlink" href="#scheduledemaillog" title="Permanent link">&para;</a></h3>
+<p>Represents a log entry for a scheduled email. This is used to track the status changes
+of an email.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.top"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../js/navigation.js"></script>
+      
+    
+  </body>
+</html>

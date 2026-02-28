@@ -1,0 +1,3269 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../users_guide/admin_index/">
+      
+      
+        <link rel="next" href="../design/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
+    
+    
+      
+        <title>Database Structure - AMY documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#amy-database-structure" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="AMY documentation" class="md-header__button md-logo" aria-label="AMY documentation" data-md-component="logo">
+      
+  <img src="../assets/TheCarpentries.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            AMY documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Database Structure
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/carpentries/amy/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="AMY documentation" class="md-nav__button md-logo" aria-label="AMY documentation" data-md-component="logo">
+      
+  <img src="../assets/TheCarpentries.svg" alt="logo">
+
+    </a>
+    AMY documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/carpentries/amy/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    For Carpentries Community members
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    For Carpentries Community members
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../users_guide/community_index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AMY Community Users Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    For AMY Administrators
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    For AMY Administrators
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../users_guide/admin_index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Users Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Database Structure
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Database Structure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#primary-tables-in-amy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Primary Tables in AMY
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Primary Tables in AMY">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#events" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Events
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Events">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#commonly-used-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Commonly used fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unused-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unused fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#persons" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Persons
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Persons">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#commonly-used-fields_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Commonly used fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#less-commonly-used-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Less commonly used fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#other-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Other fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memberships" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Memberships
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#member" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Member
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memberrole" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MemberRole
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#membershiptask" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MembershipTask
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#membershippersonrole" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MembershipPersonRole
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#organizations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Organizations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#training-applications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Training applications
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#training-progress" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Training progress
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#consents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consents
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consents">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#consent-terms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consent Terms
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#consent-term-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consent Term Options
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#individual-consent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Individual Consent
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#training-request-consent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Training Request Consent
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#additional-tables-in-amy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Additional Tables in AMY
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Additional Tables in AMY">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#badges" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Badges
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#roles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Roles
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tags
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#workshop-requests-workshop-inquiries-and-self-organised-submissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Workshop requests, workshop inquiries, and self-organised submissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#training-requests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Training requests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#training-progress_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Training progress
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#term" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Term
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Term">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#archive-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Archive Behavior
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#commonly-used-fields_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Commonly used fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#termoption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TermOption
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="TermOption">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#archive-behavior_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Archive Behavior
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#commonly-used-fields_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Commonly used fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#consent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consent
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consent">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#archive-behavior_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Archive Behavior
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#commonly-used-fields_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Commonly used fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trainingrequestconsent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TrainingRequestConsent
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="TrainingRequestConsent">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#archive-behavior_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Archive Behavior
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#commonly-used-fields_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Commonly used fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    For AMY Developers
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    For AMY Developers
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../design/application_design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Application design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../design/database_models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Database models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../design/model_versioning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model versioning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../design/template_hierarchy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Templates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../design/views_hierarchy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Views
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../design/design_patterns/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Pattern Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../design/server_infrastructure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server Infrastructure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../design/database_backups/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Database backups
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../accessibility_testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accessibility Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_11" id="__nav_4_11_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deploying AMY
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deploying AMY
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../procedures/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Procedures
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../design/cicd/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CI/CD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../releases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Releases
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../manual_deployment_steps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release-Specific Manual Deployment Steps
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_12" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_12" id="__nav_4_12_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Projects
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_12_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_12">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Projects
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../design/projects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Projects
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../design/projects/2019_automated_emails/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Automated emails (2019)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_12_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_12_3" id="__nav_4_12_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Automated emails (2023)
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_12_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_12_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Automated emails (2023)
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../design/projects/2023_automated_emails/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../design/projects/2023_automated_emails/new_action_checklist/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    New email action checklist
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../design/projects/2023_automated_emails/email_controller/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Email controller
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../design/projects/2023_automated_emails/base_actions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Base actions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../design/projects/2021_memberships/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memberships
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../design/projects/2021_consents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Consents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../design/projects/2021_profile_archival/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Profile Archival
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../design/projects/2021_community_roles/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Community Roles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../design/projects/2021_instructor_selection/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Instructor Selection
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../design/projects/2021_single_instructor_badge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Single Instructor Badge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../design/projects/2023_instructor_checkout_changes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Instructor Checkout Changes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../design/projects/2023_member_code_enforcement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Member Code Enforcement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../design/feature_flags/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Feature flags
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    About The Carpentries
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    About The Carpentries
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://carpentries.org" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Carpentries
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://datacarpentry.org/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Carpentry
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://librarycarpentry.org/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Library Carpentry
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://software-carpentry.org/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Software Carpentry
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://amy.carpentries.org" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AMY
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#primary-tables-in-amy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Primary Tables in AMY
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Primary Tables in AMY">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#events" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Events
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Events">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#commonly-used-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Commonly used fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unused-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unused fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#persons" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Persons
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Persons">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#commonly-used-fields_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Commonly used fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#less-commonly-used-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Less commonly used fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#other-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Other fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memberships" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Memberships
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#member" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Member
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memberrole" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MemberRole
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#membershiptask" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MembershipTask
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#membershippersonrole" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MembershipPersonRole
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#organizations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Organizations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#training-applications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Training applications
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#training-progress" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Training progress
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#consents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consents
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consents">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#consent-terms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consent Terms
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#consent-term-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consent Term Options
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#individual-consent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Individual Consent
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#training-request-consent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Training Request Consent
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#additional-tables-in-amy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Additional Tables in AMY
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Additional Tables in AMY">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#badges" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Badges
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#roles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Roles
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tags
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#workshop-requests-workshop-inquiries-and-self-organised-submissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Workshop requests, workshop inquiries, and self-organised submissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#training-requests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Training requests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#training-progress_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Training progress
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#term" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Term
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Term">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#archive-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Archive Behavior
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#commonly-used-fields_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Commonly used fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#termoption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TermOption
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="TermOption">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#archive-behavior_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Archive Behavior
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#commonly-used-fields_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Commonly used fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#consent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consent
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consent">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#archive-behavior_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Archive Behavior
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#commonly-used-fields_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Commonly used fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trainingrequestconsent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TrainingRequestConsent
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="TrainingRequestConsent">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#archive-behavior_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Archive Behavior
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#commonly-used-fields_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Commonly used fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="amy-database-structure">AMY Database structure<a class="headerlink" href="#amy-database-structure" title="Permanent link">&para;</a></h1>
+<p>The primary tables used in AMY (that will appear in most queries) are those that store information on events, persons, memberships, organizations, and instructor training.  Additional tables provide more information about events, persons, memberships, and organizations.  This information can be useful in writing <a href="https://redash.carpentries.org/queries">SQL queries in redash</a>.</p>
+<h2 id="primary-tables-in-amy">Primary Tables in AMY<a class="headerlink" href="#primary-tables-in-amy" title="Permanent link">&para;</a></h2>
+<h3 id="events">Events<a class="headerlink" href="#events" title="Permanent link">&para;</a></h3>
+<p><code>workshops_event</code> - Primary table for all event data.</p>
+<h4 id="commonly-used-fields">Commonly used fields<a class="headerlink" href="#commonly-used-fields" title="Permanent link">&para;</a></h4>
+<ul>
+<li><code>id</code> Sequential, automatically assigned integer</li>
+<li><code>start</code> and <code>end</code> Event start and end dates</li>
+<li><code>slug</code> Event's unique identifier in the form YYYY-MM-DD-sitename</li>
+<li><code>url</code> Event's website. Typically in the format username.github.io/YYYY-MM-DD-sitename (but not required)</li>
+<li><code>host_id</code> An integer representing the Event Host.  This is linked to the <code>workshops_organization</code> table</li>
+<li>Location based fields:</li>
+<li><code>venue</code> The venue name of the event</li>
+<li><code>address</code> The street address of the event</li>
+<li><code>latitude</code> and <code>longitude</code> Stored as floating point (decimal) numbers</li>
+<li><code>country</code> Stored as the <a href="https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2">two character country code</a></li>
+<li><code>contact</code> A list of email addresses listed as contacts for that workshop</li>
+<li><code>completed</code> A Boolean field to note that all work (including workshop coordination and data entry) is complete.</li>
+<li><code>assigned_to_id</code> The id of the Regional Coordinator or other Carpentries Core Team member assigned to this event. This is linked to the <code>workshops_person</code> table.</li>
+<li><code>language_id</code> The integer id of the language used at the workshop. This is not typically recorded. This is linked to the <code>workshops_language</code> table</li>
+<li><code>open_TTT_applications</code> Used only for instructor training events</li>
+<li><code>adminstrator_id</code> An integer representing the event organizer.  This is linked to the <code>workshops_organization</code> table. Historically any organization could be listed as an administrator. Recent updates to AMY limit this to Data Carpentry, Library Carpentry, Software Carpentry, Instructor Training, Collaborative Lesson Development Training, or self-organized. This enforcement is at the AMY app level, not at the database level.</li>
+<li><code>reg_key</code> Eventbrite registration key</li>
+<li><code>instructors_pre</code> Link to both pre- and post-workshop survey results.</li>
+</ul>
+<h4 id="unused-fields">Unused fields<a class="headerlink" href="#unused-fields" title="Permanent link">&para;</a></h4>
+<ul>
+<li><code>manual_attendance</code> We are no longer collecting or recording attendance</li>
+<li><code>admin_fee</code>, <code>invoice_status</code> We are not recording financial data in AMY</li>
+<li><code>repository_last_commit_hash</code>, <code>repository_metadata</code>, <code>metadata_all_changes</code>, <code>metadata_changed</code> Previously used to store metadata changes</li>
+<li><code>instructors_post</code> <code>learners_longterm</code> <code>learners_post</code> <code>learners_pre</code> Previously used to store links to surveys.</li>
+</ul>
+<h3 id="persons">Persons<a class="headerlink" href="#persons" title="Permanent link">&para;</a></h3>
+<p><code>workshops_person</code> - Primary table for all person data. This includes all individuals, regardless of their role with The Carpentries.</p>
+<h4 id="commonly-used-fields_1">Commonly used fields<a class="headerlink" href="#commonly-used-fields_1" title="Permanent link">&para;</a></h4>
+<ul>
+<li><code>id</code> Sequential, automatically assigned integer</li>
+<li><code>personal</code> <code>middle</code> <code>family</code> Three fields to hold the individual's name.  Only <code>personal</code> is required.</li>
+<li><code>email</code> Individual's primary email address. Used for user log in</li>
+<li><code>secondary_email</code> Alternate email address. Optional.</li>
+<li><code>gender</code> Options are <code>Prefer not to say (undisclosed)</code> <code>Female</code> <code>Gender variant / non-conforming</code> <code>Male</code> <code>Other</code>.</li>
+<li><code>gender_other</code> Text if individual selected <code>Other</code></li>
+<li><code>may_contact</code> A boolean field. We may not contact people if this field is false. This field has been replaced by <a href="#consent">new-style consents</a> (see also <a href="../design/projects/2021_consents/">2021 Consents Project</a>).</li>
+<li><code>github</code> Individual's GitHub user id</li>
+<li><code>twitter</code> Individual's Twitter user id</li>
+<li><code>bluesky</code> Individual's Bluesky user id</li>
+<li><code>mastodon</code> Individual's Mastodon url</li>
+<li><code>orcid</code> Individual's ORCID iD</li>
+<li><code>url</code> Link to the individual's personal website</li>
+<li><code>airport_id</code> An integer representing the person's self identified nearest.  This is linked to the <code>workshops_airport</code> table</li>
+<li><code>affiliation</code> A free text field representing the person's self identified institutional affliation. This is <strong>not</strong> linked to the <code>workshops_organization</code> table.</li>
+<li><code>occupation</code> A free text field representing the person's self identified occupation</li>
+<li><code>user_notes</code> Free text field with notes from the individual</li>
+<li><code>publish_profile</code> A boolean field that acknowledges permission to publish the individual's profile on our website pages such as the <a href="https://carpentries.org/instructors/">Instructors</a>, <a href="https://carpentries.org/trainers/">Trainers</a>, or <a href="https://carpentries.org/maintainers/">Maintainers</a> pages. This field has been replaced by new-style consents.</li>
+<li><code>country</code> Self identified country of residence. Stored as the [two character country code]</li>
+<li><code>lesson_publication_consent</code> Allows individual to consent to publishing their name associated with lesson contributions. Individual can select publication by name, ORCID iD, or GitHub id, or not consent to publishing their name or identity. This field has been replaced by new-style consents.</li>
+</ul>
+<h4 id="less-commonly-used-fields">Less commonly used fields<a class="headerlink" href="#less-commonly-used-fields" title="Permanent link">&para;</a></h4>
+<ul>
+<li><code>last_login</code> When the user last logged in (regardless of their activity or permissions)</li>
+<li><code>is_superuser</code> Boolean field to note whether the person is a <strong>superuser</strong>, giving them all administrative privileges</li>
+<li><code>created_at</code> Autogenerated timestamp when the record is created</li>
+<li><code>last_updated_at</code> Autogenerated timestamp when the record was last updated</li>
+<li><code>duplication_reviewed_on</code> Timestamp tracking when a <a href="https://amy.carpentries.org/reports/duplicate_persons/">potential duplicate individual's record was reviewed</a></li>
+<li><code>is_active</code> A boolean field.  Only active users are able to log in to AMY</li>
+<li><code>data_privacy_agreement</code> Acknowledges user has read our data policy. Required the first time any user logs in</li>
+</ul>
+<h4 id="other-fields">Other fields<a class="headerlink" href="#other-fields" title="Permanent link">&para;</a></h4>
+<ul>
+<li><code>password</code> Not stored as plain text. Do not use or modify this field for anything.</li>
+</ul>
+<h3 id="memberships">Memberships<a class="headerlink" href="#memberships" title="Permanent link">&para;</a></h3>
+<p><code>workshops_membership</code> - Stores information about each membership agreement.</p>
+<ul>
+<li><code>id</code> Sequential, automatically assigned integer.</li>
+<li><code>variant</code> Membership type (Gold, Silver, etc.)</li>
+<li><code>agreement_start</code> and <code>agreement_end</code> Membership term start and end dates</li>
+<li><code>extended</code> Integer; number of days the membership term end date has been extended by; <code>NULL</code> value indicates no extension</li>
+<li><code>contribution_type</code> Financial, Person-days, or Other</li>
+<li><code>workshops_without_admin_fee_per_agreement</code> Integer; number of centrally organized workshops allowed</li>
+<li><code>workshops_without_admin_fee_rolled_from_previous</code> Integer; number of centrally-organised workshops allowed that was rolled over from previous membership. This should be the same as <code>workshops_without_admin_fee_rolled_over</code> in preceding membership</li>
+<li><code>workshops_without_admin_fee_rolled_over</code> Integer; number of centrally-organised workshops allowed that was rolled over to succeeding membership. The same number should be recorded in <code>workshops_without_admin_fee_rolled_from_previous</code> in succeeding membership</li>
+<li><code>public_instructor_training_seats</code> Integer; number of public seats allowed in instructor training events in the original contract.</li>
+<li><code>additional_public_instructor_training_seats</code>  Integer; number of additional public seats allowed in instructor training events beyond the original contract.</li>
+<li><code>public_instructor_training_seats_rolled_from_previous</code> Integer; number of public instructor training seats allowed that was rolled over from previous membership. This should be the same as <code>public_instructor_training_seats_rolled_over</code> in preceding membership</li>
+<li><code>public_instructor_training_seats_rolled_over</code> Integer; number of public instructor training seats allowed that was rolled over to succeeding membership. The same number should be recorded in <code>public_instructor_training_seats_rolled_from_previous</code> in succeeding membership</li>
+<li><code>inhouse_instructor_training_seats</code> Integer; number of in-house seats allowed in instructor training events in the original contract.</li>
+<li><code>additional_inhouse_instructor_training_seats</code>  Integer; number of additional in-house seats allowed in instructor training events beyond the original contract.</li>
+<li><code>inhouse_instructor_training_seats_rolled_from_previous</code> Integer; number of in-house instructor training seats allowed that was rolled over from previous membership. This should be the same as <code>inhouse_instructor_training_seats_rolled_over</code> in preceding membership</li>
+<li><code>inhouse_instructor_training_seats_rolled_over</code> Integer; number of in-house instructor training seats allowed that was rolled over to succeeding membership. The same number should be recorded in <code>inhouse_instructor_training_seats_rolled_from_previous</code> in succeeding membership</li>
+<li><code>agreement_link</code> A link to the Member agreement in Google Drive</li>
+<li><code>registration_code</code> A string representing the code used by the Member site for Eventbrite registration and the instructor training application</li>
+<li><code>public_status</code> a string indicating agreement to publicising membership on The Carpentries websites</li>
+<li><code>emergency_contact</code> text with emergency contact data for the membership</li>
+<li><code>consortium</code> a boolean value indicating consortium (umbrella for more than one organisation member)</li>
+</ul>
+<h3 id="member">Member<a class="headerlink" href="#member" title="Permanent link">&para;</a></h3>
+<p><code>workshops_member</code> - Stores information about organisations and their roles in memberships.</p>
+<ul>
+<li><code>id</code> Sequential, automatically assigned integer.</li>
+<li><code>membership_id</code> - Integer linking membership instance</li>
+<li><code>organization_id</code> - Integer linking organisation instance</li>
+<li><code>role_id</code> - Integer linking member role instance</li>
+</ul>
+<h3 id="memberrole">MemberRole<a class="headerlink" href="#memberrole" title="Permanent link">&para;</a></h3>
+<p><code>workshops_memberrole</code> - Stores roles for organisations in memberships.</p>
+<ul>
+<li><code>id</code> Sequential, automatically assigned integer.</li>
+<li><code>name</code> string with role's name, e.g. <code>contact_signatory</code> - preferably a computer-friendly format</li>
+<li><code>verbose_name</code> string with role's name suitable for humans, e.g. <code>Contact Signatory</code></li>
+</ul>
+<h3 id="membershiptask">MembershipTask<a class="headerlink" href="#membershiptask" title="Permanent link">&para;</a></h3>
+<p><code>fiscal_membershiptask</code> - Stores information about persons and their roles in memberships.</p>
+<ul>
+<li><code>id</code> Sequential, automatically assigned integer.</li>
+<li><code>membership_id</code> - Integer linking membership instance</li>
+<li><code>person_id</code> - Integer linking person instance</li>
+<li><code>role_id</code> - Integer linking membership person role instance</li>
+</ul>
+<h3 id="membershippersonrole">MembershipPersonRole<a class="headerlink" href="#membershippersonrole" title="Permanent link">&para;</a></h3>
+<p><code>fiscal_membershippersonrole</code> - Stores roles for persons in memberships.</p>
+<ul>
+<li><code>id</code> Sequential, automatically assigned integer.</li>
+<li><code>name</code> string with role's name - preferably a computer-friendly format</li>
+<li><code>verbose_name</code> string with role's name suitable for humans</li>
+</ul>
+<h3 id="organizations">Organizations<a class="headerlink" href="#organizations" title="Permanent link">&para;</a></h3>
+<p><code>workshops_organization</code> - Stores all organizations in AMY.</p>
+<ul>
+<li><code>id</code> Sequential, automatically assigned integer.  This is used by the <code>host_id</code> and <code>administrator_id</code> fields in the <code>workshops_event</code> table, and the <code>organization_id</code> field in the <code>workshops_membership</code> table.</li>
+<li><code>domain</code> Website of the organization</li>
+<li><code>fullname</code> Human friendly name of the organization</li>
+<li><code>country</code> Stored as the [two character country code]</li>
+<li><code>latitude</code> and <code>longitude</code> Stored as floating point (decimal) numbers</li>
+<li><code>affiliated_organizations</code> Many-to-many relationship between organizations; the purpose of this field is to "link together" organisations that in some way are related. For example, "University of California" organisation can be linked to "University of California, Berkeley", "University of California, Davis", and "University of California, Los Angeles".  <strong>This field is not being used.</strong></li>
+</ul>
+<h3 id="training-applications">Training applications<a class="headerlink" href="#training-applications" title="Permanent link">&para;</a></h3>
+<p><code>workshops_trainingrequest</code> - Primary table for all Instructor Training applications</p>
+<ul>
+<li><code>personal</code>, <code>middle</code>, <code>family</code> Three fields to hold the individual's name.</li>
+<li><code>person_id</code> This is linked to the <code>workshops_person</code> table after the trainee is matched to a Person</li>
+<li><code>state</code> State of the individual's application. Options are <code>a</code> (accepted), <code>p</code> (pending), <code>w</code> (withdrawn), <code>d</code> (discarded)</li>
+<li><code>email</code> Individual's primary email address. Used for user log in</li>
+<li><code>secondary_email</code> Alternate email address. Optional.</li>
+<li><code>affiliation</code> A free text field representing the person's self identified institutional affliation. This is <strong>not</strong> linked to the <code>workshops_organization</code> table.</li>
+<li><code>country</code> Stored as the [two character country code]</li>
+<li><code>location</code> Free text field to share location within country (city, province, state, etc.)</li>
+<li><code>underresourced</code> Boolean field whether individual is from an underresourced area</li>
+<li><code>underrepresented</code> Boolean field whether individual is from an underrepresented demographic<ul>
+<li><code>underrepresented_details</code> Details on the individual's underrepresented status</li>
+</ul>
+</li>
+<li><code>github</code> Individual's GitHub user id</li>
+<li><code>review_process</code> Whether this is an open or pre-approved (usually member) Training application</li>
+<li><code>group_name</code> Registration code used for pre-approved requests</li>
+<li><code>score_auto</code> Automatically generated score from application review</li>
+<li><code>score_manual</code> Manually adjusted score from application review</li>
+<li><code>score_notes</code> Notes about the individual's score</li>
+<li><code>workshop_teaching_agreement</code> Agreement that applicant agrees to teach a Carpentries workshop</li>
+<li><code>max_travelling_frequency</code> Frequency individual may travel to teach. Select one of given options.</li>
+<li><code>teaching_frequency_expectation</code> Frequency individual may teach. Select one of given options.</li>
+<li><code>occupation</code> Applicant's current occupation/career stage. Select one of given options.<ul>
+<li><code>occupation_other</code> Text if individual selected <code>Other</code></li>
+</ul>
+</li>
+<li><code>previous_training</code> Level of previous training as a teacher/instructor.  Select one of given options.<ul>
+<li><code>previous_training_other</code>  Text if individual selected <code>Other</code></li>
+</ul>
+</li>
+<li><code>programming_language_usage_frequency</code> Frequency in using programming languages.  Select one of given options.</li>
+<li><code>previous_experience</code> Applicant's previous experience teaching. Select one of given options.</li>
+<li><code>previous_experience_other</code> Text if individual selected <code>Other</code></li>
+<li><code>previous_experience_explanation</code> Free text field to describe teaching experience</li>
+<li><code>nonprofit_teaching_experience</code> Free text field to describe nonprofit teaching experience</li>
+<li><code>reason</code> Free text field to describe why individual wants to attend Instructor Training</li>
+<li><code>data_privacy_agreement</code> Consent agreeing to The Carpentries' data privacy policy</li>
+<li><code>code_of_conduct_agreement</code> Consent agreeing to The Carpentries' Code of Conduct</li>
+<li><code>user_notes</code> Free text field with notes from the individual</li>
+<li><code>created_at</code> and <code>last_updated_at</code>  Dates the record was created and last updated. Automatically generated by database.</li>
+</ul>
+<h3 id="training-progress">Training progress<a class="headerlink" href="#training-progress" title="Permanent link">&para;</a></h3>
+<p><code>workshops_trainingrequirement</code> - Lists all available steps towards Instructor certification (Training Event, Welcome Session, etc.)</p>
+<ul>
+<li><code>id</code>  Sequential, automatically assigned integer.</li>
+<li><code>name</code> Name of requirement (<em>Demo</em>, <em>Welcome Session</em>, etc.)</li>
+<li><code>url_required</code> Notes whether a URL is required for this type of training requirement. Currently, no requirements require a URL, but some <em>Get Involved</em> activities do (see below).</li>
+<li><code>event_required</code> Notes whether an event is required for this type of training requirement.  This only applies to the <em>Training</em> (the actual event they attended).</li>
+<li><code>involvement_required</code> Notes whether an activity must be provided for this type of training requirement. This only applies to the <em>Get Involved</em> requirement where multiple different activities are acceptable.</li>
+</ul>
+<p><code>trainings_involvement</code> - Lists all activities that are accepted as part of the <em>Get Involved</em> training requirement (GitHub contribution, Workshop Instructor/helper, etc.) Note that this table uses the <code>trainings_</code> prefix, rather than <code>workshops_</code>.</p>
+<ul>
+<li><code>id</code>  Sequential, automatically assigned integer.</li>
+<li><code>name</code> A short name for the activity (<em>GitHub Contribution</em>, <em>Community Meeting</em>, etc.)</li>
+<li><code>display_name</code> A fully descriptive name for the activity (e.g. <em>Attended an Instructor meeting, regional meetup, or other community meeting</em>)</li>
+<li><code>url_required</code> Notes whether a URL must be provided for this type of activity.</li>
+<li><code>date_required</code> Notes whether a date must be provided for this type of activity. Currently, all activities require a date.</li>
+<li><code>notes_required</code> Notes whether text notes must be provided for this type of activity (such as when tracking an activity that is not covered by the existing options). These notes can come from either the trainee or an administrator.</li>
+</ul>
+<p><code>workshops_trainingprogress</code> - Connects <code>workshops_trainingrequirement</code>, <code>trainings_involvement</code>, and <code>workshops_person</code> to show what Persons have completed what steps of the checkout process.</p>
+<ul>
+<li><code>id</code>  Sequential, automatically assigned integer.</li>
+<li><code>created_at</code> and <code>last_updated_at</code>  Dates the record was created and last updated. Automatically generated by database.</li>
+<li><code>state</code> State of the trainee's progress.<ul>
+<li><code>p</code>: pass</li>
+<li><code>a</code>: ask to repeat</li>
+<li><code>f</code>: fail</li>
+<li><code>n</code>: not evaluated yet</li>
+</ul>
+</li>
+<li><code>requirement_id</code> id of the requirement that is being recorded. This is linked to the <code>workshops_trainingrequirement</code> table</li>
+<li><code>involvement_type_id</code> only for <em>Get Involved</em> requirement, id of the activity that is being recorded. This is linked to the <code>trainings_involvement</code> table</li>
+<li><code>trainee_id</code> id of the trainee being evaluated.  This is linked to the <code>workshops_person</code> table</li>
+<li><code>url</code> Link to a GitHub contribution, workshop website, etc.</li>
+<li><code>event_id</code> id of the event this trainee was at.  This is linked to the <code>workshops_event</code> table</li>
+<li><code>date</code> only for <em>Get Involved</em> requirement, the date of the activity (first day if the activity covered multiple days)</li>
+<li><code>trainee_notes</code> only for <em>Get Involved</em> requirement, notes submitted by the trainee</li>
+<li><code>notes</code> Notes written by an administrator</li>
+</ul>
+<h3 id="consents">Consents<a class="headerlink" href="#consents" title="Permanent link">&para;</a></h3>
+<h4 id="consent-terms">Consent Terms<a class="headerlink" href="#consent-terms" title="Permanent link">&para;</a></h4>
+<p><code>consents_term</code> - Stores all types of consent terms in AMY (e.g. privacy policy, permission to contact).</p>
+<ul>
+<li><code>slug</code> slug of the term. Used to uniquely identify the term.</li>
+<li><code>content</code> content of the term. This text is shown to users when they consent.</li>
+<li><code>training_request_content</code> if set, the regular <code>content</code> is replaced with this text when displaying this term on the instructor training request form.</li>
+<li><code>required_type</code> determines whether or not a term is considered required for the user or not. If required it is presented to the user when they first log in.</li>
+<li><code>help_text</code> additional text shown to the user in order to give more context on the term.</li>
+<li><code>short_description</code> a short description of the consent, shown in the admin view of a profile</li>
+<li><code>archived_at</code> if this term is archived, a timestamp of when it was archived</li>
+</ul>
+<h4 id="consent-term-options">Consent Term Options<a class="headerlink" href="#consent-term-options" title="Permanent link">&para;</a></h4>
+<p><code>consents_termoption</code> - Stores all options for all terms in AMY. Options are displayed when the user is asked to consent to a particular term. Options are considered answer choices for the term.</p>
+<ul>
+<li><code>term_id</code> id of the term this option belongs to. This is linked to the <code>consents_term</code> table. Unarchived term options attached to a term will be displayed to the user when the term is rendered.</li>
+<li><code>option_type</code> determines whether or not a term option is considered as an agreement or a decline for that term.</li>
+<li><code>content</code> the text displayed to the user when the term is rendered.</li>
+<li><code>archived_at</code> a timestamp of when the option was archived or <code>NULL</code> if it wasn't</li>
+</ul>
+<h4 id="individual-consent">Individual Consent<a class="headerlink" href="#individual-consent" title="Permanent link">&para;</a></h4>
+<p><code>consents_consent</code> - Stores all consents for all users in AMY.</p>
+<ul>
+<li><code>person_id</code> id of the person providing the consent. This is linked to the <code>workshops_person</code> table.</li>
+<li><code>term_id</code> id of the term this consent applies to. This is linked to the <code>consents_term</code> table. There is a check on the Consent model to ensure the given TermOption belongs to the Term.</li>
+<li><code>term_option_id</code> id of the term option chosen in this consent. This is linked to the <code>consents_termoption</code> table. When this field is null, the consent has not been set by the user.</li>
+<li><code>archived_at</code> if this consent is archived, a timestamp of when it was archived.</li>
+</ul>
+<h4 id="training-request-consent">Training Request Consent<a class="headerlink" href="#training-request-consent" title="Permanent link">&para;</a></h4>
+<p><code>consents_trainingrequestconsent</code> Stores all consents for all instructor training requests in AMY.</p>
+<ul>
+<li><code>training_request_id</code> id of the training request this consent option belongs to. This is linked to the <code>workshops_trainingrequest</code> table.</li>
+<li><code>term_id</code> id of the term this consent applies to. This is linked to the <code>consents_term</code> table. There is a check on the Consent model to ensure the given TermOption belongs to the Term.</li>
+<li><code>term_option_id</code> id of the term option chosen in this consent. This is linked to the <code>consents_termoption</code> table. When this field is null, the consent has not been set by the user.</li>
+<li><code>archived_at</code> a timestamp of when the consent was archived or <code>NULL</code> if it wasn't.</li>
+</ul>
+<h2 id="additional-tables-in-amy">Additional Tables in AMY<a class="headerlink" href="#additional-tables-in-amy" title="Permanent link">&para;</a></h2>
+<h3 id="badges">Badges<a class="headerlink" href="#badges" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>workshops_badge</code> Lists all available badges (Instructor, Trainer, etc.)</li>
+<li><code>id</code> Sequential, automatically assigned integer. This is used by <code>badge_id</code> in the <code>workshops_award</code> table.</li>
+<li><code>criteria</code> Description of what this badge is</li>
+<li><code>title</code> Verbose, human friendly name of badge (e.g., <em>Lesson Developer</em> or <em>Trainer</em>)</li>
+<li>
+<p><code>name</code> "back-end" badge name (e.g., <em>lesson-developer</em>, <em>trainer</em>)</p>
+</li>
+<li>
+<p><code>workshops_award</code> Connects <code>workshops_badge</code> and <code>workshops_person</code> tables to show what Badges have been awarded to what Persons</p>
+</li>
+<li><code>id</code> Sequential, automatically assigned integer.</li>
+<li><code>awarded</code> Date the badge was awarded. This is usually the date it was recorded in AMY, not the date the person completed all requirements.</li>
+<li><code>badge_id</code> An integer representing the badge.  This is linked to the <code>workshops_badge</code> table</li>
+<li><code>event_id</code> An integer representing the event the badge came from.  This is linked to the <code>workshops_event</code> table</li>
+<li><code>person_id</code> An integer representing the person who got the badge.  This is linked to the <code>workshops_person</code> table</li>
+<li><code>awarded_by_id</code> An integer representing the person who awarded the badge (entered it in AMY).  This is linked to the <code>workshops_person</code> table</li>
+</ul>
+<h3 id="roles">Roles<a class="headerlink" href="#roles" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>workshops_role</code> Lists all available roles (Instructor, Helper, Learner, etc.)</li>
+<li><code>id</code>  Sequential, automatically assigned integer.</li>
+<li><code>verbose_name</code>  Verbose, human friendly name of role (e.g., <em>Workshop host</em>, <em>Supporting Instructor</em>)</li>
+<li>
+<p><code>name</code>  "back end" task name (e.g., <em>workshop-host</em>, <em>supporting-instructor</em>)</p>
+</li>
+<li>
+<p><code>workshops_task</code> Connects <code>workshops_role</code>, <code>workshops_event</code>, and <code>workshops_person</code> tables to show what what Persons have served in what Roles at what Events</p>
+</li>
+<li><code>id</code>  Sequential, automatically assigned integer.</li>
+<li><code>event_id</code> An integer representing the event the person was at.  This is linked to the <code>workshops_event</code> table</li>
+<li><code>person_id</code> An integer representing the person who was at the event.  This is linked to the <code>workshops_person</code> table</li>
+<li><code>role_id</code> An integer representing the person's role.  This is linked to the <code>workshops_person</code> table</li>
+<li><code>seat_membership_id</code> Used for Instructor Training Learner role only.  An integer representing the membership this seat was assigned to.</li>
+<li><code>seat_public</code> Used for Instructor Training Learner role only.  Determines if the seat counts as public or in-house for the specific membership.</li>
+<li><code>seat_open_training</code> Used for Instructor Training Learner role only. Boolean field noting whether this was an open (non-member) training seat.</li>
+</ul>
+<h3 id="tags">Tags<a class="headerlink" href="#tags" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>workshops_tag</code> Lists all availabe tags for an Event (SWC, DC, LC, Online, Pilot, Circuits, etc.)</li>
+<li><code>id</code>  Sequential, automatically assigned integer.</li>
+<li><code>name</code>  "back end" tag name</li>
+<li><code>details</code> Description of what tag is used for</li>
+<li>
+<p><code>priority</code> Used to control the sort order in the AMY web interface. Not relevant for any other queries.</p>
+</li>
+<li>
+<p><code>workshops_event_tags</code> Connects <code>workshops_tag</code> and <code>workshops_event</code> to show what Tags have been applied to what Events</p>
+</li>
+<li><code>id</code>  Sequential, automatically assigned integer.</li>
+<li><code>event_id</code> An integer representing the event that got that tag.  This is linked to the <code>workshops_event</code> table</li>
+<li><code>tag_id</code> An integer representing the tag that was assigned to that event.  This is linked to the <code>workshops_tag</code> table.</li>
+</ul>
+<h3 id="workshop-requests-workshop-inquiries-and-self-organised-submissions">Workshop requests, workshop inquiries, and self-organised submissions<a class="headerlink" href="#workshop-requests-workshop-inquiries-and-self-organised-submissions" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>workshops_workshoprequest</code> List of all workshop requests.</li>
+<li><code>personal</code>, <code>family</code>, <code>email</code> See <a href="#persons">Persons</a>.</li>
+<li><code>institution</code> Integer representing the individual's affiliation. Linked to the <a href="#organizations"><code>workshops_organizations</code></a> table. May be empty as some people specify their institution using free text fields.</li>
+<li><code>member_code</code> The member code that this workshop should be associated with if accepted. Optional.</li>
+<li><code>online_inperson</code> Options are <code>Online</code>, <code>In person</code>, <code>Not sure</code>.</li>
+<li><code>location</code>, <code>country</code>, <code>language</code> See <a href="#events">Events</a>.</li>
+<li><code>requested_workshop_types</code> List of integers representing the curricula requested for the workshop. Linked to the <code>workshops_curriculum</code> table.</li>
+<li>
+<p><code>carpentries_info_source</code> How the individual found out about The Carpentries.</p>
+</li>
+<li>
+<p><code>extrequests_workshopinquiry</code> List of all workshop inquiries. Relevant fields closely mirror those under <code>workshops_workshoprequest</code>.</p>
+</li>
+<li>
+<p><code>extrequests_selforganisedsubmission</code> List of all self-organized submissions.</p>
+</li>
+<li><code>start</code>, <code>end</code>, <code>workshop_url</code>, <code>location</code>, <code>country</code>, <code>language</code> See <a href="#events">Events</a>.</li>
+<li><code>workshop_format</code> Options are <code>Standard two-day Carpentries workshop</code>, <code>Short session (less than two days)</code>, <code>Modules taught over a period of time (several weeks, one semester, etc.)</code>, and <code>Other</code>.<ul>
+<li><code>workshop_format_other</code> Text if individual selected <code>Other</code>.</li>
+</ul>
+</li>
+<li><code>workshop_types</code> Integer representing the curricula requested for the workshop. Linked to the <code>workshops_curriculum</code> table.<ul>
+<li><code>workshop_types_other_explain</code> Text if individual selected <code>Mix &amp; Match</code>.</li>
+</ul>
+</li>
+</ul>
+<h3 id="training-requests">Training requests<a class="headerlink" href="#training-requests" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>workshops_trainingrequest</code> Lists all training requests submitted by community members. List of fields omits free-text fields except for "other" options.</li>
+<li><code>id</code>  Sequential, automatically assigned integer.</li>
+<li><code>review_process</code>  Either <em>preapproved</em> (meaning associated with a membership) or <em>open</em>.</li>
+<li><code>member_code</code> The member code that this training seat should be associated with if accepted. Only present if <code>review_process</code> is <em>preapproved</em>.</li>
+<li><code>personal</code>, <code>family</code>, <code>email</code>, <code>github</code>, <code>affiliation</code>, <code>country</code>, <code>occupation</code> See <a href="#persons">Persons</a>.</li>
+<li><code>underresourced</code> A boolean field indicating whether the individual's affiliation is small, remote, or under-resourced.</li>
+<li><code>domains</code> A list of areas where the individual has expertise.<ul>
+<li><code>domains_other</code> Text if individual selected <code>Other</code>.</li>
+</ul>
+</li>
+<li><code>underrepresented</code> Whether the individual self-identifies with a group that is under-represented in research and/or computing. Options are <code>Yes</code>, <code>No</code>, and <code>Prefer not to say</code>.<ul>
+<li><code>underrepresented_details</code> Text if individual chose to share more information.</li>
+</ul>
+</li>
+<li><code>previous_involvement</code> List of types of previous involvement with the Carpentries, e.g. <em>Helper</em>, <em>Learner</em>.</li>
+<li><code>previous_training</code> Amount of previous teacher/instructor training.<ul>
+<li><code>previous_training_other</code> Text if individual selected <code>Other</code>.</li>
+</ul>
+</li>
+<li><code>previous_experience</code> Amount of previous teaching experience.<ul>
+<li><code>previous_experience_other</code> Text if individual selected <code>Other</code>.</li>
+</ul>
+</li>
+<li><code>programming_language_usage_frequency</code> How regularly the individual uses tools that The Carpentries teach, such as R, Python, and Git.</li>
+<li><code>checkout_intent</code> Whether the individual intends to complete checkout.</li>
+<li><code>teaching_intent</code> Whether the individual intends to teach Carpentries workshops once certified. This may be local, central, or both.</li>
+<li><code>teaching_frequency_expectation</code> How often the individual intends to teach Carpentries workshops once certified.<ul>
+<li><code>teaching_frequency_expectation_other</code> Text if individual selected <code>Other</code>.</li>
+</ul>
+</li>
+<li><code>score_auto</code> Automatic score generated by AMY.</li>
+<li><code>score_manual</code> Manually entered score.</li>
+</ul>
+<h3 id="training-progress_1">Training progress<a class="headerlink" href="#training-progress_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>workshops_trainingrequirement</code>  Lists all available steps towards Instructor certification (Training Event, Welcome Session, etc.)</li>
+<li><code>id</code>  Sequential, automatically assigned integer.</li>
+<li><code>name</code> Name of requirement (<em>Demo</em>, <em>Welcome Session</em>, etc.)</li>
+<li><code>url_required</code> Notes whether a URL is required for this type of training requirement. Currently, no requirements require a URL, but some <em>Get Involved</em> activities do (see below).</li>
+<li><code>event_required</code> Notes whether an event is required for this type of training requirement.  This only applies to the <em>Training</em> (the actual event they attended).</li>
+<li>
+<p><code>involvement_required</code> Notes whether an activity must be provided for this type of training requirement. This only applies to the <em>Get Involved</em> requirement where multiple different activities are acceptable.</p>
+</li>
+<li>
+<p><code>trainings_involvement</code> Lists all activities that are accepted as part of the <em>Get Involved</em> training requirement (GitHub contribution, Workshop Instructor/helper, etc.) Note that this table uses the <code>trainings_</code> prefix, rather than <code>workshops_</code>.</p>
+</li>
+<li><code>id</code>  Sequential, automatically assigned integer.</li>
+<li><code>name</code> A short name for the activity (<em>GitHub Contribution</em>, <em>Community Meeting</em>, etc.)</li>
+<li><code>display_name</code> A fully descriptive name for the activity (e.g. <em>Attended an Instructor meeting, regional meetup, or other community meeting</em>)</li>
+<li><code>url_required</code> Notes whether a URL must be provided for this type of activity.</li>
+<li><code>date_required</code> Notes whether a date must be provided for this type of activity. Currently, all activities require a date.</li>
+<li>
+<p><code>notes_required</code> Notes whether text notes must be provided for this type of activity (such as when tracking an activity that is not covered by the existing options). These notes can come from either the trainee or an administrator.</p>
+</li>
+<li>
+<p><code>workshops_trainingprogress</code> Connects <code>workshops_trainingrequirement</code>, <code>trainings_involvement</code>, and <code>workshops_person</code> to show what Persons have completed what steps of the checkout process.</p>
+</li>
+<li><code>id</code>  Sequential, automatically assigned integer.</li>
+<li><code>created_at</code> and <code>last_updated_at</code>  Dates the record was created and last updated. Automatically generated by database.</li>
+<li><code>state</code> State of the trainee's progress.<ul>
+<li><code>p</code>: pass</li>
+<li><code>a</code>: ask to repeat</li>
+<li><code>f</code>: fail</li>
+<li><code>n</code>: not evaluated yet</li>
+</ul>
+</li>
+<li><code>requirement_id</code> id of the requirement that is being recorded. This is linked to the <code>workshops_trainingrequirement</code> table</li>
+<li><code>involvement_type_id</code> only for <em>Get Involved</em> requirement, id of the activity that is being recorded. This is linked to the <code>trainings_involvement</code> table</li>
+<li><code>trainee_id</code> id of the trainee being evaluated.  This is linked to the <code>workshops_person</code> table</li>
+<li><code>url</code> Link to a GitHub contribution, workshop website, etc.</li>
+<li><code>event_id</code> id of the event this trainee was at.  This is linked to the <code>workshops_event</code> table</li>
+<li><code>date</code> only for <em>Get Involved</em> requirement, the date of the activity (first day if the activity covered multiple days)</li>
+<li><code>trainee_notes</code> only for <em>Get Involved</em> requirement, notes submitted by the trainee</li>
+<li><code>notes</code> Notes written by an administrator</li>
+</ul>
+<h3 id="term">Term<a class="headerlink" href="#term" title="Permanent link">&para;</a></h3>
+<p><code>consents_term</code> - Stores all consent terms in AMY (e.g. privacy policy, permission to contact).</p>
+<h4 id="archive-behavior">Archive Behavior<a class="headerlink" href="#archive-behavior" title="Permanent link">&para;</a></h4>
+<p>When a term is archived, that term's associated options and consents are archived as well. If the term was required, once archived it is no longer required in AMY.</p>
+<h4 id="commonly-used-fields_2">Commonly used fields<a class="headerlink" href="#commonly-used-fields_2" title="Permanent link">&para;</a></h4>
+<ul>
+<li><code>slug</code> slug of the term. Used to uniquely identify the term.</li>
+<li><code>content</code> content of the term. This text is shown to users when they consent.</li>
+<li><code>training_request_content</code> if set, the regular <code>content</code> is replaced with this text when displaying this term on the instructor training request form.</li>
+<li><code>required_type</code> determines whether or not a term is considered required for the user or not. If required it is presented to the user when they first log in.</li>
+<li><code>help_text</code> additional text shown to the user in order to give more context on the term.</li>
+<li><code>short_description</code> a short description of the consent, shown in the admin view of a profile</li>
+<li><code>archived_at</code> if this term is archived, a timestamp of when it was archived</li>
+</ul>
+<h3 id="termoption">TermOption<a class="headerlink" href="#termoption" title="Permanent link">&para;</a></h3>
+<p><code>consents_termoption</code> - Stores all options for all terms in AMY. Options are displayed when the user is asked to consent to a particular term. Options are considered answer choices for the term.</p>
+<h4 id="archive-behavior_1">Archive Behavior<a class="headerlink" href="#archive-behavior_1" title="Permanent link">&para;</a></h4>
+<p>When an option is archived, any consents that rely on that option are archived and a new unset consent is created by AMY for the user. If the term the option was attached to is required, archiving the option may result in an email sent to any users who answered with this option.</p>
+<h4 id="commonly-used-fields_3">Commonly used fields<a class="headerlink" href="#commonly-used-fields_3" title="Permanent link">&para;</a></h4>
+<ul>
+<li><code>term_id</code> id of the term this option belongs to. This is linked to the <code>consents_term</code> table. Unarchived term options attached to a term will be displayed to the user when the term is rendered.</li>
+<li><code>option_type</code> determines whether or not a term option is considered as an agreement or a decline for that term.</li>
+<li><code>content</code> the text displayed to the user when the term is rendered.</li>
+<li><code>archived_at</code> a timestamp of when the option was archived or <code>NULL</code> if it wasn't</li>
+</ul>
+<h3 id="consent">Consent<a class="headerlink" href="#consent" title="Permanent link">&para;</a></h3>
+<p><code>consents_consent</code> - Stores all consents for all users in AMY.</p>
+<h4 id="archive-behavior_2">Archive Behavior<a class="headerlink" href="#archive-behavior_2" title="Permanent link">&para;</a></h4>
+<p>When consents are archived, a new unset consent is created by AMY for each term involved.</p>
+<h4 id="commonly-used-fields_4">Commonly used fields<a class="headerlink" href="#commonly-used-fields_4" title="Permanent link">&para;</a></h4>
+<ul>
+<li><code>person_id</code> id of the person providing the consent. This is linked to the <code>workshops_person</code> table.</li>
+<li><code>term_id</code> id of the term this consent applies to. This is linked to the <code>consents_term</code> table. There is a check on the Consent model to ensure the given TermOption belongs to the Term.</li>
+<li><code>term_option_id</code> id of the term option chosen in this consent. This is linked to the <code>consents_termoption</code> table. When this field is null, the consent has not been set by the user.</li>
+<li><code>archived_at</code> if this consent is archived, a timestamp of when it was archived.</li>
+</ul>
+<h3 id="trainingrequestconsent">TrainingRequestConsent<a class="headerlink" href="#trainingrequestconsent" title="Permanent link">&para;</a></h3>
+<p><code>consents_trainingrequestconsent</code> Stores all consents for all instructor training requests in AMY.</p>
+<h4 id="archive-behavior_3">Archive Behavior<a class="headerlink" href="#archive-behavior_3" title="Permanent link">&para;</a></h4>
+<p>When training request consents are archived, a new unset consent is created by AMY for each term involved.</p>
+<h4 id="commonly-used-fields_5">Commonly used fields<a class="headerlink" href="#commonly-used-fields_5" title="Permanent link">&para;</a></h4>
+<ul>
+<li><code>training_request_id</code> id of the training request this consent option belongs to. This is linked to the <code>workshops_trainingrequest</code> table.</li>
+<li><code>term_id</code> id of the term this consent applies to. This is linked to the <code>consents_term</code> table. There is a check on the Consent model to ensure the given TermOption belongs to the Term.</li>
+<li><code>term_option_id</code> id of the term option chosen in this consent. This is linked to the <code>consents_termoption</code> table. When this field is null, the consent has not been set by the user.</li>
+<li><code>archived_at</code> a timestamp of when the consent was archived or <code>NULL</code> if it wasn't.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.top"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../js/navigation.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,3718 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../community_index/">
+      
+      
+        <link rel="next" href="../../amy_database_structure/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
+    
+    
+      
+        <title>Users Guide - AMY documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#amy-the-carpentries-internal-database" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="AMY documentation" class="md-header__button md-logo" aria-label="AMY documentation" data-md-component="logo">
+      
+  <img src="../../assets/TheCarpentries.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            AMY documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Users Guide
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/carpentries/amy/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="AMY documentation" class="md-nav__button md-logo" aria-label="AMY documentation" data-md-component="logo">
+      
+  <img src="../../assets/TheCarpentries.svg" alt="logo">
+
+    </a>
+    AMY documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/carpentries/amy/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    For Carpentries Community members
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    For Carpentries Community members
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../community_index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AMY Community Users Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    For AMY Administrators
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    For AMY Administrators
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Users Guide
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Users Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#amy-the-carpentries-internal-database" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AMY: The Carpentries' internal database
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="AMY: The Carpentries&#39; internal database">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#logging-in" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logging in
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#amy-dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AMY Dashboard
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-a-new-organisation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a New Organisation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memberships" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Memberships
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Memberships">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#creating-memberships" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creating memberships
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#membership-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Membership fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#consortium-memberships" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consortium Memberships
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#membership-contacts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Membership Contacts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#extending-membership-dates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extending membership dates
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#renewing-memberships" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Renewing memberships
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-a-new-person" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a New Person
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Adding a New Person">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adding-an-individual-person-record" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding an Individual Person Record
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-bulk-person-records" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding Bulk Person Records
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#consents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consents
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-a-new-airport" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a New Airport
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-a-new-event" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a New Event
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Adding a New Event">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#creating-a-new-event-manually" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creating a New Event Manually
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#creating-a-new-event-from-url" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creating a New Event from URL
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#creating-a-new-event-from-a-workshop-request" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creating a New Event from a Workshop Request
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Event fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recruiting-instructors-for-workshops" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recruiting Instructors for Workshops
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#assigning-people-to-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Assigning People to Events
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Assigning People to Events">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#assigning-people-to-events-one-by-one" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Assigning People to Events, One by One
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#assigning-people-to-events-in-bulk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Assigning People to Events in Bulk
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#instructor-training" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Instructor Training
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Instructor Training">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#accepting-trainee-applications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Accepting Trainee Applications
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tracking-checkout-progress" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tracking Checkout Progress
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-checkout-progress-one-by-one" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding checkout progress one by one
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-checkout-progress-in-bulk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding checkout progress in bulk
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#updating-and-deleting-checkout-progress" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Updating and deleting checkout progress
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#evaluating-get-involved-submissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Evaluating Get Involved submissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#issuing-instructor-badge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Issuing Instructor Badge
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#issuing-badges" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Issuing Badges
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reports" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reports
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#user-and-administrator-roles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        User and Administrator Roles
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="User and Administrator Roles">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#instructor-login" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Instructor Login
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#admin-roles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Admin Roles
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#automated-emails" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Automated emails
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Automated emails">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#active-emails-workshops" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Active emails (Workshops)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#active-emails-instructor-training" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Active emails (Instructor Training)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#active-emails-memberships" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Active emails (Memberships)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#inactive-emails" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inactive emails
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#managing-scheduled-emails" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Managing scheduled emails
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#other-tasks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Other Tasks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Other Tasks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#merging-duplicate-persons-training-requests-or-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Merging Duplicate Persons, Training Requests, or Events
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Merging Duplicate Persons, Training Requests, or Events">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#merging-two-known-duplicate-records" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Merging two known duplicate records.
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#searching-for-possible-duplicate-person-or-training-request-records" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Searching for possible duplicate Person or Training Request records
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#searching" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Searching
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Searching">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#general-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        General Search
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#searching-for-qualified-instructors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Searching for Qualified Instructors
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#searching-for-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Searching for Events
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#searching-for-organisations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Searching for Organisations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#searching-for-memberships" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Searching for Memberships
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#searching-for-persons" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Searching for Persons
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../amy_database_structure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Database Structure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    For AMY Developers
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    For AMY Developers
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/application_design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Application design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/database_models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Database models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/model_versioning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model versioning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/template_hierarchy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Templates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/views_hierarchy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Views
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/design_patterns/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Pattern Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/server_infrastructure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server Infrastructure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/database_backups/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Database backups
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../accessibility_testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accessibility Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_11" id="__nav_4_11_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deploying AMY
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deploying AMY
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../procedures/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Procedures
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/cicd/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CI/CD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../releases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Releases
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual_deployment_steps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release-Specific Manual Deployment Steps
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_12" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_12" id="__nav_4_12_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Projects
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_12_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_12">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Projects
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/projects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Projects
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/projects/2019_automated_emails/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Automated emails (2019)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_12_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_12_3" id="__nav_4_12_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Automated emails (2023)
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_12_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_12_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Automated emails (2023)
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/projects/2023_automated_emails/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/projects/2023_automated_emails/new_action_checklist/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    New email action checklist
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/projects/2023_automated_emails/email_controller/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Email controller
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/projects/2023_automated_emails/base_actions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Base actions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/projects/2021_memberships/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memberships
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/projects/2021_consents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Consents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/projects/2021_profile_archival/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Profile Archival
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/projects/2021_community_roles/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Community Roles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/projects/2021_instructor_selection/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Instructor Selection
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/projects/2021_single_instructor_badge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Single Instructor Badge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/projects/2023_instructor_checkout_changes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Instructor Checkout Changes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/projects/2023_member_code_enforcement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Member Code Enforcement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/feature_flags/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Feature flags
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    About The Carpentries
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    About The Carpentries
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://carpentries.org" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Carpentries
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://datacarpentry.org/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Carpentry
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://librarycarpentry.org/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Library Carpentry
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://software-carpentry.org/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Software Carpentry
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://amy.carpentries.org" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AMY
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#amy-the-carpentries-internal-database" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AMY: The Carpentries' internal database
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="AMY: The Carpentries&#39; internal database">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#logging-in" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logging in
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#amy-dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AMY Dashboard
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-a-new-organisation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a New Organisation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memberships" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Memberships
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Memberships">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#creating-memberships" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creating memberships
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#membership-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Membership fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#consortium-memberships" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consortium Memberships
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#membership-contacts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Membership Contacts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#extending-membership-dates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extending membership dates
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#renewing-memberships" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Renewing memberships
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-a-new-person" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a New Person
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Adding a New Person">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adding-an-individual-person-record" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding an Individual Person Record
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-bulk-person-records" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding Bulk Person Records
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#consents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consents
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-a-new-airport" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a New Airport
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-a-new-event" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a New Event
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Adding a New Event">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#creating-a-new-event-manually" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creating a New Event Manually
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#creating-a-new-event-from-url" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creating a New Event from URL
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#creating-a-new-event-from-a-workshop-request" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creating a New Event from a Workshop Request
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Event fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recruiting-instructors-for-workshops" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recruiting Instructors for Workshops
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#assigning-people-to-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Assigning People to Events
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Assigning People to Events">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#assigning-people-to-events-one-by-one" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Assigning People to Events, One by One
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#assigning-people-to-events-in-bulk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Assigning People to Events in Bulk
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#instructor-training" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Instructor Training
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Instructor Training">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#accepting-trainee-applications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Accepting Trainee Applications
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tracking-checkout-progress" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tracking Checkout Progress
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-checkout-progress-one-by-one" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding checkout progress one by one
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-checkout-progress-in-bulk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding checkout progress in bulk
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#updating-and-deleting-checkout-progress" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Updating and deleting checkout progress
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#evaluating-get-involved-submissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Evaluating Get Involved submissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#issuing-instructor-badge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Issuing Instructor Badge
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#issuing-badges" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Issuing Badges
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reports" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reports
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#user-and-administrator-roles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        User and Administrator Roles
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="User and Administrator Roles">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#instructor-login" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Instructor Login
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#admin-roles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Admin Roles
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#automated-emails" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Automated emails
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Automated emails">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#active-emails-workshops" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Active emails (Workshops)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#active-emails-instructor-training" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Active emails (Instructor Training)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#active-emails-memberships" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Active emails (Memberships)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#inactive-emails" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inactive emails
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#managing-scheduled-emails" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Managing scheduled emails
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#other-tasks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Other Tasks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Other Tasks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#merging-duplicate-persons-training-requests-or-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Merging Duplicate Persons, Training Requests, or Events
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Merging Duplicate Persons, Training Requests, or Events">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#merging-two-known-duplicate-records" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Merging two known duplicate records.
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#searching-for-possible-duplicate-person-or-training-request-records" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Searching for possible duplicate Person or Training Request records
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#searching" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Searching
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Searching">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#general-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        General Search
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#searching-for-qualified-instructors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Searching for Qualified Instructors
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#searching-for-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Searching for Events
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#searching-for-organisations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Searching for Organisations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#searching-for-memberships" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Searching for Memberships
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#searching-for-persons" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Searching for Persons
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+  <h1>Users Guide</h1>
+
+<h2 id="amy-the-carpentries-internal-database">AMY: The Carpentries' internal database<a class="headerlink" href="#amy-the-carpentries-internal-database" title="Permanent link">&para;</a></h2>
+<h3 id="logging-in">Logging in<a class="headerlink" href="#logging-in" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Log in to AMY <a href="https://amy.carpentries.org">here</a>. Administrative users may log in via GitHub or a user id.  Instructors should log in via GitHub.  Contact <a href="mailto:team@carpentries.org">The Carpentries Core Team</a> if you have difficulty logging in.</li>
+</ul>
+<p><img alt="AMY login screen goes here" src="../images/amy_login_screen.png" /></p>
+<h3 id="amy-dashboard">AMY Dashboard<a class="headerlink" href="#amy-dashboard" title="Permanent link">&para;</a></h3>
+<p>All menus and a search bar are displayed across the top. The main page has two columns, showing current workshops and in progress workshops.  This view can be filtered to show workshops assigned to the logged in administrator, another administrator, or unassigned workshops.</p>
+<p><img alt="AMY dashboard" src="../images/amy_dashboard.png" /></p>
+<ul>
+<li><em>Current workshops</em> have a complete start and end date, a valid url, and a complete location.</li>
+<li><em>In progress workshops</em> are all workshops that do not meet these criteria.</li>
+</ul>
+<p>Current Data, Library, and Software Carpentry workshops will be listed on <a href="https://carpentries.org/">The Carpentries website</a>, the corresponding lesson program website, and <a href="https://feeds.carpentries.org/">The Carpentries data feeds</a> if the box to publish the workshop is checked.  Instructor Training events are not publicly listed.</p>
+<p>From here you can also add new <a href="#adding-a-new-event">events</a>, <a href="#adding-a-new-organisation">organisations</a>,  <a href="#adding-a-new-person">persons</a>, or <a href="#adding-a-new-airport">airports</a> to the database.</p>
+<p><img alt="AMY add new elements" src="../images/amy_add_new.png" /></p>
+<h3 id="adding-a-new-organisation">Adding a New Organisation<a class="headerlink" href="#adding-a-new-organisation" title="Permanent link">&para;</a></h3>
+<p>If an organisation is not already in AMY, add a new one by selecting "New Organisation."  Domain and Full Name are required fields.  Enter in the domain (full website, such as <code>https://www.example.com/library</code>).  When known, enter in the country and latitude/longitude of the main location.  There is also a text box for open ended comments.</p>
+<p>The "Affiliated Organization" field is not being used; always leave this blank.</p>
+<p><img alt="AMY add new organisation" src="../images/amy_new_organisation.png" /></p>
+<h3 id="memberships">Memberships<a class="headerlink" href="#memberships" title="Permanent link">&para;</a></h3>
+<p>AMY is also used to track all Carpentries memberships.  To create a new membership, the site must first be listed as an <a href="#adding-a-new-organisation">organisation</a> in AMY.</p>
+<p>Select "Memberships" from the top menu bar to view a <a href="https://amy.carpentries.org/fiscal/memberships/">list of all Memberships</a>. Memberships can be searched by Organisation name, Consortium status, Public/Private listing, Variant, Contribution type, Active status, and allowed or remaining training seats.</p>
+<h4 id="creating-memberships">Creating memberships<a class="headerlink" href="#creating-memberships" title="Permanent link">&para;</a></h4>
+<p>New Memberships can be created one of two ways, based on whether it is an entirely new membership or a renewing membership:</p>
+<ul>
+<li><strong>New memberships:</strong> If this is an entirely new membership, click on the "New Membership" button at the top of the <a href="https://amy.carpentries.org/fiscal/memberships/">membership page</a>. This will take you to a blank new membership form.</li>
+</ul>
+<p><img alt="AMY add new membership" src="../images/amy_new_membership.png" /></p>
+<ul>
+<li><strong>Renewing memberships:</strong> If this is a <a href="#renewing-memberships">renewal of a current membership</a>, select that membership and click on the green "Create new &amp; roll-over button" at the bottom of that page.  This will take you to a new membership form with some information pre-populated.</li>
+</ul>
+<p><img alt="AMY membership rollover" src="../images/membership_rollover.png" /></p>
+<h4 id="membership-fields">Membership fields<a class="headerlink" href="#membership-fields" title="Permanent link">&para;</a></h4>
+<p>The following fields are included in the Member view:</p>
+<ul>
+<li><strong>Name</strong> The name of the membership.  If this is a single organisation, it will be that organisation's name.  If it is a consortium of several organisations, it will be their collective name.</li>
+<li><strong>Consortium</strong>  If this box is checked, you will be able to assign multiple organisations to that membership.  If not, you will only be able to assign one organisation to that membership.</li>
+<li><strong>Can this membership be publicized on The Carpentries websites</strong> If Public is selected, the membership will be listed on <a href="https://carpentries.org/members/">The Carpentries Members page</a> and <a href="https://feeds.carpentries.org/all_public_memberships.json">data feeds</a>.  If Private is selected, it will not be listed.</li>
+<li><strong>Variant</strong> This lists all the membership levels (Gold, Silver, Bronze, etc.)</li>
+<li><strong>Agreement start</strong> and <strong>Agreement end</strong> Start and end dates of the membership agreement.  A notification displays if the membership is not approximately one year long.</li>
+<li><strong>Extensions</strong> Extensions are created using the "Extend" button at the bottom of the main membership page. The duration of the extension can be edited here.</li>
+<li><strong>Contribution type</strong> What the member contribution was (Financial, Person-days, or other)</li>
+<li><strong>Registration code</strong> A unique registration code used to unlock <a href="https://carpentries.github.io/instructor-training/training_calendar">Instructor Training registration in Eventbrite</a> and match up the trainee's application to this membership. These are not automated. Eventbrite registration is manually set up within Eventbrite. Instructor training applications using the member code are <a href="#accepting-trainee-applications">manually matched to this member and a training event</a>.</li>
+<li><strong>Link to member agreement</strong> Link to the Google Drive folder with the member agreement.</li>
+<li><strong>Workshops without admin fee per agreement</strong> Number of workshops allowed in the terms of the agreement.</li>
+<li><strong>Public instructor training seats</strong> Number of public instructor training seats allowed in the terms of the agreement.</li>
+<li><strong>Additional public instructor training seats</strong> Number of additional public seats the member may have purchased beyond the standard agreement.</li>
+<li><strong>In-house instructor training seats</strong> Number of in-house instructor training seats allowed in the terms of the agreement. This will typically only apply to Platinum memberships.</li>
+<li><strong>Additional in-house instructor training seats</strong>  Number of additional in-house seats the member may have purchased beyond the standard agreement.  This will typically only apply to Platinum memberships.</li>
+<li><strong>Emergency contact</strong> Free text field to fill in emergency contact information.</li>
+</ul>
+<h4 id="consortium-memberships">Consortium Memberships<a class="headerlink" href="#consortium-memberships" title="Permanent link">&para;</a></h4>
+<p>If <em>Consortium</em> is checked, additional affiliated sites can be added to that membership.  These will display in the <code>Organisations (members)</code> line of the Member view. For single-site memberships, only the main site can be listed here.  For consortium memberships, additional member sites can be added in.  These sites must first be <a href="#adding-a-new-organisation">listed as an organisation in AMY</a>.</p>
+<h4 id="membership-contacts">Membership Contacts<a class="headerlink" href="#membership-contacts" title="Permanent link">&para;</a></h4>
+<p>Once a new membership has been created, contact people can be assigned to the membership.  Contact people can have one of three roles:</p>
+<ul>
+<li><strong>Billing Contact</strong> Person responsible for contracts and invoicing.</li>
+<li><strong>Programmatic Contact</strong> Person responsible for coordination of workshops and instructor training</li>
+<li><strong>Trainer</strong> Person responsible for delivering instructor training</li>
+</ul>
+<p>When a new membership is created, a new field called <code>Persons</code> will display. Click <code>Edit</code> in this row to add or edit any contacts. Multiple contacts can have the same role; one contact can have both roles. Existing contacts will be listed here. These Persons must first be <a href="#adding-a-new-person">listed as a Person in AMY</a>.</p>
+<p><img alt="AMY Membership Contacts" src="../images/membership_persons.png" /></p>
+<h4 id="extending-membership-dates">Extending membership dates<a class="headerlink" href="#extending-membership-dates" title="Permanent link">&para;</a></h4>
+<p>If a membership is granted an extension to the membership date terms, do not change the original membership end date.  Instead, click the gray "Extend" button at the bottom of the membership view. Enter in the new membership end date.  The number of days of the extension will automatically be calculated.  Add in any comments, such as the context for the extension or a link to more information. Multiple extensions can be granted. The duration of the extension can be edited in the membership's edit view.  If a second extension is granted, do not edit the original. Instead, click on the gray "Extend" button again to enter in another extension.</p>
+<p><img alt="AMY Membership Extension Button" src="../images/membership_extension_button.png" /></p>
+<p><img alt="Record Membership Extension" src="../images/membership_extension.png" /></p>
+<h4 id="renewing-memberships">Renewing memberships<a class="headerlink" href="#renewing-memberships" title="Permanent link">&para;</a></h4>
+<p>When a member site renews a membership, do not create a new member record. Instead, click the green "Create new &amp; roll-over" button at the bottom of the membership view. A new member view will appear, with the following fields pre-populated. Any of these values can be edited.  A membership can be rolled over only once.</p>
+<ul>
+<li><strong>Name</strong>: Same as previous</li>
+<li><strong>Can this membership be publicized?</strong>: Same as previous</li>
+<li><strong>Variant</strong>: Same as previous</li>
+<li><strong>Agreement start</strong> and <strong>Agreement end</strong> Starts on end date of previous membership; ends one year from start</li>
+<li><strong>Contribution type</strong>: Same as previous</li>
+<li><strong>Instructor training seats and workshops allowed</strong>: Same as previous or standard amounts allowed for that membership</li>
+</ul>
+<p>This also includes the options to automatically copy over member organisations (for consortiums only) and copy over associated persons and their roles.</p>
+<p>The number of workshops or instructor training seats rolled over from the previous membership should be manually entered.  These workshop/instructor training seats counts will be reflected in the available counts for both the new and previous memberships.</p>
+<h3 id="adding-a-new-person">Adding a New Person<a class="headerlink" href="#adding-a-new-person" title="Permanent link">&para;</a></h3>
+<p>A Person record can be created by <a href="#accepting-trainee-applications">accepting an Instructor Training application</a> or a <a href="#creating-a-new-event-from-a-workshop-request">Workshop Request form</a>.  A Person record can also be created independent of this activity.  If a person's record does not exist in the database, it can be added individually or as part of a bulk upload.</p>
+<h4 id="adding-an-individual-person-record">Adding an Individual Person Record<a class="headerlink" href="#adding-an-individual-person-record" title="Permanent link">&para;</a></h4>
+<p>Select "New person" and enter in as much information as possible.  At minimum a personal name is required.  If the airport is not listed, it will need to be <a href="#adding-a-new-airport">added in</a>.</p>
+<p><img alt="AMY add new person" src="../images/new_person.png" /></p>
+<h4 id="adding-bulk-person-records">Adding Bulk Person Records<a class="headerlink" href="#adding-bulk-person-records" title="Permanent link">&para;</a></h4>
+<p><code>Person</code> records can also be added in bulk from a <code>.csv</code> file using the <code>Bulk add people</code> menu option in the  <code>New</code> menu at the top right or the <code>More</code> menu. Use the blank template to generate a well formed CSV noting each person's personal name, family name (optional), email address (optional), role, and associated event. Any additional information about the person must be entered manually.  <strong>Note: To bulk add records, the persons must have a role specified (instructor, helper, learner, host) associated with a specific event</strong>.  Because the <em>learner</em> role at an Instructor Training event requires a membership or open application affiliation, Instructor Training learner roles can not be bulk added.</p>
+<p><img alt="AMY bulk add person menu" src="../images/bulk_add_persons.png" /></p>
+<p>The column for role name must exactly match the <a href="https://amy.carpentries.org/workshops/persons/bulk_upload/">instructions here</a>. The event slug must exactly match the slug for the event recorded in AMY. This may include invisible space characters.</p>
+<p>This will take you to a screen where you can verify each record, correct any errors, and submit them for bulk upload.  If a person with the same name and email already exists in the database, you will be able to match the new entry to the existing record.  Otherwise a new person record will be created.</p>
+<h4 id="consents">Consents<a class="headerlink" href="#consents" title="Permanent link">&para;</a></h4>
+<p>AMY asks all users for the following consents:</p>
+<p><strong>Mandatory consents:</strong></p>
+<ul>
+<li>I have read and agree to the <a href="https://docs.carpentries.org/policies/privacy.html">privacy policy of The Carpentries</a>.</li>
+<li>I acknowledge that I am at least 16 years old.</li>
+<li>Do you agree to the transfer of your data outside of the European Economic Area/United Kingdom?</li>
+</ul>
+<p><strong>Optional consents:</strong></p>
+<ul>
+<li>Can we contact you for volunteering opportunities, surveys, feedback, etc.?</li>
+<li>Do you consent to publish your profile on The Carpentries website?</li>
+<li>Do you consent to have your name or identity associated with lesson publications?</li>
+</ul>
+<p>By default, all consents have null values (i.e., neither yes nor no). After a Person's record has been created, the individual can log in to AMY and edit their own consents. Admin users may also make these edits on behalf of the user, but this should be used only in rare circumstances. Consents are edited in the "Consents" tab in the Person view. This tab also shows the full consent history for the Person.</p>
+<p>Some of the questions above are also asked during the <a href="https://amy.carpentries.org/forms/request_training/">instructor training application</a>. If a <a href="#accepting-trainee-applications">Person record is created from a training request</a>, the consents from that training request will be carried across to the Person.</p>
+<h3 id="adding-a-new-airport">Adding a New Airport<a class="headerlink" href="#adding-a-new-airport" title="Permanent link">&para;</a></h3>
+<p>Airports are used as approximate geographic identifiers for our instructors.  Instructors can self-select the airport closest to them or the airport they most frequently use. Instructors can select an airport only after it has been added to AMY by an admin.  Each airport is identified by its three character IATA code which can be looked up using <a href="https://www.world-airport-codes.com/">the link in AMY</a>.</p>
+<p>Enter in the airport's IATA code, full name, country, and latitude and longitude.</p>
+<p><img alt="AMY add airport" src="../images/new_airport.png" /></p>
+<h3 id="adding-a-new-event">Adding a New Event<a class="headerlink" href="#adding-a-new-event" title="Permanent link">&para;</a></h3>
+<p>New events can be created one of several ways:</p>
+<ul>
+<li><a href="#creating-a-new-event-manually">Create a new event manually</a></li>
+<li><a href="#creating-a-new-event-from-url">Create a new event from URL</a></li>
+<li><a href="#creating-a-new-event-from-a-workshop-request">Create a new event from workshop request</a></li>
+</ul>
+<p>Regardless of how an event is created, roles such as Instructor, Host, and helper can be <a href="#assigning-people-to-events">assigned</a> after the event is created and saved.</p>
+<h4 id="creating-a-new-event-manually">Creating a New Event Manually<a class="headerlink" href="#creating-a-new-event-manually" title="Permanent link">&para;</a></h4>
+<p>Go to the <a href="https://amy.carpentries.org/workshops/events/add/">New Event</a> page by clicking on <code>New &gt;&gt; New Event</code> in the top right corner, or clicking on the <code>New Event</code> button on the <a href="https://amy.carpentries.org/workshops/events/">Events listing page</a>.</p>
+<p><img alt="AMY new event" src="../images/new_event.png" /></p>
+<p><a href="#event-fields">All fields</a> will need to be manually entered in.</p>
+<h4 id="creating-a-new-event-from-url">Creating a New Event from URL<a class="headerlink" href="#creating-a-new-event-from-url" title="Permanent link">&para;</a></h4>
+<p>If you already have the event's URL with properly formatted metadata using <a href="https://github.com/carpentries/workshop-template">The Carpentries workshop template</a>, some information can automatically be imported.  Go to the <a href="https://amy.carpentries.org/workshops/events/add/">New Event</a> page by clicking on <code>New &gt;&gt; New Event</code> in the top right corner, or clicking on the <code>New Event</code> button on the <a href="https://amy.carpentries.org/workshops/events/">Events listing page</a>.  Click on the "Import from URL" button and enter the link to the workshop website OR GitHub URL.</p>
+<p><img alt="AMY new event from URL" src="../images/new_event_from_url.png" /></p>
+<p>If the website repo contained properly formatted data, the slug, start/end dates, and location may automatically be populated. <a href="#event-fields">All other fields</a> will need to be manually entered in.</p>
+<p>Instructor and helper names will be in the notes field but not assigned in the database.</p>
+<h4 id="creating-a-new-event-from-a-workshop-request">Creating a New Event from a Workshop Request<a class="headerlink" href="#creating-a-new-event-from-a-workshop-request" title="Permanent link">&para;</a></h4>
+<p>A workshop can be requested from a host site, and this information can be used to create an event in AMY. In the "Requests" menu, select one of the following options:</p>
+<ul>
+<li>Workshop requests</li>
+<li>Workshop inquiries</li>
+<li>Self-Organised submissions</li>
+</ul>
+<p><img alt="AMY workshop requests" src="../images/workshop_requests_menu.png" /></p>
+<p>This will take you to a summary view of the workshop requests, workshop inquiries, or self-organised submissions.  Click on the "information" icon at the right of each row to see more details.</p>
+<p><img alt="AMY workshop request list" src="../images/workshop_requests.png" /></p>
+<p>At the bottom of the request information page, the user has the option to accept or discard the request. All requests should be accepted (unless spam or otherwise inappropriate) so The Carpentries can maintain a history of workshop requests. Events can later be tagged as stalled or cancelled. Choosing "Change state to Accepted" will mark it as accepted in the workshop request list but will not create a new event. Select "Accept and create a new event" to create a new event from this request.</p>
+<p>This will open a page with a side by side view of the request details and view to create a new event, similar to the general new event page. The new event can be created <a href="#creating-a-new-event-manually">manually</a> or if available, <a href="#creating-a-new-event-from-url">from the URL</a>, as described above.</p>
+<p><img alt="AMY workshop accept request" src="../images/event_from_request.png" /></p>
+<h4 id="event-fields">Event fields<a class="headerlink" href="#event-fields" title="Permanent link">&para;</a></h4>
+<ul>
+<li>
+<p><strong>Slug</strong> Create the workshop slug. This must be in the form <code>YYYY-MM-DD-sitename</code> (for example, <code>2018-01-01-hawkins</code>.  The same slug should be used for the workshop's GitHub page and any other place the workshop is identified. If the exact date is not known, <code>XX</code> can replace the month and/or day (for example, <code>2018-01-xx-starfleet</code>).</p>
+</li>
+<li>
+<p><strong>Workshop Dates</strong> If known, enter in the workshop start and dates.</p>
+</li>
+<li>
+<p><strong>Completed</strong> Do not check the "Completed" box yet -- this will be checked after the workshop is over to indicate all associated wrap up work is finished.</p>
+</li>
+<li>
+<p><strong>Host</strong> Select the Host name from the drop down menu. The Host is the institution where the workshop is actually being held (or would be held for online workshops). If the Host does not appear on the list, <a href="#adding-a-new-organization">create a new organisation</a>.</p>
+</li>
+<li>
+<p><strong>Sponsor</strong> Select the Sponsor name from the drop down menu.  The Sponsor is the institution responsible for funding or organising the workshop and is often the same as the Host.</p>
+</li>
+<li>
+<p><strong>Membership</strong> Select the Membership this event should be applied to, by membership term and membership dates.</p>
+</li>
+<li>
+<p><strong>Administrator</strong> Select the administrator from the drop down menu.  This will always be  <code>Data Carpentry</code>, <code>Library Carpentry</code>, <code>Software Carpentry</code>,  <code>Instructor Training</code>, <code>Collaborative Lesson Development Training</code> or <code>Self-Organised</code>.</p>
+</li>
+<li>
+<p><strong>Is this workshop public</strong> If the workshop Host consents, choose "Public." This will list the workshop on the websites for The Carpentries, the associated lesson programs, and <a href="https://feeds.carpentries.org/">The Carpentries data feeds</a>.  If "Private" it will not be listed publicly anywhere.</p>
+</li>
+<li>
+<p><strong>Assigned to</strong> Select the name of The Carpentries team member responsible for managing this workshop.  Only AMY admin users appear in this list.  This assignment is used in the views throught AMY.</p>
+</li>
+<li>
+<p><strong>Event Tags</strong>  Tags are used for several purposes as noted below, including event type, event status, lesson program, event status, and administrative attributes. Multiple tags can be selected for any event.</p>
+<ul>
+<li><em>automated-email</em>: Administrative. Automated emails are sent only for workshops with this tag.</li>
+<li><em>DC</em>: Lesson Program. Identifies workshops teaching from Data Carpentry curricula.</li>
+<li><em>LC</em>: Lesson Program. Identifies workshops teaching from Library Carpentry curricula.</li>
+<li><em>SWC</em>: Lesson Program. Identifies workshops teaching from Software Carpentry curricula.</li>
+<li><em>Circuits</em>: Lesson Program.  Identifies "mix and match" workshops teaching across lesson programs.</li>
+<li><em>online</em>: Administrative. Identifies workshops taking place on line.</li>
+<li><em>TTT</em>: Event type. Identifies Instructor Training events.</li>
+<li><em>ITT</em>: Event type. Identifies Trainer Training events.</li>
+<li><em>CLDT</em> Event type.  Identifies Collaborative Lesson Development Training events.</li>
+<li><em>Pilot</em>: Event type. Identifies workshops teaching pilot curricula.</li>
+<li><em>for-profit</em>: Administrative. Identifies workshops run by for-profit institutions.</li>
+<li><em>Scholarship</em>: Administrative. Identifies sponsored workshops.</li>
+<li><em>private-event</em>: Deprecated. Formerly used before explicit private/public field existed.</li>
+<li><em>cancelled</em>: Event status. Identifies workshops that got canceled after they were fully scheduled.</li>
+<li><em>unresponsive</em>: Event status. Identifies workshops whose Hosts/Instructors are not sending attendance data.</li>
+<li><em>stalled</em>: Event status. Identifies workshops where planning began but workshops did not happen.</li>
+<li><em>LMO</em>: Event type.  Identifies Lesson Maintainer Onboarding sessions (for Lesson Maintainers).</li>
+<li><em>LSO</em>: Event type.  Identifies Lesson Specific Onboarding sessions (for Instructors).</li>
+<li><em>hackathon</em>: Event type.</li>
+<li><em>WiSE</em>: Event audience. Identifies workshops for Women in Science and Engineering.
+<br></li>
+</ul>
+</li>
+<li>
+<p><strong>TTT Open applications</strong> For instructor training events only, member sites become associated with the event as individuals from that member site are assigned to that event. Checking this box will allow people from the open application pool to be matched to this event as well.  This box is automatically checked for events with the <code>TTT</code> tag.</p>
+</li>
+<li>
+<p><strong>Curricula taught at the workshop</strong> Select the curricula taught at this workshop.</p>
+</li>
+<li>
+<p><strong>Lessons covered</strong> <em>Placeholder section for lessons covered</em></p>
+</li>
+<li>
+<p><strong>URL</strong> Enter in the workshop's url (to the website, not the repo). This is generally in the format <code>https://username.github.io/YYYY-MM-DD-sitename</code>.  It is created using the <a href="https://github.com/carpentries/workshop-template">template in this GitHub repo</a>.</p>
+</li>
+<li>
+<p><strong>Language</strong>  Enter in the human language the workshop is taught in. This is especially important for The Carpentries to track workshops in languages other than English.</p>
+</li>
+<li>
+<p><strong>Eventbrite</strong>  If the workshop is using The Carpentries Eventbrite for registration, enter the Eventbrite key. This is not needed if the host site is using their own Eventbrite account or any other registration system.</p>
+</li>
+<li>
+<p><strong>Manual Attendance</strong>   After the event is over, record the total number of learners who attended the workshop.  This is compared to the count of learner tasks at that event.  In the end, the higher value will be displayed.  Note The Carpentries does not currently maintain attendance data on its workshops.</p>
+</li>
+<li>
+<p><strong>Additional people to contact</strong>  Enter only email addresses for any additional contact people for this event. This is intended for people who do not have an official role (Host, Instructor, etc.) at the workshop.  Enter emails addresses, one at a time.  These individuals do not need a Person record in AMY.  They will be included on any automated emails.</p>
+</li>
+<li>
+<p><strong>Location details</strong>  Add in the location including the country, venue name, address, and latitude/longitude coordinates.</p>
+</li>
+<li>
+<p><strong>Comment</strong>  Add in any other notes that may not be covered in any fields above.  This will be transformed into a timestamped notes log once the event is saved.  Comments can be formatted in Markdown.</p>
+</li>
+</ul>
+<h3 id="recruiting-instructors-for-workshops">Recruiting Instructors for Workshops<a class="headerlink" href="#recruiting-instructors-for-workshops" title="Permanent link">&para;</a></h3>
+<p>AMY admins can create a sign up process for badged and active Instructors to express interest in teaching opportunities. The following criteria must be met to begin the instructor signup process:</p>
+<ul>
+<li>Centrally-Organised workshop</li>
+<li>Start date in future</li>
+<li>Complete location information</li>
+</ul>
+<p>Once these criteria are met, the admin will see an option to begin the Instructor signup (selection) process:</p>
+<p><img alt="AMY workshop begin signup process" src="../images/begin_instructor_signup.png" /></p>
+<p>You will then be taken to a screen to add in more information about this workshop.  A priority can be automatically assigned based on how far out the workshop is.  This priority can be changed here. You can also share additional notes such as a description of the workshop audience, COVID policy, or other information.  Click "Add sign up page" to add this to the sign up page visible to badged and active Instructors.</p>
+<p>Automatic priority is defined as follows:</p>
+<ul>
+<li>For online events: <strong>LOW</strong> if start &gt;= 60 days; <strong>MEDIUM</strong> if start &gt; 30 days; <strong>HIGH</strong> otherwise.</li>
+<li>For in-person events: <strong>LOW</strong> if start &gt;= 90 days; <strong>MEDIUM</strong> if start &gt; 60 days; <strong>HIGH</strong> otherwise.</li>
+</ul>
+<p><img alt="AMY workshop signup info" src="../images/instructor_signup_details.png" /></p>
+<p>At this point, the workshop will be available for badged and active Instructors to <a href="../community_index/#viewing-teaching-opportunities">view and consider</a>.</p>
+<p>As Instructors register their interest, an admin can track their status from the event page itself to view details of just that workshop, or by selecting the "More &gt;&gt; Instructor selection/recruitment" menu option.  The next screen will show who has signed up so far, a summary of their activity as a Helper and Instructor; the Instructor's country; and notes left by the Instructor.</p>
+<p>The admin can edit their own notes for each person using the blue edit button, and confirm or decline the Instructor to teach using the confirm or decline buttons.  Once an Instructor has been confirmed in this way, an Instructor task is automatically created for this individual.</p>
+<p>Once at least two Instructors have been confirmed, the admin may close signups for this workshop.  This workshop will then no longer appear on the list of Instructor opportunities.</p>
+<p><img alt="AMY workshop signup summary" src="../images/instructor_signup_status_view.png" /></p>
+<h3 id="assigning-people-to-events">Assigning People to Events<a class="headerlink" href="#assigning-people-to-events" title="Permanent link">&para;</a></h3>
+<p>Regardless of how events are created, adding the people associated with each event can not easily be automated. <a href="http://www.kalzumeus.com/2010/06/17/falsehoods-programmers-believe-about-names/">Name matching is hard</a>.</p>
+<p>People can be associated with events one by one or as a bulk upload.  The person must already <a href="#adding-a-new-person">be in AMY</a> before assigning them to a role at an event.  If an Instructor is assigned via the Instructor Recruitment process, the Instructor role is automatically assigned.</p>
+<h4 id="assigning-people-to-events-one-by-one">Assigning People to Events, One by One<a class="headerlink" href="#assigning-people-to-events-one-by-one" title="Permanent link">&para;</a></h4>
+<p>Go to the event page and click the "Edit" button at the top of the page.  Select the "Tasks" tab.</p>
+<p><img alt="Assign person to task" src="../images/assign_person_task.png" /></p>
+<p>Fill in the following fields:</p>
+<ul>
+<li><strong>Person</strong> Start typing in the person's name.  Auto-completed suggested names will appear.</li>
+<li><strong>Role</strong> Add the person's role in the event (Helper, Instructor, Supporting Instructor, Workshop Host, Learner, Workshop Organiser. Contributed to Lesson Materials is not used in this context.).</li>
+<li><strong>Title</strong> and <strong>URL</strong> are not used in this context.</li>
+</ul>
+<p>If a person's name does not appear in the dropdown, they will need to be <a href="#adding-a-new-person">added to the database</a>.</p>
+<p>If this is a learner role at an Instructor Training event, the following fields should also be filled in.  These fields apply only to Instructor Training, and can be left blank for other types of events.</p>
+<ul>
+<li><strong>Associated member site in TTT event</strong> Note the membership (institution name and membership year) that this seat should be assigned to.</li>
+<li><strong>Count seat as public or in-house?</strong> Note whether the learner seat should be counted as public or inhouse.  Most seats will be public. Inhouse only applies to select Platinum level memberships.</li>
+<li><strong>Open training seat</strong> Note whether this learner came through our open program, and is not affiliated with a member site.</li>
+</ul>
+<p>Click "Submit" to save your changes.</p>
+<p>Below this form, a list of all people assigned to this event is displayed, with three options at the end of the row.</p>
+<ul>
+<li><strong>"i" icon</strong> opens a detailed view of this Person's role at this event</li>
+<li><strong>pencil icon</strong> opens an edit view of this Person's role at this event</li>
+<li><strong>red X icon</strong> deletes this Person's role at this event</li>
+</ul>
+<p><img alt="Manage person tasks" src="../images/manage_person_tasks.png" /></p>
+<h4 id="assigning-people-to-events-in-bulk">Assigning People to Events in Bulk<a class="headerlink" href="#assigning-people-to-events-in-bulk" title="Permanent link">&para;</a></h4>
+<p>See <a href="#adding-bulk-person-records">section above</a>.</p>
+<h3 id="instructor-training">Instructor Training<a class="headerlink" href="#instructor-training" title="Permanent link">&para;</a></h3>
+<h4 id="accepting-trainee-applications">Accepting Trainee Applications<a class="headerlink" href="#accepting-trainee-applications" title="Permanent link">&para;</a></h4>
+<p>In addition to tracking workshops, AMY also allows us to track applications to instructor training events. <a href="https://amy.carpentries.org/forms/request_training/">The public facing application is here</a>. Applicants are given a registration code if participating in a member training event and should select "Profile Creation for Pre-approved Trainees" using this code. Open applicants will not have a registration code.</p>
+<p>Once an individual submits the form, they receive an email that confirms their application has been received and includes a copy of the individual's responses. An admin user can then view the record by going to Requests --&gt; <a href="https://amy.carpentries.org/requests/training_requests/">Training Requests</a>.</p>
+<p><img alt="Training request menu" src="../images/training_request_menu.png" /></p>
+<p>This will display a list of all applications that are <em>Pending or Accepted</em> and <em>Unmatched</em> to an existing person. Applications can then be searched by individual name, email address, group (registration code), status (pending, accepted, discarded, or withdrawn), affiliation, or location.  Affiliation and location searches rely on text strings, so <em>UCLA</em> will not return <em>University of California Los Angeles</em> and <em>Joburg ZA</em> will not return <em>Johannesburg</em> or <em>South Africa</em>.</p>
+<p><img alt="Training request list view" src="../images/amy_training_requests.png" /></p>
+<p>Some trainees will already be in AMY. If there is a record with a matching name and email address, they will show up with a "matched trainee" when you search for them. You can match the application to this trainee, or if the match was incorrect, search for a different Person record or create a new Person.</p>
+<p><img alt="Match trainee to person" src="../images/match_trainee.png" /></p>
+<p>If "matched trainee" is blank, it means a match was not found.  If you think a match exists, you can search for it.  Otherwise, you will need to create a new person record for them.  If you know this person is in AMY under a different name or email address, look this person up here and click "Match to selected trainee account."  If this is a new person, click "Create new trainee account."  This will create a new Person record for that trainee.</p>
+<p><img alt="AMY Trainee no match" src="../images/trainee_no_match.png" /></p>
+<p>This will return you to the <a href="https://amy.carpentries.org/requests/training_requests/">instructor training application search screen</a>, and this person's record will be updated with the new trainee account.</p>
+<p>Continue doing this until all relevant applications have a new trainee account. This must be done individually; it can not be done in bulk.</p>
+<p>Once all trainees for a given event have trainee accounts, we can assign them to a specific training event and associate them with a specific member contract. This part can be done in bulk for each group of trainees with a unique training date and member site affiliation. The <a href="#adding-a-new-event">event</a> and the <a href="#memberships">member agreement</a> must already have been created in AMY.</p>
+<p>Check all the names to be assigned to the training event and membership, and then select the training event from the first drop down menu.  Select the member agreement from the second drop down menu. If the trainees are coming through the open application process rather than a member agreement, check this box instead of choosing a member agreement.</p>
+<p>Click "Accept &amp; match selected trainees to chosen training." The search screen will then update to show that the trainees have been matched to this event. The event page will also update to list these trainees as learners at that event.</p>
+<p><img alt="Match trainees to instructor training event" src="../images/assign_trainees_event_membership.png" /></p>
+<h4 id="tracking-checkout-progress">Tracking Checkout Progress<a class="headerlink" href="#tracking-checkout-progress" title="Permanent link">&para;</a></h4>
+<p>The above steps note that a trainee was accepted in to a training event. Completion of the training event and <a href="https://carpentries.github.io/instructor-training/checkout.html">three steps towards trainee checkout</a> can be tracked in AMY.</p>
+<p>A list of all current trainees and their progress can be seen on the "Trainees" page under the "More" menu.</p>
+<p><img alt="Trainees link under More menu" src="../images/trainees_menu.png" /></p>
+<p><img alt="All trainees page" src="../images/all_trainees.png" /></p>
+<p>The colour of each item represents its state:</p>
+<ul>
+<li>Green: Passed</li>
+<li>Blue: Asked to repeat</li>
+<li>Yellow: Not evaluated yet</li>
+<li>Red: Failed</li>
+</ul>
+<p>Hover over any item to see more information about it, including its state, date, and any notes.</p>
+<p>Click on the plus sign next to a trainee's progress to track a new step for that trainee. Click on the "information" or "pencil" icon at the right of each row to view or edit the trainee's profile.</p>
+<p>Each person's individual record also has a line for Instructor Training Progress, where these steps can be tracked and edited in the same way.</p>
+<p>Individuals may have multiple entries for any step, especially if they were asked to repeat.  Do not edit the previous step; create a new entry if they repeat a step.</p>
+<p><img alt="AMY checkout progress in instructor profile" src="../images/instructor_training_progress.png" /></p>
+<p>Again, hover over any item to see more information, or click the plus sign to add another item.</p>
+<h4 id="adding-checkout-progress-one-by-one">Adding checkout progress one by one<a class="headerlink" href="#adding-checkout-progress-one-by-one" title="Permanent link">&para;</a></h4>
+<p>Click the plus sign in the "Trainees" page or an individual person's record to add a new progress item.</p>
+<p><img alt="AMY checkout progress steps" src="../images/new_training_progress.png" /></p>
+<ul>
+<li><strong>Trainee</strong> The page will pre-fill the trainee if possible. Otherwise, start typing in the person's name.  Auto-completed suggested names will appear.</li>
+<li><strong>Type</strong> This will be the training event (Training), the welcome session (Welcome Session), the teaching demo (Demo), or a community contribution (Get Involved). When a choice is made, additional fields may appear (see below).</li>
+<li><strong>State</strong> For the checkout type noted above, indicate if the trainee passed, was asked to repeat, or failed.  Failed should only be used in extreme circumstances.</li>
+<li><strong>Notes</strong> Any free notes from the admin. Notes are required if the state is set to Failed, or if certain Get Involved activities have been selected (<a href="../community_index/#information-required-for-each-get-involved-activity">see table</a>).</li>
+</ul>
+<p>Additional fields will appear depending on the Type selection:</p>
+<ul>
+<li><strong>Event</strong> The training event that the trainee attended. The trainee should have a learner task at this event (see <a href="#assigning-people-to-events">Assigning people to events</a>). This field is only required when <strong>Type</strong> is set to Training.</li>
+<li><strong>Get Involved activity</strong> The activity that the trainee completed for the Get Involved step. This field is only required when <strong>Type</strong> is set to Get Involved.
+Each activity, when selected, requires some or all of the <strong>URL</strong>, <strong>Date</strong>, and <strong>Notes</strong> fields to be filled as well. The community user guide contains a <a href="../community_index/#information-required-for-each-get-involved-activity">table of these requirements</a>. When you submit the form, the form will check that the correct fields have been filled and tell you if changes are needed.</li>
+<li><strong>URL</strong> A URL to a GitHub contribution, workshop website, or other contribution. This field is only required for some Get Involved activities (<a href="../community_index/#information-required-for-each-get-involved-activity">see table</a>).</li>
+<li><strong>Date</strong> The date of the activity (not the date of submission). If the activity took place across multiple days, use the first day. This field is required for all Get Involved activities (<a href="../community_index/#information-required-for-each-get-involved-activity">see table</a>).</li>
+</ul>
+<h4 id="adding-checkout-progress-in-bulk">Adding checkout progress in bulk<a class="headerlink" href="#adding-checkout-progress-in-bulk" title="Permanent link">&para;</a></h4>
+<p>Checkout progress can only be added in bulk if <strong>all selected Trainees</strong> have the exact same information for that checkout step (i.e., the same status for the same event). <a href="#evaluating-get-involved-submissions">"Get Involved" submissions</a> can not be accepted in bulk. Go to the "Trainees" page under the "More" menu.</p>
+<p>To add the same step to many trainees, select the relevant trainees using the checkboxes on the left of each row, then complete the form at the bottom of the page. This form has the same fields as the <a href="#adding-checkout-progress-one-by-one">individual progress form</a>, minus the <strong>Trainee</strong> field. When the form is submitted, an identical item will be added to each selected trainee.</p>
+<p><img alt="Bulk add checkout progress form" src="../images/bulk_add_progress.png" /></p>
+<h4 id="updating-and-deleting-checkout-progress">Updating and deleting checkout progress<a class="headerlink" href="#updating-and-deleting-checkout-progress" title="Permanent link">&para;</a></h4>
+<p>Click on any progress item in the "Trainees" view or a person's individual record to view and update the details of that item. On the update page, there is also a "Delete" button in the top right, which will remove the item completely.</p>
+<p>Items cannot be updated or deleted in bulk.</p>
+<h4 id="evaluating-get-involved-submissions">Evaluating Get Involved submissions<a class="headerlink" href="#evaluating-get-involved-submissions" title="Permanent link">&para;</a></h4>
+<p>Trainees may submit a contribution for the Get Involved checkout step through the instructor dashboard - see the <a href="../community_index/#submitting-your-get-involved-step">community user guide</a> to understand how their side of the submission works.</p>
+<p>Submissions must be evaluated by an administrator to ensure that the contribution is valid.</p>
+<p>In the "Trainees" page (under the "More" menu), select the filter "Only trainees with unevaluated Get Involved submission" in the left sidebar, then click "Submit" at the bottom of the sidebar. This will <a href="https://amy.carpentries.org/trainings/trainees/?search=&amp;get_involved=on&amp;is_instructor=&amp;training=&amp;training_request=unknown&amp;order_by=">update the page to show only trainees awaiting evaluation</a>.</p>
+<p><img alt="Trainees with unevaluated submissions" src="../images/trainees_with_unevaluated_submissions.png" /></p>
+<p>The relevant items are shown with a yellow background, which represents the "Not evaluated yet" state. Clicking on any of these items takes you to view the details of the submission and update its state. Notice there is an extra non-editable field: <strong>Trainee notes</strong>, which contains information provided by the trainee as part of their submission. Change this selection to "Passed" if this is a valid contribution.  Otherwise, change this to "Asked to repeat" and contact the individual to inform them.</p>
+<p><img alt="Progress edit page" src="../images/evaluate_get_involved_submission.png" /></p>
+<h4 id="issuing-instructor-badge">Issuing Instructor Badge<a class="headerlink" href="#issuing-instructor-badge" title="Permanent link">&para;</a></h4>
+<p>The Instructor badge can be issued through a person's record (see <a href="#issuing-badges">Issuing Badges</a>) or through the Trainees page.</p>
+<p>On the Trainees page, the <strong>Eligible</strong> column shows whether the trainee has passed all checkout steps and is eligible for an instructor badge. If the trainee is eligible, the "instructor badge" button will appear green and can be clicked to award the badge. If the trainee is not eligible, the button appears grey and the text is struck through.</p>
+<p><img alt="Trainees page with instructor eligibility highlighted" src="../images/trainees_eligible_instructor.png" /></p>
+<p>This list can also be filtered to only display trainees eligible to be certified using the left side menu.</p>
+<p><img alt="Traainees page with instructor eligibility filter" src="../images/filter_eligible_certification.png" /></p>
+<p>If eligible, clicking the green "instructor badge" button on that person's row takes you to a screen where the details of the badge can be added. See <a href="#issuing-badges">Issuing Badges</a> for guidance on completing this form. The <strong>Person</strong> and <strong>Event</strong> fields will be pre-filled.</p>
+<h3 id="issuing-badges">Issuing Badges<a class="headerlink" href="#issuing-badges" title="Permanent link">&para;</a></h3>
+<p>The Carpentries has various badges that can be issued, including Instructor, Trainer, Maintainer, and more.</p>
+<p>An individual badge can be issued by going to a person's record and clicking the <code>Edit</code> button.  Choose the <code>Awards</code> tab on the next screen.</p>
+<ul>
+<li><strong>Badge</strong> The specific badge that is being awarded</li>
+<li><strong>Awarded</strong> The date the badge is being awarded on</li>
+<li><strong>Event</strong> Used only if the badge was offered after an event, such as Instructor Training or Maintainer Onboarding</li>
+<li><strong>Awarded by</strong> The admin user awarding the badge.  Not required.</li>
+</ul>
+<p><img alt="AMY issue badge" src="../images/issuing_badges.png" /></p>
+<h3 id="reports">Reports<a class="headerlink" href="#reports" title="Permanent link">&para;</a></h3>
+<p>AMY comes with several built in reporting features that can be accessed by clicking <code>Reports</code> in the top menu.</p>
+<ul>
+<li><strong><a href="https://amy.carpentries.org/reports/membership_trainings_stats/">Membership training statistics</a></strong> Lists all memberships by variant, agreement dates, contribution type, and total/used/remaining instructor training seats (inhouse and public)</li>
+<li><strong><a href="https://amy.carpentries.org/reports/workshop_issues/">Workshop issues</a></strong> and <strong><a href="https://amy.carpentries.org/reports/instructor_issues/">Instructor issues</a></strong> identify specific workshops and instructors with gaps in data.</li>
+<li><strong><a href="https://amy.carpentries.org/reports/duplicate_persons/">Find duplicate persons</a></strong> and <strong><a href="https://amy.carpentries.org/reports/duplicate_training_requests/">Find duplicate training requests</a></strong> identifies Persons or Training Requests that may be listed as duplicates due to having the same name or email address, and allows the user to merge them. <a href="#merging-duplicate-persons-training-requests-or-events">Read more on how to merge duplicates</a></li>
+</ul>
+<h3 id="user-and-administrator-roles">User and Administrator Roles<a class="headerlink" href="#user-and-administrator-roles" title="Permanent link">&para;</a></h3>
+<p>What you are able to edit or view depends on your assigned role as a user or administrator in AMY.</p>
+<h4 id="instructor-login">Instructor Login<a class="headerlink" href="#instructor-login" title="Permanent link">&para;</a></h4>
+<p>Instructors can log in to AMY to view and update their own information. To do so, they must have a valid GitHub username in their profile. Instructors should visit the <a href="https://amy.carpentries.org/account/login/">AMY login page</a> and click on <code>Log in with your GitHub account</code>.  More information for the user can be found in the <a href="../community_index/">community users guide</a>.</p>
+<p>If an instructor is having trouble logging in, an administrator can verify the following information.</p>
+<ul>
+<li>Be sure the GitHub user name is accurate.</li>
+<li>Click on <code>Change permissions</code> and be sure <code>Is active</code> is checked. No other permissions should be checked unless the instructor is also an otherwise authorised user.</li>
+<li><code>Logging in allowed</code> should show next to the GitHub name in the profile. If it says <code>Allow logging in with GitHub</code>, click this to allow logging in. This must be done <strong>after</strong> setting permissions to active above.</li>
+</ul>
+<h4 id="admin-roles">Admin Roles<a class="headerlink" href="#admin-roles" title="Permanent link">&para;</a></h4>
+<p>Admin users will have rights to view and edit many other parts of the AMY database.  The Django admin panel can be accessed from the top right menu, under the user's name, generating a unique URL for the session.</p>
+<p>An admin user can view their profile as if they were an ordinary user on <a href="https://amy.carpentries.org/dashboard/instructor/">this dashboard page</a>.</p>
+<h3 id="automated-emails">Automated emails<a class="headerlink" href="#automated-emails" title="Permanent link">&para;</a></h3>
+<p>AMY sends automated emails for membership, instructor training, and workshop administration. This system was completely revamped in October 2024.</p>
+<p><a href="https://amy.carpentries.org/emails/templates/">Email templates</a> and <a href="https://amy.carpentries.org/emails/scheduled_emails/">status of scheduled emails</a> can be viewed directly through the user interface under the "More" menu.  Not all templated emails are currently active.</p>
+<p>Email recipients, schedule, and conditions are all set in the AMY codebase.  All automated emails depend on recipients having a valid email address in AMY.</p>
+<p>From, Reply to, CC, and BCC are all set in the AMY interface.  The email subject and body are also set in the AMY interface. These fields can all be modified by admin users at any time.</p>
+<h4 id="active-emails-workshops">Active emails (Workshops)<a class="headerlink" href="#active-emails-workshops" title="Permanent link">&para;</a></h4>
+<details class="abstract">
+<summary>Admin Signs Instructor Up for Workshop</summary>
+<p><a href="https://amy.carpentries.org/emails/template/53209bdb-fbd2-4620-988b-16703d38a083/">View in AMY</a>
+<strong>Email description:</strong>  Send email to Instructor informing them the admin has signed them up as interested in teaching a workshop
+<strong>Sent to:</strong>  Instructor
+<strong>Date sent:</strong>   One hour after admin action</p>
+</details>
+<details class="abstract">
+<summary>Ask for website</summary>
+<p><a href="https://amy.carpentries.org/emails/template/8b29643c-d4f2-4b58-bc3c-5ebc4ff3d7b4/">View in AMY</a>
+<strong>Email description:</strong>  Send email to workshop Instructors reminding them to send us workshop website link
+<strong>Sent to:</strong>  Instructors
+<strong>Date sent:</strong>  One month before event start
+<strong>Conditions:</strong> Has administrator; Has at least one Instructor; Tagged SWC/DC/LC; Start date in future; not stalled/cancelled/unresponsive; Missing website</p>
+</details>
+<details class="abstract">
+<summary>Host-instructors introduction</summary>
+<p><a href="https://amy.carpentries.org/emails/template/fb7286a4-e4a1-4d92-81b8-33e698170178/">View in AMY</a>
+<strong>Email description:</strong>  Send email introducing workshop Hosts &amp; Instructors providing general information
+<strong>Sent to:</strong>  Instructors and Hosts
+<strong>Date sent:</strong>  Immediately after conditions are met
+<strong>Conditions:</strong> Centrally-Organised; Instructor recruitment closed; Not stalled/cancelled; Has at least two Instructors; Has host; Tagged SWC/DC/LC; At least seven days in future</p>
+</details>
+<details class="abstract">
+<summary>Instructor confirmed for workshop</summary>
+<p><a href="https://amy.carpentries.org/emails/template/ba2d0130-d123-402d-97d5-8818b72af963/">View in AMY</a>
+<strong>Email description:</strong> Emails instructor to confirm they have been assigned to a workshop
+<strong>Sent to:</strong>  Instructor
+<strong>Date sent:</strong> One hour after conditions are met
+<strong>Conditions:</strong> Instructor task created (either through recruitment process or manual data entry); Tagged SWC/DC/LC; Centrally-Organised; Start date in future</p>
+</details>
+<details class="abstract">
+<summary>Instructor declined for workshop</summary>
+<p><a href="https://amy.carpentries.org/emails/template/be7a8e81-d4fb-47c1-b78f-1e5f809bc128/">View in AMY</a>
+<strong>Email description:</strong> Emails instructor to inform them they have not been assigned to a workshop
+<strong>Sent to:</strong>  Instructor
+<strong>Date sent:</strong> One hour after conditions are met
+<strong>Conditions:</strong> Instructor declined in recruitment process</p>
+</details>
+<details class="abstract">
+<summary>Instructor Signs Up for Workshop</summary>
+<p><a href="https://amy.carpentries.org/emails/template/43754daa-c312-41db-a0f6-00ac4f88bafd/">View in AMY</a>
+<strong>Email description:</strong> Emails instructor to confirm they have expressed interest in a workshop
+<strong>Sent to:</strong>  Instructor
+<strong>Date sent:</strong> One hour after conditions are met
+<strong>Conditions:</strong> Instructor signs up in recruitment process</p>
+</details>
+<details class="abstract">
+<summary>New Self-Organised Workshop</summary>
+<p><a href="https://amy.carpentries.org/emails/template/f967122e-55a8-483e-a571-c3dff43dd33e/">View in AMY</a>
+<strong>Email description:</strong> Emails Self-Organised workshop host to confirm their submission has been accepted
+<strong>Sent to:</strong>  Contacts from Self-Organised Workshop submission form
+<strong>Date sent:</strong> One hour after conditions are met
+<strong>Conditions:</strong> Self organized submission form accepted and linked to event; start date in future; not stalled/cancelled/unresponsive;</p>
+</details>
+<details class="abstract">
+<summary>Post Workshop 7 days</summary>
+<p><a href="https://amy.carpentries.org/emails/template/4809378c-c1aa-4118-a3a7-cbc9586c686b/">View in AMY</a>
+<strong>Email description:</strong> Follow up one week after Centrally-Organised or Self-Organised workshop is complete
+<strong>Sent to:</strong> Hosts and Instructors
+<strong>Date sent:</strong> Later of seven days after workshop end or seven days from now
+<strong>Conditions:</strong> Centrally-Organised or Self-Organised; At least one host; At least one Instructor;  Tagged SWC/DC/LC; Not CLDT; end date in future; not stalled/cancelled/unresponsive</p>
+</details>
+<details class="abstract">
+<summary>Recruit helpers</summary>
+<p><a href="https://amy.carpentries.org/emails/template/d1b20e74-a245-4c7d-9182-663f3acd8a48/">View in AMY</a>
+<strong>Email description:</strong> Reminder to host to recruit helpers
+<strong>Sent to:</strong> Hosts and Instructors
+<strong>Date sent:</strong> 21 days before event
+<strong>Conditions:</strong> Centrally-Organised; Tagged SWC/DC/LC; Not stalled/cancelled; At least one host; At least one Instructor; No helpers; Start date at least 14 days in future; not stalled/cancelled/unresponsive</p>
+</details>
+<h4 id="active-emails-instructor-training">Active emails (Instructor Training)<a class="headerlink" href="#active-emails-instructor-training" title="Permanent link">&para;</a></h4>
+<details class="abstract">
+<summary>Instructor Training (One month away)</summary>
+<p><a href="https://amy.carpentries.org/emails/template/bafe53c4-e486-4a6e-8b5d-894790946913/">View in AMY</a>
+<strong>Email description:</strong> Send Trainers information about upcoming Instructor Training
+<strong>Sent to:</strong> Trainers
+<strong>Date sent:</strong> One month before event start
+<strong>Conditions:</strong> Tag TTT; At least 2 Trainers; Start date in future</p>
+</details>
+<h4 id="active-emails-memberships">Active emails (Memberships)<a class="headerlink" href="#active-emails-memberships" title="Permanent link">&para;</a></h4>
+<details class="abstract">
+<summary>New / renewing membership starting (member onboarding)</summary>
+<p><a href="https://amy.carpentries.org/emails/template/f1311aaf-c546-429b-930c-c36a5a8009fb/">View in AMY</a>
+<strong>Email description:</strong>  Onboarding message for new/renewing memberships
+<strong>Sent to:</strong>   Programmatic and billing contacts
+<strong>Date sent:</strong> One month before membership start date or immediately (whichever is later)
+<strong>Conditions:</strong> Membership roles exist; membership variant is bronze, silver, gold or platinum.</p>
+</details>
+<h4 id="inactive-emails">Inactive emails<a class="headerlink" href="#inactive-emails" title="Permanent link">&para;</a></h4>
+<ul>
+<li><a href="https://amy.carpentries.org/emails/template/35bab114-43eb-48d1-8744-b6e1a356b0f1/">Instructor Badge awarded</a></li>
+<li><a href="https://amy.carpentries.org/emails/template/93f71266-60cb-4606-b4a6-b74266cfb04a/">Instructor Training completed but not yet badged</a></li>
+<li><a href="https://amy.carpentries.org/emails/template/f043ec2e-ebdb-4b61-b09e-b69e31868b8f/">Person records are merged</a></li>
+</ul>
+<h4 id="managing-scheduled-emails">Managing scheduled emails<a class="headerlink" href="#managing-scheduled-emails" title="Permanent link">&para;</a></h4>
+<p>When an email is scheduled, it will be listed in the relevant event or person page.  It will also be listed on the main <a href="https://amy.carpentries.org/emails/scheduled_emails/">Scheduled Emails page</a>.</p>
+<p>Click on the listing for an individual scheduled email to see more information about it, to reschedule it, or to edit the recipients, subject, or body.</p>
+<h3 id="other-tasks">Other Tasks<a class="headerlink" href="#other-tasks" title="Permanent link">&para;</a></h3>
+<h4 id="merging-duplicate-persons-training-requests-or-events">Merging Duplicate Persons, Training Requests, or Events<a class="headerlink" href="#merging-duplicate-persons-training-requests-or-events" title="Permanent link">&para;</a></h4>
+<p>If duplicate Person, Training Request, or Event records exist, they can be merged.  If you know which two records should be merged, you can select them directly.  You can also search for possible duplicate records.</p>
+<h5 id="merging-two-known-duplicate-records">Merging two known duplicate records.<a class="headerlink" href="#merging-two-known-duplicate-records" title="Permanent link">&para;</a></h5>
+<p><img alt="AMY merge duplicates menu" src="../images/merge_menu.png" /></p>
+<p>Once you select <a href="https://amy.carpentries.org/workshops/persons/merge/">Merge Persons</a>, <a href="https://amy.carpentries.org/workshops/events/merge/">Merge Events</a>, or <a href="https://amy.carpentries.org/requests/training_requests/merge">Merge Training Requests</a> you will be taken to a screen to select the two Persons, Events, or Training Requests you would like to merge. Start typing in the name or slug, and AMY will autocomplete with possible options.</p>
+<p><img alt="AMY select Persons to merge" src="../images/select_merge_persons.png" /></p>
+<p>This will take you to a screen listing all the information in that Person's record, and allowing you to choose whether to keep the values in record A or record B.  For fields allowing multiple values (such as event tasks), you will also have the option to combine (include all values). For consents, no choice is provided, as the most recently provided consents will always be kept and older consents will be archived. Click "Submit" on the bottom of this screen to complete the merge process.</p>
+<p><img alt="AMY merge Persons" src="../images/merge_persons.png" /></p>
+<h5 id="searching-for-possible-duplicate-person-or-training-request-records">Searching for possible duplicate Person or Training Request records<a class="headerlink" href="#searching-for-possible-duplicate-person-or-training-request-records" title="Permanent link">&para;</a></h5>
+<p>If you want to check for duplicate Person or Training Requests in general, you can review a list of possible duplicate records. Select the appropriate option from the "Reports" menu.</p>
+<p><img alt="AMY find duplicates menu" src="../images/find_duplicate_menu.png" /></p>
+<p>Here, you will see two lists:</p>
+<ul>
+<li><strong>Possible duplicate persons</strong>. This will include records where another record exists with the personal and family names switched, or a single person with the same personal and family name.</li>
+<li><strong>Persons with the same names</strong>.  This compares people with the same personal and family names.</li>
+</ul>
+<p>In either case, if these records should be merged, select records A and B.  This will take you to the Merge Persons screen (see above).  If these individuals are not the same person, select "Mark as Reviewed" and they will not show up in the list of possible duplicates again.</p>
+<p><img alt="AMY search duplicates" src="../images/search_duplicates.png" /></p>
+<h3 id="searching">Searching<a class="headerlink" href="#searching" title="Permanent link">&para;</a></h3>
+<h4 id="general-search">General Search<a class="headerlink" href="#general-search" title="Permanent link">&para;</a></h4>
+<p>The quickest and easiest way to search is using the search box in the top menu bar. This will perform a case insensitive search of any field in AMY, including searching for partial matches. For example:</p>
+<ul>
+<li><code>12-12-</code> will match any workshop slug containing that string (essentially any workshop on December 12 of any year.)</li>
+<li><code>ola tes</code> will match <code>Nikola Tesla</code> and <code>Nolan Bates</code></li>
+<li><code>stanford</code> will match any one with a <code>stanford</code> email address, with <code>stanford</code> in their name, any workshops with <code>stanford</code> in the slug, or the site <code>Stanford University</code>.</li>
+</ul>
+<p>If only one result is found across all fields, AMY will automatically redirect to that result.  Otherwise, AMY will redirect to a search results view.  The search results view will include a new search box, with results appearing in a tabbed view, separated by Organisations, Memberships, Events, Persons, Airports, Training Requests, and Comments.</p>
+<p><a href="https://amy.carpentries.org/dashboard/admin/search/">This search view can also be accessed directly from the More menu</a>.</p>
+<h4 id="searching-for-qualified-instructors">Searching for Qualified Instructors<a class="headerlink" href="#searching-for-qualified-instructors" title="Permanent link">&para;</a></h4>
+<p>Under the "More" menu, select "<a href="https://amy.carpentries.org/workshops/workshop_staff/">Find Workshop Staff</a>."  Here you can filter by the following criteria:</p>
+<ul>
+<li><strong>Airport</strong>: This returns a list of all Instructors beginning with those who list that airport as their closest airport, and then continues reaching farther out.</li>
+<li><strong>Country</strong>: This returns a list of all Instructors who are in that country.  It does not continue to any proximate countries.</li>
+<li><strong>Latitude</strong> and <strong>Longitude</strong>: Like the <em>Airport</em> search, this begins with people whose listed airport is closest to that latitude and longitude, and then continues reaching farther out.</li>
+<li><strong>Has active Instructor Community Role</strong>, <strong>Has Trainer badge</strong>, <strong>Was helper at least once before</strong>, <strong>Was organiser at least once before</strong>, <strong>Is an in-progress instructor trainee</strong> are based on AMY's current records</li>
+<li><strong>Languages</strong>, <strong>Knowledge Domains</strong>, <strong>Gender</strong>, and <strong>Lessons</strong> come from the Person record for that individual. If multiple options are selected, only Instructors who have <em>all</em> of those options on their record will be shown.</li>
+</ul>
+<h4 id="searching-for-events">Searching for Events<a class="headerlink" href="#searching-for-events" title="Permanent link">&para;</a></h4>
+<p>Clicking "<a href="https://amy.carpentries.org/workshops/events/">Events</a>" on the top menu bar will take you to a list of <em>all</em> recorded events - past, present, and future, including those that were stalled or cancelled. Here you can filter by the following criteria:</p>
+<ul>
+<li><strong>Assigned to</strong>: The admin user the event is assigned to</li>
+<li><strong>Tags</strong>: Any tags applied to that event</li>
+<li><strong>Host</strong>: The organisation hosting the event</li>
+<li><strong>Administrator</strong> The event administrator (A lesson program for centrally organised workshops, self organised, Instructor Training, or Collaborative Lesson Development Training)</li>
+<li><strong>Completed</strong> Whether the "completed" box has been checked, indicating all necessary work for that event is complete</li>
+<li><strong>Country</strong> Country from the event's location</li>
+<li><strong>Continent</strong> Continent based on the country</li>
+<li><strong>Status</strong> Whether the event is active, past, ongoing, upcoming, unpublished, published, detected changes in metadata</li>
+<li><strong>Ordering</strong> Select sort order for returned list</li>
+</ul>
+<h4 id="searching-for-organisations">Searching for Organisations<a class="headerlink" href="#searching-for-organisations" title="Permanent link">&para;</a></h4>
+<p>Clicking "<a href="https://amy.carpentries.org/fiscal/organizations/">Organisations</a>" on the top menu bar will take you to a list of <em>all</em> recorded organisations, regardless of their involvement with The Carpentries. Here you can filter by the following criteria:</p>
+<ul>
+<li><strong>Country</strong>: Country the organisation is based in</li>
+<li><strong>Memberships (current or past)</strong>: Whether the organisation has had any current or past membership, by selected membership variant</li>
+<li><strong>Ordering</strong> Select sort order for returned list</li>
+</ul>
+<h4 id="searching-for-memberships">Searching for Memberships<a class="headerlink" href="#searching-for-memberships" title="Permanent link">&para;</a></h4>
+<p>Clicking "<a href="https://amy.carpentries.org/fiscal/memberships/">Memberships</a>" on the top menu bar will take you to a list of all Carpentries memberships - past, present, and future.  Here you can filter by the following criteria:</p>
+<ul>
+<li><strong>Organisation Name</strong>: For most memberships, this will be the name of the main organisation. For consortium memberships, this will be the name of the consortium.</li>
+<li><strong>Consortium</strong>:  Whether the membership is listed as a consortium</li>
+<li><strong>Can this membership be publicized on The carpentries websites?</strong>: Whether public/private has been selected, allowing the membership to be listed on <a href="https://carpentries.org/members/">The Carpentries website</a></li>
+<li><strong>Variant</strong>: The membership level (bronze, silver, gold, etc.)</li>
+<li><strong>Contribution type</strong>: Financial, Person-days, etc.</li>
+<li><strong>Only show active memberships</strong></li>
+<li><strong>Only show memberships with non-zero allowed training seats</strong></li>
+<li><strong>Only show memberships with zero or less remaining seats</strong></li>
+<li><strong>Ordering</strong> Select sort order for returned list</li>
+</ul>
+<h4 id="searching-for-persons">Searching for Persons<a class="headerlink" href="#searching-for-persons" title="Permanent link">&para;</a></h4>
+<p>Clicking "<a href="https://amy.carpentries.org/workshops/persons/">Persons</a>" on the top menu bar will take you to a list of <em>all</em> recorded persons, regardless of their involvement with The Carpentries. Here you can filter by the following criteria:</p>
+<ul>
+<li><strong>Badges</strong> This will return Persons who have any of the selected badges</li>
+<li><strong>Taught at workshops of type</strong> This will list Persons who have taught at workshops with any of the selected tags</li>
+<li><strong>Ordering</strong> Select sort order for returned list</li>
+</ul>
+<p>See the section above to search specifically for <a href="#searching-for-qualified-instructors">qualified instructors</a>.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.top"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../js/navigation.js"></script>
+      
+    
+  </body>
+</html>
