@@ -13,6 +13,73 @@ Then paste output from that script here.
 
 -----------------------------------------------------------------
 
+## v4.8 - 2026-02-28
+
+### Bugfixes
+* fix(#2838): Add flag-enabled field to task form in event edit page - [#2839](https://github.com/carpentries/amy/pull/2839) by @pbanaszkiewicz
+* fix(#2826): Show "missing airport information" only for logged-in users - [#2827](https://github.com/carpentries/amy/pull/2827) by @pbanaszkiewicz
+
+### Features
+* [Offering] Validate code for partnerships in Training and Workshop Request forms - [#2904](https://github.com/carpentries/amy/pull/2904) by @pbanaszkiewicz
+* [Offering][Emails] New Partnership Onboarding email - [#2903](https://github.com/carpentries/amy/pull/2903) by @pbanaszkiewicz
+* fix(#2873): Correctly render initial value for Airport IATA field - [#2902](https://github.com/carpentries/amy/pull/2902) by @pbanaszkiewicz
+* [Offering] Disable `SERVICE_OFFERING` flag in production - [#2901](https://github.com/carpentries/amy/pull/2901) by @pbanaszkiewicz
+* [Offering] Data migration for open training applications - [#2899](https://github.com/carpentries/amy/pull/2899) by @pbanaszkiewicz
+* [Offering] Restrict task form allocated benefit based on event tags - [#2898](https://github.com/carpentries/amy/pull/2898) by @pbanaszkiewicz
+* [Offering] Enable revision tracking for models in Offering project - [#2897](https://github.com/carpentries/amy/pull/2897) by @pbanaszkiewicz
+* [Offering] Accept & Match form to allow multiple account benefits per partnership, use first one available - [#2896](https://github.com/carpentries/amy/pull/2896) by @pbanaszkiewicz
+* [Offering] Update UI for partnerships - [#2895](https://github.com/carpentries/amy/pull/2895) by @pbanaszkiewicz
+* [Offering] Use Select2 field for allocated benefit - [#2892](https://github.com/carpentries/amy/pull/2892) by @pbanaszkiewicz
+* feat(#2880): Add airport_iata field to TrainingRequest model and form - [#2891](https://github.com/carpentries/amy/pull/2891) by @pbanaszkiewicz
+* [Offering] Update UI - [#2890](https://github.com/carpentries/amy/pull/2890) by @pbanaszkiewicz
+* feat(#2873): Reset country&timezone overrides when airport is changed - [#2879](https://github.com/carpentries/amy/pull/2879) by @pbanaszkiewicz
+* feat(#2877): Hide partnerships&community roles in indiv. account detail page - [#2878](https://github.com/carpentries/amy/pull/2878) by @pbanaszkiewicz
+* chore(deps): Bump django from 5.2.9 to 5.2.11 - [#2872](https://github.com/carpentries/amy/pull/2872) by @dependabot[bot]
+* [Offering] Auto-assign partnerships (account benefits) - [#2871](https://github.com/carpentries/amy/pull/2871) by @pbanaszkiewicz
+* [Offering] Add community roles to partnerships - [#2869](https://github.com/carpentries/amy/pull/2869) by @pbanaszkiewicz
+* Update Welcome Session links to Pretix - [#2868](https://github.com/carpentries/amy/pull/2868) by @pbanaszkiewicz
+* chore(deps): Bump pynacl from 1.6.1 to 1.6.2 - [#2867](https://github.com/carpentries/amy/pull/2867) by @dependabot[bot]
+* chore(deps): Bump urllib3 from 2.6.2 to 2.6.3 - [#2866](https://github.com/carpentries/amy/pull/2866) by @dependabot[bot]
+* chore(deps): Bump filelock from 3.20.1 to 3.20.3 - [#2865](https://github.com/carpentries/amy/pull/2865) by @dependabot[bot]
+* chore(deps): Bump virtualenv from 20.35.4 to 20.36.1 - [#2864](https://github.com/carpentries/amy/pull/2864) by @dependabot[bot]
+* [#2857] Add Mypy to CICD - [#2863](https://github.com/carpentries/amy/pull/2863) by @pbanaszkiewicz
+* [Offering] Fixes for offering project - [#2859](https://github.com/carpentries/amy/pull/2859) by @pbanaszkiewicz
+* feat(#2855): Extend people bulk upload with airport IATA column - [#2858](https://github.com/carpentries/amy/pull/2858) by @pbanaszkiewicz
+* feat(#2791): Improve CI/CD - [#2854](https://github.com/carpentries/amy/pull/2854) by @pbanaszkiewicz
+* [#2755] Remove `autoemails` from codebase - [#2853](https://github.com/carpentries/amy/pull/2853) by @pbanaszkiewicz
+* feat(#2790): Update docs (procedures, server infrastructure) - [#2852](https://github.com/carpentries/amy/pull/2852) by @pbanaszkiewicz
+* [#2757] Fix mypy issues - [#2851](https://github.com/carpentries/amy/pull/2851) by @pbanaszkiewicz
+* feat(#2842): Switch from `poetry` to `uv` - [#2850](https://github.com/carpentries/amy/pull/2850) by @pbanaszkiewicz
+* [#2843] Switch to ruff - [#2849](https://github.com/carpentries/amy/pull/2849) by @pbanaszkiewicz
+* feat(#2841): Update to Python 3.14 - [#2848](https://github.com/carpentries/amy/pull/2848) by @pbanaszkiewicz
+* chore(deps): Bump filelock from 3.16.1 to 3.20.1 - [#2847](https://github.com/carpentries/amy/pull/2847) by @dependabot[bot]
+* chore(deps): Bump pymdown-extensions from 10.14 to 10.16.1 - [#2846](https://github.com/carpentries/amy/pull/2846) by @dependabot[bot]
+* [Maintenance] switch to django 5.2 - [#2845](https://github.com/carpentries/amy/pull/2845) by @pbanaszkiewicz
+* Update Accessibility Language - [#2835](https://github.com/carpentries/amy/pull/2835) by @elletjies
+* chore(deps): Bump django from 4.2.25 to 4.2.27 - [#2834](https://github.com/carpentries/amy/pull/2834) by @dependabot[bot]
+* [Offering] Various improvements - [#2833](https://github.com/carpentries/amy/pull/2833) by @pbanaszkiewicz
+* [#2829] Airport package improvements - [#2831](https://github.com/carpentries/amy/pull/2831) by @pbanaszkiewicz
+* Add tests for offering - [#2828](https://github.com/carpentries/amy/pull/2828) by @pbanaszkiewicz
+* Airports package, timezones - [#2825](https://github.com/carpentries/amy/pull/2825) by @pbanaszkiewicz
+* feat(#2823): Update conditions for instructor training completed not badged - [#2824](https://github.com/carpentries/amy/pull/2824) by @pbanaszkiewicz
+* chore: Update CodeQL version - [#2822](https://github.com/carpentries/amy/pull/2822) by @pbanaszkiewicz
+* chore(deps): Bump django from 4.2.24 to 4.2.25 - [#2820](https://github.com/carpentries/amy/pull/2820) by @dependabot[bot]
+* chore(deps): Bump django from 4.2.22 to 4.2.24 - [#2819](https://github.com/carpentries/amy/pull/2819) by @dependabot[bot]
+* Change name of form - [#2818](https://github.com/carpentries/amy/pull/2818) by @brownsarahm
+* Start up service offering - [#2815](https://github.com/carpentries/amy/pull/2815) by @pbanaszkiewicz
+* chore: Simplify (remove `request`) some email actions kwargs - [#2813](https://github.com/carpentries/amy/pull/2813) by @pbanaszkiewicz
+* chore(deps): Bump urllib3 from 2.3.0 to 2.5.0 - [#2812](https://github.com/carpentries/amy/pull/2812) by @dependabot[bot]
+* chore(deps): Bump requests from 2.32.3 to 2.32.4 - [#2811](https://github.com/carpentries/amy/pull/2811) by @dependabot[bot]
+* update/remove urls for new handbook/website design - [#2810](https://github.com/carpentries/amy/pull/2810) by @maneesha
+* Add Mastodon field  - [#2809](https://github.com/carpentries/amy/pull/2809) by @maneesha
+* chore(deps): Bump django from 4.2.20 to 4.2.22 - [#2808](https://github.com/carpentries/amy/pull/2808) by @dependabot[bot]
+* chore(deps): Bump django-select2 from 8.4.0 to 8.4.1 - [#2807](https://github.com/carpentries/amy/pull/2807) by @dependabot[bot]
+* [Emails] Improve membership quarterly emails - [#2806](https://github.com/carpentries/amy/pull/2806) by @pbanaszkiewicz
+* [Emails] Cancel instructor training completed not badged if badge awarded - [#2802](https://github.com/carpentries/amy/pull/2802) by @pbanaszkiewicz
+* [Emails] Don't cancel emails for 7days post workshop during that time after the workshop - [#2801](https://github.com/carpentries/amy/pull/2801) by @pbanaszkiewicz
+* [Emails] Membership quarterly emails - [#2794](https://github.com/carpentries/amy/pull/2794) by @pbanaszkiewicz
+
+
 ## v4.7.2 - 2025-05-11
 
 ### Bugfixes
