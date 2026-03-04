@@ -500,7 +500,7 @@ class OfferingAccountRelation(GenericObjectLookupView):
         return qs  # type: ignore
 
 
-class AirportsLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
+class AirportsLookupView(LoginNotRequiredMixin, AutoResponseView):
     def filter_results(self, results: list[tuple[str, Airport]], term: str) -> list[tuple[str, Airport]]:
         lowered_term = term.lower()
         return [

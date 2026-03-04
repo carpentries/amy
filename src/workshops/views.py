@@ -49,6 +49,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.html import escape
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.decorators.http import require_POST
 from django_stubs_ext import Annotations
 from flags.state import flag_enabled  # type: ignore[import-untyped]
 from github.GithubException import GithubException
@@ -184,6 +185,7 @@ logger = logging.getLogger("amy")
 
 
 @login_required
+@require_POST
 def logout_then_login_with_msg(request: AuthenticatedHttpRequest) -> HttpResponse:
     messages.success(request, "You were successfully logged-out.")
     return logout_then_login(request)
