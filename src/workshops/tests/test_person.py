@@ -243,7 +243,7 @@ class TestPerson(TestBase):
             "family": "Test",
             "gender": "U",
             "airport_iata": "CDG",
-            "lessons": [1, 2],  # just IDs
+            "lessons": [self.git.pk, self.sql.pk],
         }
         rv = self.client.post(reverse("person_add"), data)
         assert rv.status_code == 302
@@ -269,7 +269,7 @@ class TestPerson(TestBase):
             "family": "Test",
             "gender": "U",
             "airport_iata": "CDG",
-            "lessons": [1, 2],  # just IDs
+            "lessons": [self.git.pk, self.sql.pk],
         }
         rv = self.client.post(reverse("person_add"), data, follow=True)
         assert rv.status_code == 200
