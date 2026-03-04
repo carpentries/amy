@@ -34,7 +34,10 @@
               <a class="dropdown-item" href="{% url 'person_password' user.id %}">Change password</a>
               <a class="dropdown-item" href="https://carpentries.github.io/amy/users_guide/community_index/" target="_blank" rel="noreferrer nofollow">Help</a>
               <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="{% url 'logout' %}">Log out</a>
+              <form action="{% url 'logout' %}" method="post" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="dropdown-item">Log out</button>
+              </form>
             </div>
           </li>
         </ul>
