@@ -11,7 +11,10 @@
   We minimize the personal data we collect, and your data is never sold to third-parties.</p>
 
 {% crispy form %}
-<a href="{% url 'logout' %}" class="btn btn-secondary">Log out</a>
+<form action="{% url 'logout' %}" method="post" class="d-inline">
+  {% csrf_token %}
+  <button type="submit" class="btn btn-secondary">Log out</button>
+</form>
 
 <p>If you have any questions, please send us email at <a href="mailto:privacy@carpentries.org">privacy@carpentries.org</a>.</p>
 

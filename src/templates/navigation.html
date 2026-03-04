@@ -112,7 +112,10 @@
               {% endif %}
               <a class="dropdown-item" href="{% url 'feature_flags' %}">Feature flags</a>
               <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="{% url 'logout' %}">Log out</a>
+              <form action="{% url 'logout' %}" method="post" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="dropdown-item">Log out</button>
+              </form>
             </div>
           </li>
         </ul>
