@@ -59,6 +59,7 @@ dependencies = [
   "types-pytz (>=2025.2.0.20250809,<2026.0.0.0)",
   "ruff (>=0.14.10,<0.15.0)",
   "types-django-filter>=25.2.0.20251010",
+  "types-requests (>=2.32.3,<3.0.0)",
 ]
 
 [tool.ruff]
