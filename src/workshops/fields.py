@@ -47,6 +47,56 @@ class NullableGithubUsernameField(models.CharField):  # type: ignore
     ]
 
 
+# ORCID IDs are 16 digits split into 4 groups of 4 by hyphens; the last
+# character may be "X" (ISO 7064 check digit).  The canonical form is the
+# full URI, but bare IDs are also accepted.
+# See https://support.orcid.org/hc/en-us/articles/360006897674
+ORCID_REGEX_VALIDATOR = RegexValidator(
+    regex=r"^(https://orcid\.org/)?\d{4}-\d{4}-\d{4}-\d{3}[\dX]$",
+    message=(
+        "Enter a valid ORCID identifier, either as a bare ID "
+        "(e.g. 0000-0001-2345-6789) or as a full URI "
+        "(e.g. https://orcid.org/0000-0001-2345-6789)."
+    ),
+)
+
+
+class OrcidField(models.CharField):  # type: ignore
+    def __init__(self, **kwargs: Any) -> None:
+        kwargs.setdefault("max_length", STR_LONG)
+        super().__init__(**kwargs)
+
+    default_validators = [ORCID_REGEX_VALIDATOR]
+
+
+# Bluesky handles follow the AT Protocol handle format: a dot-separated
+# domain name, optionally prefixed with "@".
+# See https://atproto.com/specs/handle
+BLUESKY_HANDLE_VALIDATOR = RegexValidator(
+    regex=r"^@?([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$",
+    message=("Enter a valid Bluesky handle (e.g. alice.bsky.social or @alice.bsky.social)."),
+)
+
+
+class BlueSkyHandleField(models.CharField):  # type: ignore
+    def __init__(self, **kwargs: Any) -> None:
+        kwargs.setdefault("max_length", STR_LONG)
+        super().__init__(**kwargs)
+
+    default_validators = [BLUESKY_HANDLE_VALIDATOR]
+
+
+# Mastodon profile URLs follow the pattern https://<instance>/@<username>.
+MASTODON_URL_VALIDATOR = RegexValidator(
+    regex=r"^https?://[^/]+/@[^/]+",
+    message=("Enter a valid Mastodon profile URL (e.g. https://mastodon.social/@alice)."),
+)
+
+
+class MastodonURLField(models.URLField):  # type: ignore
+    default_validators = [*models.URLField.default_validators, MASTODON_URL_VALIDATOR]
+
+
 # ------------------------------------------------------------
 
 
