@@ -50,7 +50,13 @@ from src.workshops.consts import (
     STR_REG_KEY,
     STR_SHORT,
 )
-from src.workshops.fields import NullableGithubUsernameField, choice_field_with_other
+from src.workshops.fields import (
+    BlueSkyHandleField,
+    MastodonURLField,
+    NullableGithubUsernameField,
+    OrcidField,
+    choice_field_with_other,
+)
 from src.workshops.mixins import (
     ActiveMixin,
     AssignmentMixin,
@@ -752,8 +758,7 @@ class Person(
         default="",
         verbose_name="Family (last) name",
     )
-    email = models.CharField(  # emailfield?
-        max_length=STR_LONG,
+    email = models.EmailField(
         unique=True,
         null=True,
         blank=True,
@@ -801,15 +806,14 @@ class Person(
         blank=True,
         verbose_name="Twitter username",
     )
-    bluesky = models.CharField(
-        max_length=STR_LONG,
+    bluesky = BlueSkyHandleField(
         unique=True,
         null=True,
         blank=True,
         verbose_name="BlueSky username",
     )
 
-    mastodon = models.URLField(
+    mastodon = MastodonURLField(
         unique=True,
         null=True,
         blank=True,
@@ -867,8 +871,7 @@ class Person(
         blank=True,
         default="",
     )
-    orcid = models.CharField(
-        max_length=STR_LONG,
+    orcid = OrcidField(
         verbose_name="ORCID ID",
         blank=True,
         default="",

@@ -309,12 +309,12 @@ class TestInstructorTaskCreatedForWorkshopUpdateIntegration(TestBase):
             airport_iata="CDG",
             github="",
             twitter="",
-            bluesky="@purdy_kelsi.bsky.social",
-            mastodon="http://kelsipurdy.com/",
+            bluesky="@purdykelsi.bsky.social",
+            mastodon="http://mastodon.com/@kelsipurdy",
             url="http://kelsipurdy.com/",
             affiliation="University of Arizona",
             occupation="TA at Biology Department",
-            orcid="0000-0000-0000",
+            orcid="0000-0001-2345-6789",
             is_active=True,
         )
         instructor_role = Role.objects.get(name="instructor")
