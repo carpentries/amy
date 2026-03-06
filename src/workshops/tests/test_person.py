@@ -6,6 +6,7 @@ from urllib.parse import urlencode
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import Group, Permission
 from django.core.exceptions import ValidationError
+from django.test import TestCase
 from django.urls import reverse
 from django_comments.models import Comment
 from reversion.models import Version
@@ -1637,7 +1638,7 @@ class TestArchivePerson(TestBase):
         self.assertFalse(self.admin.is_superuser)
 
 
-class TestPersonContactFieldValidation(TestBase):
+class TestPersonContactFieldValidation(TestCase):
     """Validate that Person contact fields enforce their format constraints."""
 
     # Exclude fields that are required by AbstractBaseUser but irrelevant here.
@@ -1673,14 +1674,14 @@ class TestPersonContactFieldValidation(TestBase):
     # orcid
     # ------------------------------------------------------------------
 
-    def test_orcid_bare_id_valid(self) -> None:
-        self._assert_valid(self._make_person(orcid="0000-0001-2345-6789"))
-
     def test_orcid_full_uri_valid(self) -> None:
         self._assert_valid(self._make_person(orcid="https://orcid.org/0000-0001-2345-678X"))
 
     def test_orcid_blank_valid(self) -> None:
         self._assert_valid(self._make_person(orcid=""))
+
+    def test_orcid_bare_id_invalid(self) -> None:
+        self._assert_field_invalid(self._make_person(orcid="0000-0001-2345-6789"), "orcid")
 
     def test_orcid_invalid(self) -> None:
         self._assert_field_invalid(self._make_person(orcid="not-an-orcid"), "orcid")
@@ -1696,11 +1697,14 @@ class TestPersonContactFieldValidation(TestBase):
     def test_bluesky_handle_valid(self) -> None:
         self._assert_valid(self._make_person(bluesky="alice.bsky.social"))
 
-    def test_bluesky_handle_with_at_valid(self) -> None:
-        self._assert_valid(self._make_person(bluesky="@alice.bsky.social"))
+    def test_bluesky_handle_blank_valid(self) -> None:
+        self._assert_valid(self._make_person(bluesky=""))
 
     def test_bluesky_null_allowed(self) -> None:
         self._assert_valid(self._make_person(bluesky=None))
+
+    def test_bluesky_handle_with_at_invalid(self) -> None:
+        self._assert_field_invalid(self._make_person(bluesky="@alice.bsky.social"), "bluesky")
 
     def test_bluesky_no_tld_invalid(self) -> None:
         self._assert_field_invalid(self._make_person(bluesky="alice"), "bluesky")
@@ -1709,15 +1713,17 @@ class TestPersonContactFieldValidation(TestBase):
     # mastodon
     # ------------------------------------------------------------------
 
-    def test_mastodon_url_valid(self) -> None:
-        self._assert_valid(self._make_person(mastodon="https://mastodon.social/@alice"))
+    def test_mastodon_valid(self) -> None:
+        self._assert_valid(self._make_person(mastodon="alice@mastodon.social"))
+
+    def test_mastodon_handle_blank_valid(self) -> None:
+        self._assert_valid(self._make_person(mastodon=""))
 
     def test_mastodon_null_allowed(self) -> None:
         self._assert_valid(self._make_person(mastodon=None))
 
-    def test_mastodon_missing_at_invalid(self) -> None:
-        """URL without /@username is not a valid Mastodon profile URL."""
-        self._assert_field_invalid(self._make_person(mastodon="https://mastodon.social/alice"), "mastodon")
+    def test_mastodon_url_invalid(self) -> None:
+        self._assert_field_invalid(self._make_person(mastodon="https://mastodon.social/@alice"), "mastodon")
 
     def test_mastodon_handle_format_invalid(self) -> None:
         """@user@instance handle format is not accepted (not a URL)."""

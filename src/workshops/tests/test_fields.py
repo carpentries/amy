@@ -4,7 +4,7 @@ from src.workshops.consts import COUNTRIES, IATA_AIRPORTS
 from src.workshops.fields import (
     AirportSelect2Widget,
     BlueSkyHandleField,
-    MastodonURLField,
+    MastodonHandleField,
     NullableGithubUsernameField,
     OrcidField,
     Select2TagWidget,
@@ -38,25 +38,26 @@ class TestNullableGHUsernameField(TestBase):
     def test_passing_usernames(self) -> None:
         """All correct usernames pass the field validation."""
         for username in self.passing:
-            self.field.run_validators(username)
+            with self.subTest(username=username):
+                self.field.run_validators(username)
 
     def test_failing_usernames(self) -> None:
         """All incorrect usernames don't pass the field validation."""
         for username in self.failing:
-            with self.assertRaises(ValidationError):
+            with self.subTest(username=username), self.assertRaises(ValidationError):
                 self.field.run_validators(username)
 
 
 class TestOrcidField(TestBase):
     def setUp(self) -> None:
         self.passing = [
-            "0000-0001-2345-6789",
-            "0000-0001-2345-678X",
             "https://orcid.org/0000-0001-2345-6789",
             "https://orcid.org/0000-0001-2345-678X",
             "",  # blank is allowed
         ]
         self.failing = [
+            "0000-0001-2345-6789",  # only URI form is accepted
+            "0000-0001-2345-678X",  # only URI form is accepted
             "0000-0001-2345-678",  # last group only 3 digits, no X
             "0000-0001-2345-6789X",  # extra character
             "000-0001-2345-6789",  # first group too short
@@ -64,18 +65,20 @@ class TestOrcidField(TestBase):
             "http://orcid.org/0000-0001-2345-6789",  # http not https
             "orcid.org/0000-0001-2345-6789",  # missing scheme
             "not-an-orcid",
+            "aaaa-bbbb-cccc-dddd",  # non-digit characters
         ]
         self.field = OrcidField()
 
     def test_passing_orcids(self) -> None:
         """Valid ORCID identifiers pass field validation."""
         for value in self.passing:
-            self.field.run_validators(value)
+            with self.subTest(value=value):
+                self.field.run_validators(value)
 
     def test_failing_orcids(self) -> None:
         """Invalid ORCID identifiers do not pass field validation."""
         for value in self.failing:
-            with self.assertRaises(ValidationError):
+            with self.subTest(value=value), self.assertRaises(ValidationError):
                 self.field.run_validators(value)
 
 
@@ -83,14 +86,14 @@ class TestBlueSkyHandleField(TestBase):
     def setUp(self) -> None:
         self.passing = [
             "alice.bsky.social",
-            "@alice.bsky.social",
             "alice.com",
-            "@alice.com",
             "my-handle.bsky.social",
             "user123.example.org",
             "",  # blank is allowed
         ]
         self.failing = [
+            "@alice.bsky.social",  # @ is not allowed
+            "@alice.com",
             "alice",  # no TLD
             "@alice",  # no TLD
             ".alice.bsky.social",  # leading dot
@@ -104,42 +107,44 @@ class TestBlueSkyHandleField(TestBase):
     def test_passing_handles(self) -> None:
         """Valid Bluesky handles pass field validation."""
         for value in self.passing:
-            self.field.run_validators(value)
+            with self.subTest(value=value):
+                self.field.run_validators(value)
 
     def test_failing_handles(self) -> None:
         """Invalid Bluesky handles do not pass field validation."""
         for value in self.failing:
-            with self.assertRaises(ValidationError):
+            with self.subTest(value=value), self.assertRaises(ValidationError):
                 self.field.run_validators(value)
 
 
-class TestMastodonURLField(TestBase):
+class TestMastodonHandleField(TestBase):
     def setUp(self) -> None:
         self.passing = [
-            "https://mastodon.social/@alice",
-            "https://fosstodon.org/@bob",
-            "http://mastodon.example.com/@carol",
-            "https://mastodon.social/@alice/extra/path",
+            "alice@mastodon.social",
             "",  # blank is allowed
         ]
         self.failing = [
-            "https://mastodon.social/alice",  # missing @ before username
-            "mastodon.social/@alice",  # missing scheme
-            "@alice@mastodon.social",  # handle format, not URL
-            "https://mastodon.social/",  # no username
-            "not-a-url",
+            "alice@",  # no domain
+            "alice@mastodon",  # missing TLD
+            "@mastodon.social",  # no username
+            "@alice@mastodon.social",  # leading @ not allowed
+            "https://mastodon.social/alice",  # URI
+            "https://mastodon.social/",  # URI
+            "mastodon.social/@alice",  # partial URI
+            "not-a-handle",
         ]
-        self.field = MastodonURLField()
+        self.field = MastodonHandleField()
 
-    def test_passing_urls(self) -> None:
-        """Valid Mastodon profile URLs pass field validation."""
+    def test_passing_handles(self) -> None:
+        """Valid Mastodon handles pass field validation."""
         for value in self.passing:
-            self.field.run_validators(value)
+            with self.subTest(value=value):
+                self.field.run_validators(value)
 
-    def test_failing_urls(self) -> None:
-        """Invalid Mastodon profile URLs do not pass field validation."""
+    def test_failing_handles(self) -> None:
+        """Invalid Mastodon handles do not pass field validation."""
         for value in self.failing:
-            with self.assertRaises(ValidationError):
+            with self.subTest(value=value), self.assertRaises(ValidationError):
                 self.field.run_validators(value)
 
 

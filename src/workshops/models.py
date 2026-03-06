@@ -52,7 +52,7 @@ from src.workshops.consts import (
 )
 from src.workshops.fields import (
     BlueSkyHandleField,
-    MastodonURLField,
+    MastodonHandleField,
     NullableGithubUsernameField,
     OrcidField,
     choice_field_with_other,
@@ -812,12 +812,11 @@ class Person(
         blank=True,
         verbose_name="BlueSky username",
     )
-
-    mastodon = MastodonURLField(
+    mastodon = MastodonHandleField(
         unique=True,
         null=True,
         blank=True,
-        verbose_name="Mastodon URL",
+        verbose_name="Mastodon username",
     )
 
     url = models.CharField(

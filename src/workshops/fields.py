@@ -3,7 +3,7 @@ from typing import Any, Protocol, cast
 
 import pytz
 from django import forms
-from django.core.validators import MaxLengthValidator, RegexValidator
+from django.core.validators import EmailValidator, MaxLengthValidator, RegexValidator
 from django.db import models
 from django.utils.safestring import SafeString, mark_safe
 from django_select2.forms import HeavySelect2Widget as DS2_HeavySelect2Widget
@@ -49,14 +49,14 @@ class NullableGithubUsernameField(models.CharField):  # type: ignore
 
 # ORCID IDs are 16 digits split into 4 groups of 4 by hyphens; the last
 # character may be "X" (ISO 7064 check digit).  The canonical form is the
-# full URI, but bare IDs are also accepted.
-# See https://support.orcid.org/hc/en-us/articles/360006897674
+# full URI.
+# See https://support.orcid.org/hc/en-us/articles/360006897674,
+# subsection "Storage of the ORCID iD in a database" which requires the full URI form.
 ORCID_REGEX_VALIDATOR = RegexValidator(
-    regex=r"^(https://orcid\.org/)?\d{4}-\d{4}-\d{4}-\d{3}[\dX]$",
+    regex=r"^https://orcid\.org/\d{4}-\d{4}-\d{4}-\d{3}[\dX]$",
     message=(
         "Enter a valid ORCID identifier, either as a bare ID "
-        "(e.g. 0000-0001-2345-6789) or as a full URI "
-        "(e.g. https://orcid.org/0000-0001-2345-6789)."
+        "as a full URI (e.g. https://orcid.org/0000-0001-2345-6789)."
     ),
 )
 
@@ -64,37 +64,42 @@ ORCID_REGEX_VALIDATOR = RegexValidator(
 class OrcidField(models.CharField):  # type: ignore
     def __init__(self, **kwargs: Any) -> None:
         kwargs.setdefault("max_length", STR_LONG)
+        kwargs.setdefault(
+            "help_text", "Enter your ORCID identifier as a full URI (e.g. https://orcid.org/0000-0001-2345-6789)."
+        )
         super().__init__(**kwargs)
 
     default_validators = [ORCID_REGEX_VALIDATOR]
 
 
 # Bluesky handles follow the AT Protocol handle format: a dot-separated
-# domain name, optionally prefixed with "@".
+# domain name.
 # See https://atproto.com/specs/handle
 BLUESKY_HANDLE_VALIDATOR = RegexValidator(
-    regex=r"^@?([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$",
-    message=("Enter a valid Bluesky handle (e.g. alice.bsky.social or @alice.bsky.social)."),
+    regex=r"^([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$",
+    message=("Enter a valid Bluesky handle (e.g. alice.bsky.social)."),
 )
 
 
 class BlueSkyHandleField(models.CharField):  # type: ignore
     def __init__(self, **kwargs: Any) -> None:
         kwargs.setdefault("max_length", STR_LONG)
+        kwargs.setdefault("help_text", "Enter your Bluesky handle (e.g. alice.bsky.social).")
         super().__init__(**kwargs)
 
     default_validators = [BLUESKY_HANDLE_VALIDATOR]
 
 
-# Mastodon profile URLs follow the pattern https://<instance>/@<username>.
-MASTODON_URL_VALIDATOR = RegexValidator(
-    regex=r"^https?://[^/]+/@[^/]+",
-    message=("Enter a valid Mastodon profile URL (e.g. https://mastodon.social/@alice)."),
-)
+# Mastodon usernames follow the email pattern,
+# see: https://docs.joinmastodon.org/user/signup/#address
+# URL is mentioned to be also accepted in the documentation, but the Mastodon website mostly uses email form.
+class MastodonHandleField(models.CharField):  # type: ignore
+    def __init__(self, **kwargs: Any) -> None:
+        kwargs.setdefault("max_length", STR_LONG)
+        kwargs.setdefault("help_text", "Enter your Mastodon handle (e.g. alice@mastodon.social).")
+        super().__init__(**kwargs)
 
-
-class MastodonURLField(models.URLField):  # type: ignore
-    default_validators = [*models.URLField.default_validators, MASTODON_URL_VALIDATOR]
+    default_validators = [EmailValidator(message="Enter a valid Mastodon handle (e.g. alice@mastodon.social).")]
 
 
 # ------------------------------------------------------------
