@@ -172,7 +172,7 @@ class TestBase(SuperuserMixin, TestCase):
             airport_iata="CDG",
             github="herself",
             twitter="herself",
-            bluesky="@herself.bsky.social",
+            bluesky="herself.bsky.social",
             mastodon="",
             url="http://hermione.org",
             username="granger_hermione",

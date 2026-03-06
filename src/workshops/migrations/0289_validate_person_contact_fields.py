@@ -33,8 +33,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="person",
             name="mastodon",
-            field=src.workshops.fields.MastodonURLField(
-                blank=True, null=True, unique=True, verbose_name="Mastodon URL"
+            field=src.workshops.fields.MastodonHandleField(
+                blank=True, null=True, unique=True, verbose_name="Mastodon username"
             ),
         ),
         migrations.AlterField(
