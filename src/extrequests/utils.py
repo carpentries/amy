@@ -88,10 +88,16 @@ def get_membership_or_none_from_code(code: str | None) -> Membership | None:
     if not code:
         return None
 
-    try:
-        return Membership.objects.get(registration_code=code)
-    except Membership.DoesNotExist:
+    return Membership.objects.filter(registration_code=code).first()
+
+
+def get_partnership_or_none_from_code(code: str | None) -> Partnership | None:
+    """Given a partnership code, returns the related partnership
+    or None if no such partnership exists. If provided an empty code, returns None."""
+    if not code:
         return None
+
+    return Partnership.objects.filter(registration_code=code).first()
 
 
 # ----------------------------------------
