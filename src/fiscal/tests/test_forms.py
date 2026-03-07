@@ -2,9 +2,9 @@ from datetime import date
 
 from django.test import TestCase
 
-from src.fiscal.forms import PartnershipExtensionForm, PartnershipForm
+from src.fiscal.forms import MembershipForm, PartnershipExtensionForm, PartnershipForm
 from src.fiscal.models import Partnership, PartnershipTier
-from src.offering.models import Account
+from src.offering.models import Account, AccountBenefit, Benefit
 from src.workshops.models import Membership, Organization
 
 
@@ -115,8 +115,48 @@ class TestPartnershipForm(TestCase):
             [f'This registration code is used by membership "{membership}".'],
         )
 
+    def test_clean__registration_code_used_by_account_benefit(self) -> None:
+        """Test that form is invalid when registration code is already used by an account benefit."""
+        # Arrange
+        org = Organization.objects.create(fullname="Benefit Org", domain="benefit.com")
+        account = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=org,
+        )
+        benefit = Benefit.objects.create(name="Test Benefit", unit_type="seat", credits=1)
+        account_benefit = AccountBenefit.objects.create(
+            account=account,
+            benefit=benefit,
+            registration_code="DUPLICATE123",
+            start_date=date(2025, 1, 1),
+            end_date=date(2025, 12, 31),
+            allocation=5,
+        )
+
+        data = {
+            "partner_organisation": self.organisation.pk,
+            "name": "Test Partnership",
+            "tier": self.tier.pk,
+            "agreement_start": date(2025, 1, 1),
+            "agreement_end": date(2025, 12, 31),
+            "agreement_link": "http://example.com/agreement.pdf",
+            "registration_code": "DUPLICATE123",
+            "public_status": "public",
+        }
+
+        # Act
+        form = PartnershipForm(data)
+
+        # Assert
+        self.assertFalse(form.is_valid())
+        self.assertIn("registration_code", form.errors)
+        self.assertEqual(
+            form.errors["registration_code"],
+            [f'This registration code is used by account benefit "{account_benefit}".'],
+        )
+
     def test_clean__valid_unique_registration_code(self) -> None:
-        """Test that form is valid when registration code is unique and not used by membership."""
+        """Test that form is valid when registration code is not used by any membership or account benefit."""
         # Arrange
         data = {
             "partner_organisation": self.organisation.pk,
@@ -131,6 +171,111 @@ class TestPartnershipForm(TestCase):
 
         # Act
         form = PartnershipForm(data)
+
+        # Assert
+        self.assertTrue(form.is_valid())
+
+
+MEMBERSHIP_BASE_DATA = {
+    "name": "Test Membership",
+    "consortium": False,
+    "public_status": "public",
+    "variant": "bronze",
+    "agreement_start": date(2025, 1, 1),
+    "agreement_end": date(2025, 12, 31),
+    "extensions": "",
+    "contribution_type": "financial",
+    "registration_code": "",
+    "agreement_link": "http://example.com/agreement.pdf",
+    "workshops_without_admin_fee_per_agreement": "",
+    "public_instructor_training_seats": 0,
+    "additional_public_instructor_training_seats": 0,
+    "inhouse_instructor_training_seats": 0,
+    "additional_inhouse_instructor_training_seats": 0,
+    "emergency_contact": "",
+}
+
+
+class TestMembershipForm(TestCase):
+    def setUp(self) -> None:
+        self.organisation = Organization.objects.create(fullname="test", domain="example.com")
+        self.account = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=self.organisation,
+        )
+        tier = PartnershipTier.objects.create(name="Gold", credits=10)
+        self.partnership = Partnership.objects.create(
+            name="Existing Partnership",
+            tier=tier,
+            credits=10,
+            account=self.account,
+            agreement_start=date(2025, 1, 1),
+            agreement_end=date(2025, 12, 31),
+            agreement_link="http://example.com/agreement.pdf",
+            registration_code="PARTNER_CODE",
+            public_status="public",
+            partner_organisation=self.organisation,
+        )
+        benefit = Benefit.objects.create(name="Test Benefit", unit_type="seat", credits=1)
+        self.account_benefit = AccountBenefit.objects.create(
+            account=self.account,
+            benefit=benefit,
+            registration_code="BENEFIT_CODE",
+            start_date=date(2025, 1, 1),
+            end_date=date(2025, 12, 31),
+            allocation=5,
+        )
+
+    def test_clean__registration_code_used_by_partnership(self) -> None:
+        """Form is invalid when the registration code is already used by a partnership."""
+        # Arrange
+        data = {**MEMBERSHIP_BASE_DATA, "registration_code": "PARTNER_CODE"}
+
+        # Act
+        form = MembershipForm(data)
+
+        # Assert
+        self.assertFalse(form.is_valid())
+        self.assertIn("registration_code", form.errors)
+        self.assertEqual(
+            form.errors["registration_code"],
+            [f'This registration code is used by partnership "{self.partnership}".'],
+        )
+
+    def test_clean__registration_code_used_by_account_benefit(self) -> None:
+        """Form is invalid when the registration code is already used by an account benefit."""
+        # Arrange
+        data = {**MEMBERSHIP_BASE_DATA, "registration_code": "BENEFIT_CODE"}
+
+        # Act
+        form = MembershipForm(data)
+
+        # Assert
+        self.assertFalse(form.is_valid())
+        self.assertIn("registration_code", form.errors)
+        self.assertEqual(
+            form.errors["registration_code"],
+            [f'This registration code is used by account benefit "{self.account_benefit}".'],
+        )
+
+    def test_clean__registration_code_unique(self) -> None:
+        """Form is valid when the registration code is not used by any partnership or account benefit."""
+        # Arrange
+        data = {**MEMBERSHIP_BASE_DATA, "registration_code": "UNIQUE_CODE"}
+
+        # Act
+        form = MembershipForm(data)
+
+        # Assert
+        self.assertTrue(form.is_valid())
+
+    def test_clean__registration_code_empty(self) -> None:
+        """Form is valid when registration code is empty (it's optional)."""
+        # Arrange
+        data = {**MEMBERSHIP_BASE_DATA, "registration_code": ""}
+
+        # Act
+        form = MembershipForm(data)
 
         # Assert
         self.assertTrue(form.is_valid())

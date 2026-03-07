@@ -6,9 +6,11 @@ from django.core.exceptions import ValidationError
 from django.utils.html import format_html
 
 from src.fiscal.forms import EditableFormsetFormMixin
+from src.fiscal.models import Partnership
 from src.offering.models import Account, AccountBenefit, AccountOwner, Benefit
 from src.workshops.fields import HeavySelect2Widget, ModelSelect2Widget
 from src.workshops.forms import BootstrapHelper
+from src.workshops.models import Membership
 
 
 class AccountForm(forms.ModelForm[Account]):
@@ -205,6 +207,20 @@ class AccountBenefitForm(forms.ModelForm[AccountBenefit]):
     def clean(self) -> dict[str, Any]:
         cleaned_data = cast(dict[str, Any], super().clean())
         errors = {}
+
+        # Ensure unique registration code across Memberships and Partnerships.
+        registration_code = cleaned_data.get("registration_code")
+        if registration_code:
+            existing_membership = Membership.objects.filter(registration_code=registration_code).first()
+            if existing_membership:
+                errors["registration_code"] = ValidationError(
+                    f'This registration code is used by membership "{existing_membership}".'
+                )
+            existing_partnership = Partnership.objects.filter(registration_code=registration_code).first()
+            if existing_partnership:
+                errors["registration_code"] = ValidationError(
+                    f'This registration code is used by partnership "{existing_partnership}".'
+                )
 
         # Verify if partnership belongs to the account
         account = cleaned_data["account"]
