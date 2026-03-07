@@ -13,12 +13,7 @@ from src.extrequests.models import (
     SelfOrganisedSubmission,
     WorkshopInquiryRequest,
 )
-from src.extrequests.utils import (
-    MemberCodeValidationError,
-    membership_code_valid,
-    membership_code_valid_training,
-    partnership_code_valid,
-)
+from src.extrequests.utils import any_member_code_valid, any_member_code_valid_training
 from src.offering.models import AccountBenefit, Benefit
 from src.workshops.fields import (
     AirportSelect2Widget,
@@ -470,25 +465,10 @@ class WorkshopRequestBaseForm(forms.ModelForm[WorkshopRequest]):
         if not member_code:
             return None
 
-        # confirm that membership or partnership is active at the time of submission
-        # grace period: 60 days before, 0 days after
-        try:
-            membership_code_valid(
-                code=member_code,
-                date=datetime.date.today(),
-                grace_before=60,
-                grace_after=0,
-            )
-        except MemberCodeValidationError:
-            try:
-                partnership_code_valid(
-                    code=member_code,
-                    date=datetime.date.today(),
-                    grace_before=60,
-                    grace_after=0,
-                )
-            except MemberCodeValidationError:
-                errors["member_code"] = ValidationError(error_msg)
+        # Confirm that membership, partnership, or account benefit is active at the time of submission.
+        # Grace period: 60 days before, 0 days after.
+        if not any_member_code_valid(member_code, datetime.date.today(), grace_before=60, grace_after=0):
+            errors["member_code"] = ValidationError(error_msg)
 
         return errors
 
@@ -1337,30 +1317,17 @@ class TrainingRequestUpdateForm(forms.ModelForm[TrainingRequest]):
         if not member_code:
             return None
 
-        code_is_valid = False
-        try:
-            code_is_valid = membership_code_valid_training(
-                member_code,
-                self.instance.created_at.date(),
-                grace_before=90,
-                grace_after=90,
+        code_is_valid = any_member_code_valid_training(
+            member_code,
+            self.instance.created_at.date(),
+            grace_before=90,
+            grace_after=90,
+        )
+
+        if not code_is_valid and not member_code_override:
+            errors["member_code"] = ValidationError(
+                "This code is invalid. Tick the checkbox below to ignore this message."
             )
-        except MemberCodeValidationError as membership_error:
-            try:
-                code_is_valid = partnership_code_valid(
-                    member_code,
-                    self.instance.created_at.date(),
-                    grace_before=90,
-                    grace_after=90,
-                )
-            except MemberCodeValidationError:
-                if not member_code_override:
-                    # user must either correct the code or tick the override
-                    error_msg = (
-                        f"This code is invalid: {membership_error.message} "
-                        "Tick the checkbox below to ignore this message."
-                    )
-                    errors["member_code"] = ValidationError(error_msg)
 
         if code_is_valid and member_code_override:
             # case where a user corrects their code but ticks the box anyway
