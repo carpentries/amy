@@ -574,14 +574,18 @@ def all_trainingrequests(request: AuthenticatedHttpRequest) -> HttpResponse:
                         if service_offering_enabled
                         else None
                     )
-                    account_benefit = None
+                    account_benefit = (
+                        AccountBenefit.objects.filter(registration_code=member_code).first()
+                        if service_offering_enabled
+                        else None
+                    )
 
-                    if membership and partnership:
+                    if membership and partnership or membership and account_benefit or partnership and account_benefit:
                         # It should never happen beacause of the unique check on both models against each other's codes.
                         errors.append(
                             f'{training_request}: Registration code "{member_code}" is associated '
-                            "with both a membership and a partnership; cannot auto-assign. This is a problem with "
-                            "internal data, please contact an administrator."
+                            "with two or more: membership, partnership, or account benefit; cannot auto-assign. "
+                            "This is a problem with internal data, please contact an administrator."
                         )
                         continue
 
@@ -600,11 +604,15 @@ def all_trainingrequests(request: AuthenticatedHttpRequest) -> HttpResponse:
                             )
                             continue
 
-                    # both cases below are related to "not found registration code" situations
+                    elif account_benefit and service_offering_enabled:
+                        # found account benefit directly via registration code
+                        pass
+
+                    # all cases below are related to "not found registration code" situations
                     elif service_offering_enabled:
                         errors.append(
-                            f"{training_request}: No membership or partnership found for registration code "
-                            f'"{member_code}".'
+                            f"{training_request}: No membership, partnership, or account benefit found for "
+                            f'registration code "{member_code}".'
                         )
                         continue
                     else:
