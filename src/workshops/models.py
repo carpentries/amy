@@ -780,6 +780,9 @@ class Person(
     )
     airport_lat = models.FloatField(default=0.0, help_text="Airport latitude (copied from airport data package)")
     airport_lon = models.FloatField(default=0.0, help_text="Airport longitude (copied from airport data package)")
+    airport_timezone = models.CharField(
+        default="", help_text="Airport timezone (copied from airport data package)", blank=True
+    )
     country = CountryField(
         null=False,
         blank=True,
@@ -1042,11 +1045,13 @@ class Person(
             self.airport_country = airport["country"]
             self.airport_lat = airport["lat"]
             self.airport_lon = airport["lon"]
+            self.airport_timezone = airport["tz"]
         except KeyError:
             self.airport_iata = ""
             self.airport_country = ""
             self.airport_lat = 0.0
             self.airport_lon = 0.0
+            self.airport_timezone = ""
 
         super().save(*args, **kwargs)
 

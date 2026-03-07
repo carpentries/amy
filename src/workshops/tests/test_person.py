@@ -527,6 +527,7 @@ class TestPerson(TestBase):
         self.assertEqual(person.airport_country, cdg_airport["country"])
         self.assertEqual(person.airport_lat, cdg_airport["lat"])
         self.assertEqual(person.airport_lon, cdg_airport["lon"])
+        self.assertEqual(person.airport_timezone, cdg_airport["tz"])
 
     def test_save__airport_invalid(self) -> None:
         # Arrange
@@ -545,6 +546,7 @@ class TestPerson(TestBase):
         self.assertEqual(person.airport_country, "")
         self.assertEqual(person.airport_lat, 0.0)
         self.assertEqual(person.airport_lon, 0.0)
+        self.assertEqual(person.airport_timezone, "")
 
     def test_clean_airport_iata(self) -> None:
         # Arrange
