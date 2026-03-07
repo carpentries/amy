@@ -161,7 +161,6 @@ class Partnership(CreatedUpdatedMixin, models.Model):
 
     class Meta:
         # Ensure only 1 partner is selected, either consortium or organization.
-        # TODO: different arguments in Django 5.2
         constraints = [
             models.CheckConstraint(
                 condition=Q(partner_consortium__isnull=True) ^ Q(partner_organisation__isnull=True),
