@@ -9,7 +9,7 @@ from django.urls import reverse
 from django.utils import timezone
 from reversion import revisions as reversion
 
-from src.workshops.consts import STR_LONG, STR_LONGEST
+from src.workshops.consts import STR_LONG, STR_LONGEST, STR_MED
 from src.workshops.mixins import ActiveMixin, CreatedUpdatedMixin
 from src.workshops.models import Curriculum, Event, Person, Task
 from src.workshops.utils.dates import human_daterange
@@ -128,6 +128,15 @@ class AccountBenefit(CreatedUpdatedMixin, models.Model):
 
     # null if event category is workshop, defined if skillup
     curriculum = models.ForeignKey(Curriculum, on_delete=models.PROTECT, null=True, blank=True)
+
+    registration_code = models.CharField(
+        max_length=STR_MED,
+        null=True,
+        blank=True,
+        unique=True,
+        verbose_name="Registration Code",
+        help_text="Unique registration code used for account benefit identification.",
+    )
 
     start_date = models.DateField()
     end_date = models.DateField()
