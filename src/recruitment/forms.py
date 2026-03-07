@@ -60,8 +60,9 @@ class InstructorRecruitmentSignupUpdateForm(forms.ModelForm[InstructorRecruitmen
 
 class InstructorRecruitmentSignupChangeStateForm(forms.Form):
     ALLOWED_ACTIONS = (
-        ("confirm", "Confirm"),
-        ("decline", "Decline"),
+        ("accept", "Accept"),
+        ("discard", "Discard"),
+        ("pending", "Pending"),
     )
     action = forms.ChoiceField(choices=ALLOWED_ACTIONS)
 

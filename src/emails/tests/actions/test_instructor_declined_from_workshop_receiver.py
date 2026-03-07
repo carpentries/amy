@@ -245,7 +245,7 @@ class TestInstructorDeclinedFromWorkshopReceiverIntegration(TestBase):
         )
 
         url = reverse("instructorrecruitmentsignup_changestate", args=[signup.pk])
-        payload = {"action": "decline"}
+        payload = {"action": "discard"}
         self._setUpUsersAndLogin()
 
         # Act

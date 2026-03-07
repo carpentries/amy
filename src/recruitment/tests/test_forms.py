@@ -100,14 +100,41 @@ class TestInstructorRecruitmentSignupChangeStateForm(TestCase):
         self.assertFalse(form.is_valid())
         self.assertEqual(form.errors.keys(), {"action"})
 
-    def test_clean_success(self) -> None:
+    def test_clean_success__accept(self) -> None:
         # Arrange
-        data = {"action": "confirm"}
+        data = {"action": "accept"}
         # Act
         form = InstructorRecruitmentSignupChangeStateForm(data)
         # Assert
         self.assertTrue(form.is_valid())
         self.assertEqual(form.errors.keys(), set())
+
+    def test_clean_success__discard(self) -> None:
+        # Arrange
+        data = {"action": "discard"}
+        # Act
+        form = InstructorRecruitmentSignupChangeStateForm(data)
+        # Assert
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.errors.keys(), set())
+
+    def test_clean_success__pending(self) -> None:
+        # Arrange
+        data = {"action": "pending"}
+        # Act
+        form = InstructorRecruitmentSignupChangeStateForm(data)
+        # Assert
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.errors.keys(), set())
+
+    def test_invalid_action(self) -> None:
+        # Arrange
+        data = {"action": "confirm"}  # old/removed action
+        # Act
+        form = InstructorRecruitmentSignupChangeStateForm(data)
+        # Assert
+        self.assertFalse(form.is_valid())
+        self.assertIn("action", form.errors)
 
 
 class TestInstructorRecruitmentChangeStateForm(TestCase):
