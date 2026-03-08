@@ -5,7 +5,6 @@ import logging
 from functools import partial
 from typing import Annotated, Any, TypedDict, cast
 
-import requests
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
@@ -42,12 +41,9 @@ from django.http import (
     Http404,
     HttpRequest,
     HttpResponse,
-    HttpResponseBadRequest,
-    JsonResponse,
 )
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
-from django.utils.html import escape
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 from django_stubs_ext import Annotations
@@ -120,7 +116,7 @@ from src.workshops.base_views import (
     RedirectSupportMixin,
 )
 from src.workshops.consts import IATA_AIRPORTS
-from src.workshops.exceptions import InternalError, WrongWorkshopURL
+from src.workshops.exceptions import InternalError
 from src.workshops.filters import (
     BadgeAwardsFilter,
     EventFilter,
@@ -161,11 +157,6 @@ from src.workshops.models import (
 from src.workshops.signals import create_comment_signal
 from src.workshops.utils.access import OnlyForAdminsMixin, admin_required, login_required
 from src.workshops.utils.merge import merge_objects
-from src.workshops.utils.metadata import (
-    fetch_workshop_metadata,
-    parse_workshop_metadata,
-    validate_workshop_metadata,
-)
 from src.workshops.utils.pagination import get_pagination_items
 from src.workshops.utils.person_upload import (
     PersonTaskEntry,
@@ -1033,37 +1024,16 @@ def event_details(request: AuthenticatedHttpRequest, slug: str) -> HttpResponse:
 
 @admin_required
 def validate_event(request: AuthenticatedHttpRequest, slug: str) -> HttpResponse:
-    """Check the event's home page *or* the specified URL (for testing)."""
+    """Show metadata validation page for the event's home page (validation runs client-side)."""
     try:
         event = Event.objects.get(slug=slug)
     except Event.DoesNotExist as e:
         raise Http404("Event matching query does not exist.") from e
 
-    page_url = (event.url or "").strip()
-
-    error_messages: list[str] = []
-    warning_messages: list[str] = []
-
-    try:
-        metadata = fetch_workshop_metadata(page_url)
-        # validate metadata
-        error_messages, warning_messages = validate_workshop_metadata(metadata)
-
-    except WrongWorkshopURL as e:
-        error_messages.append(f"URL error: {e.msg}")
-
-    except requests.exceptions.HTTPError as e:
-        error_messages.append(f'Request for "{page_url}" returned status code {e.response.status_code}')
-
-    except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
-        error_messages.append("Network connection error.")
-
     context = {
         "title": f"Validate Event {event}",
         "event": event,
-        "page": page_url,
-        "error_messages": error_messages,
-        "warning_messages": warning_messages,
+        "page": (event.url or "").strip(),
     }
     return render(request, "workshops/validate_event.html", context)
 
@@ -1377,35 +1347,6 @@ class EventDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView[Eve
                     self.request,
                     f"Error when creating or updating scheduled email. {exc}",
                 )
-
-
-@admin_required
-def event_import(request: HttpRequest) -> HttpResponse:
-    """Read metadata from remote URL and return them as JSON.
-
-    This is used to read metadata from workshop website and then fill up fields
-    on event_create form."""
-
-    url = request.GET.get("url", "").strip()
-
-    try:
-        metadata_dict = fetch_workshop_metadata(url)
-        # normalize the metadata
-        metadata = parse_workshop_metadata(metadata_dict)
-        return JsonResponse(metadata)
-
-    except requests.exceptions.HTTPError as e:
-        escaped_url = escape(url)
-        return HttpResponseBadRequest(f'Request for "{escaped_url}" returned status code {e.response.status_code}.')
-
-    except requests.exceptions.RequestException:
-        return HttpResponseBadRequest("Network connection error.")
-
-    except WrongWorkshopURL as e:
-        return HttpResponseBadRequest(f"URL error: {e.msg}")
-
-    except KeyError:
-        return HttpResponseBadRequest('Missing or wrong "url" parameter.')
 
 
 class EventAssign(OnlyForAdminsMixin, AssignView[Event]):

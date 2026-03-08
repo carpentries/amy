@@ -81,7 +81,6 @@ urlpatterns = [
             [
                 path("", views.AllEvents.as_view(), name="all_events"),
                 path("add/", views.EventCreate.as_view(), name="event_add"),
-                path("import/", views.event_import, name="event_import"),
                 path("merge/", views.events_merge, name="events_merge"),
             ]
         ),

@@ -3,7 +3,6 @@ from datetime import date, timedelta
 from django.conf import settings
 from django.db.models import QuerySet
 from django.urls import reverse
-from requests_mock import Mocker
 
 from src.extrequests.forms import SelfOrganisedSubmissionBaseForm
 from src.extrequests.models import SelfOrganisedSubmission
@@ -536,105 +535,25 @@ class TestAcceptingSelfOrgSubmPrefilledform(TestBase):
         )
         self.sos1.workshop_types.set(Curriculum.objects.filter(mix_match=True))
 
-    def test_form_prefilled_not_from_URL(self) -> None:
-        """Ensure even though URL isn't working, the form gets some fields
-        with initial values."""
+    def test_form_prefilled_from_submission(self) -> None:
+        """Ensure the form gets pre-filled from the SelfOrganisedSubmission.
+        Metadata from the workshop URL is no longer fetched server-side;
+        it is loaded client-side via the Import from URL modal."""
         view_url = reverse("selforganisedsubmission_accept_event", args=[self.sos1.pk])
         page = self.client.get(view_url)
+        self.assertEqual(page.status_code, 200)
         form = page.context["form"]
 
-        # assert we see the warning
-        self.assertIn("Cannot automatically fill the form", page.content.decode("utf-8"))
+        # no server-side metadata warnings
+        content = page.content.decode("utf-8")
+        self.assertNotIn("Cannot automatically fill the form", content)
 
         expected = {
-            # fields below are pre-filled without accessing the website
             "url": "http://nonexistent-url/",
             "curricula": Curriculum.objects.filter(mix_match=True),
             "host": self.org_alpha,
             "administrator": Organization.objects.get(domain="self-organized"),
             "tags": Tag.objects.filter(name="Circuits"),
-            # fields below can't get populated because the website doesn't
-            # work
-            "slug": None,
-            "language": None,
-            "start": None,
-            "end": None,
-            "country": None,
-            "venue": "",
-            "address": "",
-            "latitude": None,
-            "longitude": None,
-            "reg_key": None,
-            "contact": "",
-            "comment": None,
-        }
-        for key, value in expected.items():
-            init = form[key].initial
-            if isinstance(value, QuerySet):
-                init = list(init)
-                value = list(value)
-            self.assertEqual(init, value, f"Issue with {key}")
-
-    @Mocker()
-    def test_form_prefilled_from_URL(self, mock: Mocker) -> None:
-        """Ensure the form gets fields populated both from Self-Organised Subm.
-        and from the workshop page."""
-        html = """
-<html><head>
-<meta name="slug" content="2020-04-04-test" />
-<meta name="startdate" content="2020-04-04" />
-<meta name="enddate" content="2020-04-05" />
-<meta name="country" content="us" />
-<meta name="venue" content="Euphoric State University" />
-<meta name="address" content="Highway to Heaven 42, Academipolis" />
-<meta name="latlng" content="36.998977, -109.045173" />
-<meta name="language" content="en" />
-<meta name="invalid" content="invalid" />
-<meta name="instructor" content="Hermione Granger|Ron Weasley" />
-<meta name="helper" content="Peter Parker|Tony Stark|Natasha Romanova" />
-<meta name="contact" content="hermione@granger.co.uk|rweasley@ministry.gov" />
-<meta name="eventbrite" content="10000000" />
-<meta name="charset" content="utf-8" />
-</head>
-<body>
-<h1>test</h1>
-</body></html>
-        """
-        # setup mock to "fake" the response from non-existing URL
-        mock.get(
-            self.sos1.workshop_url,
-            text=html,
-            status_code=200,
-        )
-
-        view_url = reverse("selforganisedsubmission_accept_event", args=[self.sos1.pk])
-        page = self.client.get(view_url)
-        form = page.context["form"]
-
-        # assert we see the warning
-        self.assertNotIn("Cannot automatically fill the form", page.content.decode("utf-8"))
-        self.assertNotIn("Cannot automatically fill language", page.content.decode("utf-8"))
-
-        expected = {
-            # fields below are pre-filled without accessing the website
-            "url": "http://nonexistent-url/",
-            "curricula": Curriculum.objects.filter(mix_match=True),
-            "host": self.org_alpha,
-            "administrator": Organization.objects.get(domain="self-organized"),
-            "tags": Tag.objects.filter(name="Circuits"),
-            # fields below are pre-filled from the website meta tags
-            "slug": "2020-04-04-test",
-            "language": Language.objects.get(subtag="en").pk,
-            "start": date(2020, 4, 4),
-            "end": date(2020, 4, 5),
-            "country": "US",
-            "venue": "Euphoric State University",
-            "address": "Highway to Heaven 42, Academipolis",
-            "latitude": 36.998977,
-            "longitude": -109.045173,
-            "reg_key": 10000000,
-            "contact": ["hermione@granger.co.uk", "rweasley@ministry.gov"],
-            "comment": "Instructors: Hermione Granger,Ron Weasley\n\nHelpers: Peter Parker,Tony Stark,Natasha Romanova",
         }
         for key, value in expected.items():
             init = form[key].initial

@@ -15,7 +15,6 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from flags.state import flag_enabled  # type: ignore[import-untyped]
-from requests.exceptions import HTTPError, RequestException
 
 from src.consents.models import Term, TermOption, TrainingRequestConsent
 from src.consents.util import reconsent_for_term_option_type
@@ -65,7 +64,7 @@ from src.workshops.base_views import (
     RedirectSupportMixin,
     StateFilterMixin,
 )
-from src.workshops.exceptions import InternalError, WrongWorkshopURL
+from src.workshops.exceptions import InternalError
 from src.workshops.forms import (
     AdminLookupForm,
     BootstrapHelper,
@@ -74,7 +73,6 @@ from src.workshops.forms import (
 )
 from src.workshops.models import (
     Event,
-    Language,
     Membership,
     Organization,
     Person,
@@ -85,7 +83,6 @@ from src.workshops.models import (
 )
 from src.workshops.utils.access import OnlyForAdminsMixin, admin_required
 from src.workshops.utils.merge import merge_objects
-from src.workshops.utils.metadata import fetch_workshop_metadata, parse_workshop_metadata
 from src.workshops.utils.trainingrequest_upload import (
     clean_upload_trainingrequest_manual_score,
     update_manual_score,
@@ -408,51 +405,18 @@ class SelfOrganisedSubmissionAcceptEvent(
     other_object: SelfOrganisedSubmission
 
     def get_form_kwargs(self) -> dict[str, Any]:
-        """Extend form kwargs with `initial` values.
-
-        The initial values are read from SelfOrganisedSubmission request
-        object, and from corresponding workshop page (if it's possible)."""
+        """Extend form kwargs with `initial` values from the SelfOrganisedSubmission request."""
         kwargs = super().get_form_kwargs()
 
         # no matter what, don't show "lessons" field; previously they were shown
         # when mix&match was selected
         kwargs["show_lessons"] = False
 
-        url = self.other_object.workshop_url.strip()
         data: dict[str, Any] = {
-            "url": url,
+            "url": self.other_object.workshop_url.strip(),
             "host": self.other_object.host_organization() or self.other_object.institution,
             "administrator": Organization.objects.get(domain="self-organized"),
         }
-
-        try:
-            metadata = fetch_workshop_metadata(url)
-            parsed_data = parse_workshop_metadata(metadata)
-        except (AttributeError, HTTPError, RequestException, WrongWorkshopURL):
-            # ignore errors, but show warning instead
-            messages.warning(
-                self.request,
-                "Cannot automatically fill the form from provided workshop URL.",
-            )
-        else:
-            # keep working only if no exception occurred
-            language = None
-            try:
-                language = Language.objects.get(subtag=parsed_data["language"].lower())
-            except (KeyError, ValueError, Language.DoesNotExist):
-                # ignore non-existing
-                messages.warning(self.request, "Cannot automatically fill language.")
-                # clear bad value
-                parsed_data["language"] = ""
-
-            data.update(parsed_data)
-            if language:
-                data["language"] = language.pk
-
-            if "instructors" in data or "helpers" in data:
-                instructors = data.get("instructors") or ["none"]
-                helpers = data.get("helpers") or ["none"]
-                data["comment"] = f"Instructors: {','.join(instructors)}\n\nHelpers: {','.join(helpers)}"
 
         initial = super().get_initial()
         initial.update(data)

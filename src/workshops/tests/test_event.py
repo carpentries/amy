@@ -1184,18 +1184,6 @@ class TestEventMerging(TestBase):
         )
 
 
-class TestEventImport(TestBase):
-    def setUp(self) -> None:
-        self._setUpUsersAndLogin()
-
-    def test_no_exception_when_empty_url(self) -> None:
-        """Regression test: ensure no exceptions are raised when accessing
-        `event_import` view without `url` GET param."""
-        url = reverse("event_import")
-        rv = self.client.get(url)
-        self.assertLess(rv.status_code, 500)
-
-
 class TestEventAttendance(TestBase):
     """
     Make sure new (as of #1177) attendance mechanics work as expected.
