@@ -283,6 +283,8 @@ class TestTrainingRequestsListView(TestBase):
         self.learner = Role.objects.get(name="learner")
         self.ttt = Tag.objects.get(name="TTT")
 
+        self.benefit = Benefit.objects.get(name="Instructor Training")
+
         self.first_training = Event.objects.create(slug="ttt-event", host=self.org)
         self.first_training.tags.add(self.ttt)
         Task.objects.create(person=self.spiderman, role=self.learner, event=self.first_training)
@@ -363,6 +365,7 @@ class TestTrainingRequestsListView(TestBase):
             "match": "",
             "event": self.second_training.pk,
             "requests": [self.first_req.pk],
+            "benefit_override": self.benefit.pk,
             # "seat_public": "True",
         }
         rv = self.client.post(reverse("all_trainingrequests"), data, follow=True)
@@ -385,6 +388,7 @@ class TestTrainingRequestsListView(TestBase):
             "match": "",
             "event": self.first_training.pk,
             "requests": [self.first_req.pk],
+            "benefit_override": self.benefit.pk,
         }
         # Spiderman is already matched with first_training
         assert self.spiderman.get_training_tasks()[0].event == self.first_training
@@ -419,6 +423,7 @@ class TestTrainingRequestsListView(TestBase):
             "event": self.second_training.pk,
             "requests": [self.first_req.pk],
             "allocated_benefit": account_benefit.pk,
+            "benefit_override": benefit.pk,
         }
 
         # Act
@@ -442,6 +447,7 @@ class TestTrainingRequestsListView(TestBase):
             "match": "",
             "event": self.second_training.pk,
             "requests": [self.second_req.pk],
+            "benefit_override": self.benefit.pk,
             # "seat_public": "True",
         }
         rv = self.client.post(reverse("all_trainingrequests"), data, follow=True)
@@ -561,6 +567,7 @@ class TestTrainingRequestsListView(TestBase):
             "requests": [self.first_req.pk, self.third_req.pk],
             "event": self.second_training.pk,
             "seat_membership": membership1.pk,
+            "benefit_override": self.benefit.pk,
             # "seat_public": True,
         }
         msg1 = f"Membership &quot;{membership1}&quot; is using more training seats than it&#x27;s been allowed."
@@ -571,6 +578,7 @@ class TestTrainingRequestsListView(TestBase):
             "requests": [self.second_req.pk],
             "event": self.second_training.pk,
             "seat_membership": membership2.pk,
+            "benefit_override": self.benefit.pk,
             # "seat_public": True,
         }
         msg2 = f"Membership &quot;{membership2}&quot; is using more training seats than it&#x27;s been allowed."
@@ -649,6 +657,7 @@ class TestTrainingRequestsListView(TestBase):
             "event": self.first_training.pk,
             "auto_assign": "True",
             "requests": [req1.pk, req2.pk, req3.pk, self.first_req.pk],
+            "benefit_override": self.benefit.pk,
             # "seat_public": "True",
         }
 
@@ -664,7 +673,10 @@ class TestTrainingRequestsListView(TestBase):
         self.assertContains(rv, "2 request(s) were skipped due to errors")
         self.assertEqual(Task.objects.filter(seat_membership=membership_alpha).count(), 1)
         self.assertEqual(Task.objects.filter(seat_membership=membership_beta).count(), 1)
-        self.assertContains(rv, "No membership found for registration code &quot;invalid&quot;")
+        self.assertContains(
+            rv,
+            "No membership, partnership, or account benefit found for registration code &quot;invalid&quot;",
+        )
         self.assertContains(
             rv,
             "Request does not include a member registration code, so cannot be matched to a membership seat.",
@@ -1164,6 +1176,7 @@ class TestTrainingRequestsListView(TestBase):
             "match": "",
             "event": self.second_training.pk,
             "requests": [self.first_req.pk],
+            "benefit_override": self.benefit.pk,
             # No seat_membership or allocated_benefit provided
         }
 
@@ -1203,6 +1216,7 @@ class TestTrainingRequestsListView(TestBase):
             "event": self.first_training.pk,
             "auto_assign": "True",
             "requests": [req_valid.pk, req_invalid.pk, req_no_code.pk],
+            "benefit_override": self.benefit.pk,
         }
 
         # Act
