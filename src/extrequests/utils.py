@@ -1,8 +1,6 @@
 import re
 from datetime import date, timedelta
 
-from django.core.exceptions import ValidationError
-
 from src.fiscal.models import Partnership
 from src.offering.models import AccountBenefit, Benefit
 from src.workshops.models import Event, Membership, Role, Task, TrainingRequest
@@ -11,75 +9,120 @@ from src.workshops.models import Event, Membership, Role, Task, TrainingRequest
 # Utilities for validating member codes
 # ----------------------------------------
 
-
-class MemberCodeValidationError(ValidationError):
-    pass
+type CodeValidationResult = tuple[bool, str]  # (is_valid, reason)
 
 
-def membership_code_valid(code: str, date: date, grace_before: int = 0, grace_after: int = 0) -> bool:
+def membership_code_valid(code: str, date: date, grace_before: int = 0, grace_after: int = 0) -> CodeValidationResult:
     """Returns True if `code` matches an Membership that is active on `date`,
     including a grace period of `grace_before` days before
     and `grace_after` days after the Membership dates.
-    If there is no match, raises an Exception with a detailed error.
+    If there is no match, returns False with a detailed error.
     """
     try:
-        # find relevant membership - may raise Membership.DoesNotExist
+        # Find relevant membership - may raise Membership.DoesNotExist
         membership = Membership.objects.get(registration_code=code)
-    except Membership.DoesNotExist as e:
-        raise MemberCodeValidationError(f'No membership found for code "{code}".') from e
+    except Membership.DoesNotExist:
+        return False, f'No membership found for code "{code}".'
 
-    # confirm that membership was active at the time the request was submitted
-    # grace period: 90 days before and after
+    # Confirm that membership was active at the time the request was submitted.
+    # Grace period: 90 days before and after
     if not membership.active_on_date(date, grace_before=grace_before, grace_after=grace_after):
-        raise MemberCodeValidationError(
-            f"Membership is inactive (start {membership.agreement_start}, end {membership.agreement_end})."
-        )
+        return False, (f"Membership is inactive (start {membership.agreement_start}, end {membership.agreement_end}).")
 
-    return True
+    return True, "Membership is valid."
 
 
-def membership_code_valid_training(code: str, date: date, grace_before: int = 0, grace_after: int = 0) -> bool:
+def membership_code_valid_training(
+    code: str, date: date, grace_before: int = 0, grace_after: int = 0
+) -> CodeValidationResult:
     """Returns True if `code` matches an active Membership with training seats
-    remaining. If there is no match, raises an Exception with a detailed error."""
-    # first ensure the code matches an active membership
-    try:
-        membership_code_valid(code=code, date=date, grace_before=grace_before, grace_after=grace_after)
-    except MemberCodeValidationError:
-        raise
+    remaining. If there is no match, returns False with a detailed error."""
+    # First ensure the code matches an active membership.
+    result, reason = membership_code_valid(code=code, date=date, grace_before=grace_before, grace_after=grace_after)
+    if not result:
+        return result, reason
 
-    # find relevant membership - should definitely exist
+    # Find relevant membership - should definitely exist.
     membership = Membership.objects.get(registration_code=code)
 
-    # confirm that membership has training seats remaining
+    # Confirm that membership has training seats remaining.
     if (
         membership.public_instructor_training_seats_remaining + membership.inhouse_instructor_training_seats_remaining
         <= 0
     ):
-        raise MemberCodeValidationError("Membership has no training seats remaining.")
+        return False, "Membership has no training seats remaining."
 
-    return True
+    return True, "Membership has training seats remaining."
 
 
-def partnership_code_valid(code: str, date: date, grace_before: int = 0, grace_after: int = 0) -> bool:
+def partnership_code_valid(code: str, date: date, grace_before: int = 0, grace_after: int = 0) -> CodeValidationResult:
     """Returns True if `code` matches a Partnership that is active on `date`,
     including a grace period of `grace_before` days before
     and `grace_after` days after the Partnership dates.
-    If there is no match, raises an Exception with a detailed error.
+    If there is no match, returns False with a detailed error.
     """
     try:
         partnership = Partnership.objects.get(registration_code=code)
-    except Partnership.DoesNotExist as e:
-        raise MemberCodeValidationError(f'No partnership found for code "{code}".') from e
+    except Partnership.DoesNotExist:
+        return False, f'No partnership found for code "{code}".'
 
     start_date = partnership.agreement_start - timedelta(days=grace_before)
     end_date = partnership.agreement_end + timedelta(days=grace_after)
 
     if not (start_date <= date <= end_date):
-        raise MemberCodeValidationError(
-            f"Partnership is inactive (start {partnership.agreement_start}, end {partnership.agreement_end})."
+        return False, f"Partnership is inactive (start {partnership.agreement_start}, end {partnership.agreement_end})."
+
+    return True, "Partnership is valid."
+
+
+def account_benefit_code_valid(
+    code: str, date: date, grace_before: int = 0, grace_after: int = 0
+) -> CodeValidationResult:
+    """Returns True if `code` matches an AccountBenefit that is active on `date`,
+    including a grace period of `grace_before` days before
+    and `grace_after` days after the AccountBenefit dates, and if it is not frozen and has allocation remaining.
+    If there is no match, returns False with a detailed error.
+    """
+    try:
+        account_benefit = AccountBenefit.objects.get(registration_code=code)
+    except AccountBenefit.DoesNotExist:
+        return False, f'No account benefit found for code "{code}".'
+
+    start_date = account_benefit.start_date - timedelta(days=grace_before)
+    end_date = account_benefit.end_date + timedelta(days=grace_after)
+
+    if not (start_date <= date <= end_date):
+        return (
+            False,
+            f"Account benefit is inactive (start {account_benefit.start_date}, end {account_benefit.end_date}).",
         )
 
-    return True
+    if account_benefit.frozen:
+        return False, "Account benefit has been frozen."
+
+    if account_benefit.allocation_used() >= account_benefit.allocation:
+        return False, "Account benefit has no allocation remaining."
+
+    return True, "Account benefit is valid."
+
+
+def any_member_code_valid(code: str, date: date, grace_before: int = 0, grace_after: int = 0) -> bool:
+    """Returns True if `code` matches any active Membership, Partnership, or AccountBenefit."""
+    for validator in [membership_code_valid, partnership_code_valid, account_benefit_code_valid]:
+        is_valid, _ = validator(code=code, date=date, grace_before=grace_before, grace_after=grace_after)
+        if is_valid:  # Exit early if any validator returns True
+            return True
+    return False
+
+
+def any_member_code_valid_training(code: str, date: date, grace_before: int = 0, grace_after: int = 0) -> bool:
+    """Returns True if `code` matches any active Membership with training seats, Partnership,
+    or AccountBenefit with allocation remaining."""
+    for validator in [membership_code_valid_training, partnership_code_valid, account_benefit_code_valid]:
+        is_valid, _ = validator(code=code, date=date, grace_before=grace_before, grace_after=grace_after)
+        if is_valid:  # Exit early if any validator returns True
+            return True
+    return False
 
 
 def get_membership_or_none_from_code(code: str | None) -> Membership | None:

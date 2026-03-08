@@ -1,4 +1,3 @@
-import contextlib
 from collections.abc import Iterable
 from datetime import date
 from typing import Any, cast
@@ -18,7 +17,7 @@ from src.extrequests.forms import (
     WorkshopInquiryRequestBaseForm,
     WorkshopRequestBaseForm,
 )
-from src.extrequests.utils import MemberCodeValidationError, membership_code_valid_training, partnership_code_valid
+from src.extrequests.utils import any_member_code_valid_training
 from src.workshops.fields import (
     AirportSelect2Widget,
     CheckboxSelectMultipleWithOthers,
@@ -234,14 +233,9 @@ class TrainingRequestForm(forms.ModelForm[TrainingRequest]):
         if not member_code:
             return None
 
-        # check code validity against Membership or Partnership
-        # grace period: 90 days before and after
-        code_is_valid = False
-        try:
-            code_is_valid = membership_code_valid_training(member_code, date.today(), grace_before=90, grace_after=90)
-        except MemberCodeValidationError:
-            with contextlib.suppress(MemberCodeValidationError):
-                code_is_valid = partnership_code_valid(member_code, date.today(), grace_before=90, grace_after=90)
+        # Check code validity against Membership, Partnership, or AccountBenefit.
+        # Grace period: 90 days before and after.
+        code_is_valid = any_member_code_valid_training(member_code, date.today(), grace_before=90, grace_after=90)
 
         if code_is_valid:
             if member_code_override:

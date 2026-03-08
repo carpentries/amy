@@ -111,7 +111,7 @@ class TestTrainingRequestUpdateForm(TestBase):
 
         # Assert
         self.assertEqual(rv.status_code, 200)
-        self.assertContains(rv, "No membership found for code &quot;invalid&quot;.")
+        self.assertContains(rv, self.INVALID_MEMBER_CODE_ERROR)
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
     def test_member_code_validation__code_inactive_early(self) -> None:
@@ -130,10 +130,7 @@ class TestTrainingRequestUpdateForm(TestBase):
 
         # Assert
         self.assertEqual(rv.status_code, 200)
-        self.assertContains(
-            rv,
-            f"Membership is inactive (start {self.membership.agreement_start}, end {self.membership.agreement_end}).",
-        )
+        self.assertContains(rv, self.INVALID_MEMBER_CODE_ERROR)
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
     def test_member_code_validation__code_inactive_late(self) -> None:
@@ -152,10 +149,7 @@ class TestTrainingRequestUpdateForm(TestBase):
 
         # Assert
         self.assertEqual(rv.status_code, 200)
-        self.assertContains(
-            rv,
-            f"Membership is inactive (start {self.membership.agreement_start}, end {self.membership.agreement_end}).",
-        )
+        self.assertContains(rv, self.INVALID_MEMBER_CODE_ERROR)
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
     def test_member_code_validation__code_no_seats_remaining(self) -> None:
@@ -173,7 +167,7 @@ class TestTrainingRequestUpdateForm(TestBase):
 
         # Assert
         self.assertEqual(rv.status_code, 200)
-        self.assertContains(rv, "Membership has no training seats remaining.")
+        self.assertContains(rv, self.INVALID_MEMBER_CODE_ERROR)
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
     def test_member_code_validation__code_only_public_seats_remaining(self) -> None:

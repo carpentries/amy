@@ -12,6 +12,7 @@ from markdownx.fields import MarkdownxFormField
 
 from src.fiscal.fields import FlexibleSplitArrayField
 from src.fiscal.models import Consortium, MembershipTask, Partnership
+from src.offering.models import AccountBenefit
 
 # this is used instead of Django Autocomplete Light widgets
 # see issue #1330: https://github.com/swcarpentry/amy/issues/1330
@@ -194,12 +195,18 @@ class MembershipForm(forms.ModelForm[Membership]):
                     "assigned. Remove the members so that at most 1 is left."
                 )
 
+        # Ensure unique registration code across Partnerships and Account Benefits.
         registration_code = self.cleaned_data["registration_code"]
         if registration_code:
             existing_partnership = Partnership.objects.filter(registration_code=registration_code).first()
             if existing_partnership:
                 errors["registration_code"] = ValidationError(
                     f'This registration code is used by partnership "{existing_partnership}".'
+                )
+            existing_account_benefit = AccountBenefit.objects.filter(registration_code=registration_code).first()
+            if existing_account_benefit:
+                errors["registration_code"] = ValidationError(
+                    f'This registration code is used by account benefit "{existing_account_benefit}".'
                 )
 
         if errors:
@@ -590,12 +597,18 @@ class PartnershipForm(forms.ModelForm[Partnership]):
         except TypeError:
             pass
 
+        # Ensure unique registration code across Memberships and Account Benefits.
         registration_code = self.cleaned_data["registration_code"]
         if registration_code:
             existing_membership = Membership.objects.filter(registration_code=registration_code).first()
             if existing_membership:
                 errors["registration_code"] = ValidationError(
                     f'This registration code is used by membership "{existing_membership}".'
+                )
+            existing_account_benefit = AccountBenefit.objects.filter(registration_code=registration_code).first()
+            if existing_account_benefit:
+                errors["registration_code"] = ValidationError(
+                    f'This registration code is used by account benefit "{existing_account_benefit}".'
                 )
 
         if errors:
