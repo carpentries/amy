@@ -60,7 +60,6 @@ from src.communityroles.forms import CommunityRoleForm
 from src.communityroles.models import CommunityRole, CommunityRoleConfig
 from src.consents.forms import ActiveTermConsentsForm
 from src.consents.models import Consent, TermEnum, TermOptionChoices
-from src.dashboard.forms import AssignmentForm
 from src.emails.actions.ask_for_website import (
     ask_for_website_strategy,
     run_ask_for_website_strategy,
@@ -161,12 +160,9 @@ from src.workshops.models import (
 )
 from src.workshops.signals import create_comment_signal
 from src.workshops.utils.access import OnlyForAdminsMixin, admin_required, login_required
-from src.workshops.utils.comments import add_comment
 from src.workshops.utils.merge import merge_objects
 from src.workshops.utils.metadata import (
     fetch_workshop_metadata,
-    metadata_deserialize,
-    metadata_serialize,
     parse_workshop_metadata,
     validate_workshop_metadata,
 )
@@ -1517,141 +1513,6 @@ def events_merge(request: AuthenticatedHttpRequest) -> HttpResponse:
         "form": form,
     }
     return render(request, "workshops/events_merge.html", context)
-
-
-@admin_required
-def events_metadata_changed(request: AuthenticatedHttpRequest) -> HttpResponse:
-    """List events with metadata changed."""
-
-    assignment_form = AssignmentForm(request.GET)
-    assigned_to: Person | None = None
-    if assignment_form.is_valid():
-        assigned_to = assignment_form.cleaned_data["assigned_to"]
-
-    events = Event.objects.active().filter(metadata_changed=True)
-
-    if assigned_to is not None:
-        events = events.filter(assigned_to=assigned_to)
-
-    context = {
-        "title": "Events with metadata changed",
-        "events": events,
-        "assignment_form": assignment_form,
-        "assigned_to": assigned_to,
-    }
-    return render(request, "workshops/events_metadata_changed.html", context)
-
-
-@admin_required
-@permission_required("workshops.change_event", raise_exception=True)
-def event_review_metadata_changes(request: AuthenticatedHttpRequest, slug: str) -> HttpResponse:
-    """Review changes made to metadata on event's website."""
-    try:
-        event = Event.objects.get(slug=slug)
-    except Event.DoesNotExist as e:
-        raise Http404("No event found matching the query.") from e
-
-    try:
-        metadata = fetch_workshop_metadata(event.website_url)
-    except requests.exceptions.RequestException:
-        messages.error(
-            request,
-            "There was an error while fetching event's "
-            "website. Make sure the event has website URL "
-            "provided, and that it's reachable.",
-        )
-        return redirect(event.get_absolute_url())
-
-    metadata_parsed = parse_workshop_metadata(metadata)
-
-    # save serialized metadata in session so in case of acceptance we don't
-    # reload them
-    metadata_serialized = metadata_serialize(metadata_parsed)
-    request.session["metadata_from_event_website"] = metadata_serialized
-
-    context = {
-        "title": f"Review changes for {str(event)}",
-        "metadata": metadata_parsed,
-        "event": event,
-    }
-    return render(request, "workshops/event_review_metadata_changes.html", context)
-
-
-@admin_required
-@permission_required("workshops.change_event", raise_exception=True)
-def event_accept_metadata_changes(request: AuthenticatedHttpRequest, slug: str) -> HttpResponse:
-    """Review changes made to metadata on event's website."""
-    try:
-        event = Event.objects.get(slug=slug)
-    except Event.DoesNotExist as e:
-        raise Http404("No event found matching the query.") from e
-
-    # load serialized metadata from session
-    metadata_serialized = request.session.get("metadata_from_event_website")
-    if not metadata_serialized:
-        raise Http404("Nothing to update.")
-
-    metadata = metadata_deserialize(metadata_serialized)
-
-    # update values
-    ALLOWED_METADATA = (
-        "start",
-        "end",
-        "country",
-        "venue",
-        "address",
-        "latitude",
-        "longitude",
-        "contact",
-        "reg_key",
-    )
-    for key, value in metadata.items():
-        if hasattr(event, key) and key in ALLOWED_METADATA:
-            setattr(event, key, value)
-
-    # update instructors and helpers
-    instructors = ", ".join(metadata.get("instructors", []))
-    helpers = ", ".join(metadata.get("helpers", []))
-    comment_txt = f"INSTRUCTORS: {instructors}\n\nHELPERS: {helpers}"
-    add_comment(event, comment_txt)
-
-    # save serialized metadata
-    event.repository_metadata = metadata_serialized
-
-    # dismiss notification
-    event.metadata_all_changes = ""
-    event.metadata_changed = False
-    event.save()
-
-    # remove metadata from session
-    del request.session["metadata_from_event_website"]
-
-    messages.success(request, f"Successfully updated {event.slug}.")
-
-    return redirect(reverse("event_details", args=[event.slug]))
-
-
-@admin_required
-@permission_required("workshops.change_event", raise_exception=True)
-def event_dismiss_metadata_changes(request: AuthenticatedHttpRequest, slug: str) -> HttpResponse:
-    """Review changes made to metadata on event's website."""
-    try:
-        event = Event.objects.get(slug=slug)
-    except Event.DoesNotExist as e:
-        raise Http404("No event found matching the query.") from e
-
-    # dismiss notification
-    event.metadata_all_changes = ""
-    event.metadata_changed = False
-    event.save()
-
-    # remove metadata from session
-    if "metadata_from_event_website" in request.session:
-        del request.session["metadata_from_event_website"]
-
-    messages.success(request, f"Changes to {event.slug} were dismissed.")
-
-    return redirect(reverse("event_details", args=[event.slug]))
 
 
 # ------------------------------------------------------------

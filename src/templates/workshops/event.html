@@ -39,16 +39,6 @@
 
 {% block content %}
 
-{% if event.metadata_changed %}
-<div class="alert alert-warning alert-dismissible" role="alert">
-  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-  <h4 class="alert-heading">Event's website updated</h4>
-  <p>This event's repository was updated by the repository owner. Changes detected:</p>
-  <p>{{ event.metadata_all_changes |linebreaksbr }}</p>
-  <p><a class="btn btn-warning" href="{% url 'event_review_metadata_changes' event.slug %}">Review changes</a></p>
-</div>
-{% endif %}
-
 <div class="row">
   <div class="col-md-6">
     {% last_modified event %}
