@@ -151,6 +151,10 @@ organisations) in The Carpentries project. Memberships can be paid. With
 each membership comes a number of fields defining perks like allowable
 number of centrally-organised workshops that don't need to pay fee.
 
+Includes a `registration_code` field — a unique code shared with member organisations
+and used by trainees and workshop requesters to identify their membership when submitting
+forms (see [Member Code Enforcement](./projects/2023_member_code_enforcement.md)).
+
 ### `Airport`
 Represents an airport (used for example to locate instructors).
 
@@ -198,6 +202,10 @@ Represents a knowledge domain (like High Performance Computing) a person is enga
 Represents a request for instructor training. Usually these requests come from people
 who are not AMY users.
 
+Includes a `member_code` field (the registration code entered by the applicant), which is validated against active memberships, partnerships or account benefits, and a
+`member_code_override` boolean field, which records whether the applicant chose to
+submit despite an invalid member code (see [Member Code Enforcement](./projects/2023_member_code_enforcement.md)).
+
 This model falls into `external requests` domain, which also includes `WorkshopRequest`,
 `WorkshopInquiryRequest`, and `SelfOrganisedSubmission`.
 
@@ -241,6 +249,10 @@ some common parts were extracted into `CommonRequest` abstract model (mixin).
 
 ### `WorkshopRequest`
 Represents a request for teaching a Carpentries workshop.
+
+Includes a `member_code` field for the registration code entered by the requester, which
+is validated against active memberships, partnerships or account benefits when member code enforcement is
+enabled (see [Member Code Enforcement](./projects/2023_member_code_enforcement.md)).
 
 This model falls into `external requests` domain.
 
