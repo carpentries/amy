@@ -5,7 +5,6 @@ import logging
 from functools import partial
 from typing import Annotated, Any, TypedDict, cast
 
-import requests
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
@@ -39,15 +38,11 @@ from django.db.models import (
 )
 from django.forms import HiddenInput
 from django.http import (
-    Http404,
     HttpRequest,
     HttpResponse,
-    HttpResponseBadRequest,
-    JsonResponse,
 )
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
-from django.utils.html import escape
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 from django_stubs_ext import Annotations
@@ -60,7 +55,6 @@ from src.communityroles.forms import CommunityRoleForm
 from src.communityroles.models import CommunityRole, CommunityRoleConfig
 from src.consents.forms import ActiveTermConsentsForm
 from src.consents.models import Consent, TermEnum, TermOptionChoices
-from src.dashboard.forms import AssignmentForm
 from src.emails.actions.ask_for_website import (
     ask_for_website_strategy,
     run_ask_for_website_strategy,
@@ -121,7 +115,7 @@ from src.workshops.base_views import (
     RedirectSupportMixin,
 )
 from src.workshops.consts import IATA_AIRPORTS
-from src.workshops.exceptions import InternalError, WrongWorkshopURL
+from src.workshops.exceptions import InternalError
 from src.workshops.filters import (
     BadgeAwardsFilter,
     EventFilter,
@@ -161,15 +155,7 @@ from src.workshops.models import (
 )
 from src.workshops.signals import create_comment_signal
 from src.workshops.utils.access import OnlyForAdminsMixin, admin_required, login_required
-from src.workshops.utils.comments import add_comment
 from src.workshops.utils.merge import merge_objects
-from src.workshops.utils.metadata import (
-    fetch_workshop_metadata,
-    metadata_deserialize,
-    metadata_serialize,
-    parse_workshop_metadata,
-    validate_workshop_metadata,
-)
 from src.workshops.utils.pagination import get_pagination_items
 from src.workshops.utils.person_upload import (
     PersonTaskEntry,
@@ -1035,43 +1021,6 @@ def event_details(request: AuthenticatedHttpRequest, slug: str) -> HttpResponse:
     return render(request, "workshops/event.html", context)
 
 
-@admin_required
-def validate_event(request: AuthenticatedHttpRequest, slug: str) -> HttpResponse:
-    """Check the event's home page *or* the specified URL (for testing)."""
-    try:
-        event = Event.objects.get(slug=slug)
-    except Event.DoesNotExist as e:
-        raise Http404("Event matching query does not exist.") from e
-
-    page_url = (event.url or "").strip()
-
-    error_messages: list[str] = []
-    warning_messages: list[str] = []
-
-    try:
-        metadata = fetch_workshop_metadata(page_url)
-        # validate metadata
-        error_messages, warning_messages = validate_workshop_metadata(metadata)
-
-    except WrongWorkshopURL as e:
-        error_messages.append(f"URL error: {e.msg}")
-
-    except requests.exceptions.HTTPError as e:
-        error_messages.append(f'Request for "{page_url}" returned status code {e.response.status_code}')
-
-    except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
-        error_messages.append("Network connection error.")
-
-    context = {
-        "title": f"Validate Event {event}",
-        "event": event,
-        "page": page_url,
-        "error_messages": error_messages,
-        "warning_messages": warning_messages,
-    }
-    return render(request, "workshops/validate_event.html", context)
-
-
 class EventCreate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateView[EventCreateForm, Event]):
     permission_required = "workshops.add_event"
     model = Event
@@ -1383,35 +1332,6 @@ class EventDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView[Eve
                 )
 
 
-@admin_required
-def event_import(request: HttpRequest) -> HttpResponse:
-    """Read metadata from remote URL and return them as JSON.
-
-    This is used to read metadata from workshop website and then fill up fields
-    on event_create form."""
-
-    url = request.GET.get("url", "").strip()
-
-    try:
-        metadata_dict = fetch_workshop_metadata(url)
-        # normalize the metadata
-        metadata = parse_workshop_metadata(metadata_dict)
-        return JsonResponse(metadata)
-
-    except requests.exceptions.HTTPError as e:
-        escaped_url = escape(url)
-        return HttpResponseBadRequest(f'Request for "{escaped_url}" returned status code {e.response.status_code}.')
-
-    except requests.exceptions.RequestException:
-        return HttpResponseBadRequest("Network connection error.")
-
-    except WrongWorkshopURL as e:
-        return HttpResponseBadRequest(f"URL error: {e.msg}")
-
-    except KeyError:
-        return HttpResponseBadRequest('Missing or wrong "url" parameter.')
-
-
 class EventAssign(OnlyForAdminsMixin, AssignView[Event]):
     permission_required = "workshops.change_event"
     model = Event
@@ -1517,141 +1437,6 @@ def events_merge(request: AuthenticatedHttpRequest) -> HttpResponse:
         "form": form,
     }
     return render(request, "workshops/events_merge.html", context)
-
-
-@admin_required
-def events_metadata_changed(request: AuthenticatedHttpRequest) -> HttpResponse:
-    """List events with metadata changed."""
-
-    assignment_form = AssignmentForm(request.GET)
-    assigned_to: Person | None = None
-    if assignment_form.is_valid():
-        assigned_to = assignment_form.cleaned_data["assigned_to"]
-
-    events = Event.objects.active().filter(metadata_changed=True)
-
-    if assigned_to is not None:
-        events = events.filter(assigned_to=assigned_to)
-
-    context = {
-        "title": "Events with metadata changed",
-        "events": events,
-        "assignment_form": assignment_form,
-        "assigned_to": assigned_to,
-    }
-    return render(request, "workshops/events_metadata_changed.html", context)
-
-
-@admin_required
-@permission_required("workshops.change_event", raise_exception=True)
-def event_review_metadata_changes(request: AuthenticatedHttpRequest, slug: str) -> HttpResponse:
-    """Review changes made to metadata on event's website."""
-    try:
-        event = Event.objects.get(slug=slug)
-    except Event.DoesNotExist as e:
-        raise Http404("No event found matching the query.") from e
-
-    try:
-        metadata = fetch_workshop_metadata(event.website_url)
-    except requests.exceptions.RequestException:
-        messages.error(
-            request,
-            "There was an error while fetching event's "
-            "website. Make sure the event has website URL "
-            "provided, and that it's reachable.",
-        )
-        return redirect(event.get_absolute_url())
-
-    metadata_parsed = parse_workshop_metadata(metadata)
-
-    # save serialized metadata in session so in case of acceptance we don't
-    # reload them
-    metadata_serialized = metadata_serialize(metadata_parsed)
-    request.session["metadata_from_event_website"] = metadata_serialized
-
-    context = {
-        "title": f"Review changes for {str(event)}",
-        "metadata": metadata_parsed,
-        "event": event,
-    }
-    return render(request, "workshops/event_review_metadata_changes.html", context)
-
-
-@admin_required
-@permission_required("workshops.change_event", raise_exception=True)
-def event_accept_metadata_changes(request: AuthenticatedHttpRequest, slug: str) -> HttpResponse:
-    """Review changes made to metadata on event's website."""
-    try:
-        event = Event.objects.get(slug=slug)
-    except Event.DoesNotExist as e:
-        raise Http404("No event found matching the query.") from e
-
-    # load serialized metadata from session
-    metadata_serialized = request.session.get("metadata_from_event_website")
-    if not metadata_serialized:
-        raise Http404("Nothing to update.")
-
-    metadata = metadata_deserialize(metadata_serialized)
-
-    # update values
-    ALLOWED_METADATA = (
-        "start",
-        "end",
-        "country",
-        "venue",
-        "address",
-        "latitude",
-        "longitude",
-        "contact",
-        "reg_key",
-    )
-    for key, value in metadata.items():
-        if hasattr(event, key) and key in ALLOWED_METADATA:
-            setattr(event, key, value)
-
-    # update instructors and helpers
-    instructors = ", ".join(metadata.get("instructors", []))
-    helpers = ", ".join(metadata.get("helpers", []))
-    comment_txt = f"INSTRUCTORS: {instructors}\n\nHELPERS: {helpers}"
-    add_comment(event, comment_txt)
-
-    # save serialized metadata
-    event.repository_metadata = metadata_serialized
-
-    # dismiss notification
-    event.metadata_all_changes = ""
-    event.metadata_changed = False
-    event.save()
-
-    # remove metadata from session
-    del request.session["metadata_from_event_website"]
-
-    messages.success(request, f"Successfully updated {event.slug}.")
-
-    return redirect(reverse("event_details", args=[event.slug]))
-
-
-@admin_required
-@permission_required("workshops.change_event", raise_exception=True)
-def event_dismiss_metadata_changes(request: AuthenticatedHttpRequest, slug: str) -> HttpResponse:
-    """Review changes made to metadata on event's website."""
-    try:
-        event = Event.objects.get(slug=slug)
-    except Event.DoesNotExist as e:
-        raise Http404("No event found matching the query.") from e
-
-    # dismiss notification
-    event.metadata_all_changes = ""
-    event.metadata_changed = False
-    event.save()
-
-    # remove metadata from session
-    if "metadata_from_event_website" in request.session:
-        del request.session["metadata_from_event_website"]
-
-    messages.success(request, f"Changes to {event.slug} were dismissed.")
-
-    return redirect(reverse("event_details", args=[event.slug]))
 
 
 # ------------------------------------------------------------

@@ -20,7 +20,6 @@ from src.workshops.models import (
     Task,
 )
 from src.workshops.tests.base import TestBase
-from src.workshops.utils.metadata import metadata_serialize
 
 
 class TestEvent(TestBase):
@@ -1183,114 +1182,6 @@ class TestEventMerging(TestBase):
             set(Comment.objects.for_model(self.event_b).filter(is_removed=False)),  # type: ignore
             set(comments),
         )
-
-
-class TestEventImport(TestBase):
-    def setUp(self) -> None:
-        self._setUpUsersAndLogin()
-
-    def test_no_exception_when_empty_url(self) -> None:
-        """Regression test: ensure no exceptions are raised when accessing
-        `event_import` view without `url` GET param."""
-        url = reverse("event_import")
-        rv = self.client.get(url)
-        self.assertLess(rv.status_code, 500)
-
-
-class TestEventReviewingRepoChanges(TestBase):
-    """Ensure views used for reviewing, accepting and dismissing changes made
-    to event's metadata work correctly."""
-
-    def setUp(self) -> None:
-        self._setUpUsersAndLogin()
-        self._setUpOrganizations()
-
-        self.metadata = {
-            "slug": "2015-07-13-test",
-            "language": "US",
-            "start": date(2015, 7, 13),
-            "end": date(2015, 7, 14),
-            "country": "US",
-            "venue": "Euphoric State University",
-            "address": "Highway to Heaven 42, Academipolis",
-            "latitude": 36.998977,
-            "longitude": -109.045173,
-            "reg_key": "10000000",
-            "instructors": ["Hermione Granger", "Ron Weasley"],
-            "helpers": ["Peter Parker", "Tony Stark", "Natasha Romanova"],
-            "contact": "hermione@granger.co.uk, rweasley@ministry.gov",
-        }
-        self.metadata_serialized = metadata_serialize(self.metadata)
-
-        # create event with some changes detected
-        self.event = Event.objects.create(
-            slug="event-for-changes",
-            start=date(2016, 4, 20),
-            end=date(2016, 4, 22),
-            host=Organization.objects.all()[0],
-            metadata_changed=True,
-        )
-
-        # add metadata to the session
-        session = self.client.session
-        session["metadata_from_event_website"] = self.metadata_serialized
-        session.save()
-
-    def test_showing_all_events_with_changed_metadata(self) -> None:
-        """Ensure `events_metadata_changed` only shows events with changed
-        metadata."""
-        url = reverse("events_metadata_changed")
-        rv = self.client.get(url)
-        self.assertEqual(rv.status_code, 200)
-
-        self.assertEqual(list(rv.context["events"]), [self.event])
-
-    def test_accepting_changes(self) -> None:
-        """Ensure `event_review_repo_changes_accept`:
-        * updates changed values in event
-        * dismisses notification about changed metadata
-        * removes metadata from session
-        * redirects to the event details page."""
-        url = reverse("event_accept_metadata_changes", args=[self.event.slug])
-        rv = self.client.get(url, follow=False)
-
-        # check for redirect to event's details page
-        self.assertEqual(rv.status_code, 302)
-
-        self.event.refresh_from_db()
-
-        self.assertEqual(self.event.metadata_changed, False)
-        self.assertEqual(self.event.metadata_all_changes, "")
-        self.assertEqual(self.event.repository_metadata, self.metadata_serialized)
-        for key, value in self.metadata.items():
-            if key not in ("slug", "instructors", "helpers", "language"):
-                self.assertEqual(getattr(self.event, key), value)
-
-    def test_accepting_changes_no_session_data(self) -> None:
-        """Ensure `event_review_repo_changes_accept` throws 404 when specific
-        session key 'metadata_from_event_website' is unavailable."""
-        session = self.client.session
-        del session["metadata_from_event_website"]
-        session.save()
-
-        url = reverse("event_accept_metadata_changes", args=[self.event.slug])
-        rv = self.client.get(url, follow=False)
-        self.assertEqual(rv.status_code, 404)
-
-    def test_dismissing_changes(self) -> None:
-        url = reverse("event_dismiss_metadata_changes", args=[self.event.slug])
-        rv = self.client.get(url, follow=False)
-
-        # check for redirect to event's details page
-        self.assertEqual(rv.status_code, 302)
-
-        self.event.refresh_from_db()
-
-        self.assertEqual(self.event.metadata_changed, False)
-        self.assertEqual(self.event.metadata_all_changes, "")
-        for key, value in self.metadata.items():
-            if key not in ("slug", "instructors", "helpers", "language"):
-                self.assertNotEqual(getattr(self.event, key), value)
 
 
 class TestEventAttendance(TestBase):
