@@ -46,6 +46,10 @@
     <td>{{ object.discount|default:"&mdash;" }}</td>
   </tr>
   <tr>
+    <th>Registration code:</th>
+    <td>{% if object.registration_code %}<code>{{ object.registration_code }}</code>{% else %}&mdash;{% endif %}</td>
+  </tr>
+  <tr>
     <th>Curriculum:</th>
     <td>{{ object.curriculum|default_if_none:"&mdash;" }}</td>
   </tr>

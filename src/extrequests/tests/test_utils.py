@@ -6,6 +6,7 @@ from src.extrequests.tests.test_training_request import create_training_request
 from src.extrequests.utils import (
     accept_training_request_and_match_to_event,
     get_account_benefit_from_partnership,
+    get_account_benefit_or_none_from_code,
     get_account_benefit_warnings_after_match,
     get_eventbrite_id_from_url_or_return_input,
     get_membership_or_none_from_code,
@@ -306,6 +307,49 @@ class TestGetPartnershipOrNoneFromCode(TestCase):
 
         # Assert
         self.assertEqual(result, self.partnership)
+
+
+class TestGetAccountBenefitOrNoneFromCode(TestCase):
+    def setUp(self) -> None:
+        self.valid_code = "valid123"
+
+        self.organisation = Organization.objects.create(fullname="Test Organisation", domain="test.org")
+        self.benefit = Benefit.objects.create(name="Instructor Training", unit_type="seat", credits=1)
+        self.account = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=self.organisation,
+        )
+        self.account_benefit = AccountBenefit.objects.create(
+            account=self.account,
+            benefit=self.benefit,
+            start_date=date.today(),
+            end_date=date.today() + timedelta(days=30),
+            allocation=10,
+            registration_code=self.valid_code,
+        )
+
+    def test_returns_none_if_code_empty(self) -> None:
+        # Act
+        result_empty_string = get_account_benefit_or_none_from_code("")
+        result_none = get_account_benefit_or_none_from_code(None)
+
+        # Assert
+        self.assertIsNone(result_empty_string)
+        self.assertIsNone(result_none)
+
+    def test_returns_none_if_no_match(self) -> None:
+        # Act
+        result = get_account_benefit_or_none_from_code("invalid")
+
+        # Assert
+        self.assertIsNone(result)
+
+    def test_returns_matching_partnership(self) -> None:
+        # Act
+        result = get_account_benefit_or_none_from_code(self.valid_code)
+
+        # Assert
+        self.assertEqual(result, self.account_benefit)
 
 
 class TestAcceptTrainingRequestAndMatchToEvent(TestBase):

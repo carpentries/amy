@@ -10,6 +10,7 @@
         <th>Benefit</th>
         <th>Used / allocated</th>
         <th>Discount</th>
+        <th>Registration code</th>
         <th>Curriculum</th>
         <th>Dates</th>
         <th>Active</th>
@@ -23,6 +24,7 @@
         <td><a href="{{ object.benefit.get_absolute_url }}">{{ object.benefit.name }} ({{ object.benefit.unit_type }})</a></td>
         <td>{{ object.allocation_used }} / {{ object.allocation }}</td>
         <td>{{ object.discount|default:"&mdash;" }}</td>
+        <td>{% if object.registration_code %}<code>{{ object.registration_code }}</code>{% else %}&mdash;{% endif %}</td>
         <td>{{ object.curriculum|default_if_none:"&mdash;" }}</td>
         <td>{{ object.human_daterange }}</td>
         <td>
