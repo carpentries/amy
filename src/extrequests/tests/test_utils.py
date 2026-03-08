@@ -10,12 +10,13 @@ from src.extrequests.utils import (
     get_eventbrite_id_from_url_or_return_input,
     get_membership_or_none_from_code,
     get_membership_warnings_after_match,
+    get_partnership_or_none_from_code,
     membership_code_valid,
     membership_code_valid_training,
 )
 from src.fiscal.models import Partnership, PartnershipTier
 from src.offering.models import Account, AccountBenefit, Benefit
-from src.workshops.models import Event, Membership, Role, Tag, Task
+from src.workshops.models import Event, Membership, Organization, Role, Tag, Task
 from src.workshops.tests.base import TestBase
 
 
@@ -257,6 +258,54 @@ class TestGetMembershipOrNoneFromCode(TestBase):
 
         # Assert
         self.assertEqual(result, self.membership)
+
+
+class TestGetPartnershipOrNoneFromCode(TestCase):
+    def setUp(self) -> None:
+        self.valid_code = "valid123"
+
+        self.organisation = Organization.objects.create(fullname="Test Organisation", domain="test.org")
+        self.benefit = Benefit.objects.create(name="Instructor Training", unit_type="seat", credits=1)
+        self.account = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=self.organisation,
+        )
+        tier = PartnershipTier.objects.create(name="Standard", credits=10)
+        self.partnership = Partnership.objects.create(
+            name="Partner Org",
+            tier=tier,
+            credits=10,
+            account=self.account,
+            registration_code=self.valid_code,
+            agreement_start=date.today(),
+            agreement_end=date.today() + timedelta(days=365),
+            agreement_link="https://example.com/agreement",
+            public_status="public",
+            partner_organisation=self.organisation,
+        )
+
+    def test_returns_none_if_code_empty(self) -> None:
+        # Act
+        result_empty_string = get_partnership_or_none_from_code("")
+        result_none = get_partnership_or_none_from_code(None)
+
+        # Assert
+        self.assertIsNone(result_empty_string)
+        self.assertIsNone(result_none)
+
+    def test_returns_none_if_no_match(self) -> None:
+        # Act
+        result = get_partnership_or_none_from_code("invalid")
+
+        # Assert
+        self.assertIsNone(result)
+
+    def test_returns_matching_partnership(self) -> None:
+        # Act
+        result = get_partnership_or_none_from_code(self.valid_code)
+
+        # Assert
+        self.assertEqual(result, self.partnership)
 
 
 class TestAcceptTrainingRequestAndMatchToEvent(TestBase):

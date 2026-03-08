@@ -2967,9 +2967,9 @@ class CommonRequest(SecondaryEmailMixin, models.Model):
         blank=True,
         null=False,
         default="",
-        verbose_name="Membership registration code",
+        verbose_name="Registration code",
         help_text="If you are affiliated with a Carpentries member organization, "
-        "please enter the registration code associated with the membership. "
+        "please enter the registration code associated with the membership or partnership. "
         "Your Member Affiliate can provide this.",
     )
 

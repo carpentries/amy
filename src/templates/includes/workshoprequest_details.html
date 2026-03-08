@@ -1,5 +1,7 @@
 {% load state %}
 {% load utils %}
+{% load request_membership %}
+
 <table class="table table-striped">
   <tbody>
 {% if admin %}
@@ -29,10 +31,33 @@
         <td>
           {% include "includes/request_institution.html" with admin=admin object=object %}
         </td></tr>
-    <tr><th>Member registration code:</th>
+    <tr><th>Registration code:</th>
         <td>
-          {{ object.member_code|default:"&mdash;" }}
-          {% if admin %}{% include "includes/request_membership.html" with object=object membership=membership %}{% endif %}
+          {% if object.member_code %}<code>{{ object.member_code }}</code>
+          {% else %}&mdash;{% endif %}
+          {% if admin %}
+            {% if membership %}
+              <div class="alert alert-{% membership_alert_type membership %}">
+                Related membership:
+                <a href="{{ membership.get_absolute_url }}">{{ membership }}</a>.
+                <br>
+                This membership has <strong>{{ membership.workshops_without_admin_fee_remaining }}</strong>
+                workshop{{ membership.workshops_without_admin_fee_remaining|pluralize }} remaining.
+
+                {% membership_active membership as is_active %}
+                {% if not is_active %}
+                <br>This membership is <strong>not currently active</strong>.
+                {% endif %}
+              </div>
+            {% elif partnership %}
+              <div class="alert alert-info %}">
+                Related partnership:
+                <a href="{{ partnership.get_absolute_url }}">{{ partnership }}</a>.
+              </div>
+            {% else %}
+              <div class="alert alert-warning">No membership or partnership found for this code.</div>
+            {% endif %}
+          {% endif %}
         </td></tr>
     <tr><th>Workshop location:</th>
         <td>{{ object.location }}</td></tr>

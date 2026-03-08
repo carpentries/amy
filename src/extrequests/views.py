@@ -50,6 +50,7 @@ from src.extrequests.utils import (
     get_account_benefit_warnings_after_match,
     get_membership_or_none_from_code,
     get_membership_warnings_after_match,
+    get_partnership_or_none_from_code,
 )
 from src.fiscal.models import Partnership
 from src.offering.models import AccountBenefit, Benefit
@@ -124,6 +125,7 @@ class WorkshopRequestDetails(OnlyForAdminsMixin, AMYDetailView[WorkshopRequest])
 
         member_code = self.get_object().member_code
         context["membership"] = get_membership_or_none_from_code(member_code)
+        context["partnership"] = get_partnership_or_none_from_code(member_code)
 
         person_lookup_form = AdminLookupForm()
         if self.object.assigned_to:
