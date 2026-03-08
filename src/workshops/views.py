@@ -38,7 +38,6 @@ from django.db.models import (
 )
 from django.forms import HiddenInput
 from django.http import (
-    Http404,
     HttpRequest,
     HttpResponse,
 )
@@ -1020,22 +1019,6 @@ def event_details(request: AuthenticatedHttpRequest, slug: str) -> HttpResponse:
         "related_instructor_recruitment_signups": instructor_recruitment_signups,
     }
     return render(request, "workshops/event.html", context)
-
-
-@admin_required
-def validate_event(request: AuthenticatedHttpRequest, slug: str) -> HttpResponse:
-    """Show metadata validation page for the event's home page (validation runs client-side)."""
-    try:
-        event = Event.objects.get(slug=slug)
-    except Event.DoesNotExist as e:
-        raise Http404("Event matching query does not exist.") from e
-
-    context = {
-        "title": f"Validate Event {event}",
-        "event": event,
-        "page": (event.url or "").strip(),
-    }
-    return render(request, "workshops/validate_event.html", context)
 
 
 class EventCreate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateView[EventCreateForm, Event]):

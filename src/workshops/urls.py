@@ -93,7 +93,6 @@ urlpatterns = [
                 path("assign/", views.EventAssign.as_view(), name="event_assign"),
                 path("edit/", views.EventUpdate.as_view(), name="event_edit"),
                 path("delete/", views.EventDelete.as_view(), name="event_delete"),
-                path("validate/", views.validate_event, name="validate_event"),
             ]
         ),
     ),
