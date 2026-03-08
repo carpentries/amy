@@ -143,6 +143,15 @@ def get_partnership_or_none_from_code(code: str | None) -> Partnership | None:
     return Partnership.objects.filter(registration_code=code).first()
 
 
+def get_account_benefit_or_none_from_code(code: str | None) -> AccountBenefit | None:
+    """Given an account benefit code, returns the related account benefit
+    or None if no such account benefit exists. If provided an empty code, returns None."""
+    if not code:
+        return None
+
+    return AccountBenefit.objects.filter(registration_code=code).first()
+
+
 # ----------------------------------------
 # Utilities for matching training requests
 # ----------------------------------------

@@ -54,8 +54,13 @@
                 Related partnership:
                 <a href="{{ partnership.get_absolute_url }}">{{ partnership }}</a>.
               </div>
+            {% elif account_benefit %}
+              <div class="alert alert-info %}">
+                Related account benefit:
+                <a href="{{ account_benefit.get_absolute_url }}">{{ account_benefit }}</a>.
+              </div>
             {% else %}
-              <div class="alert alert-warning">No membership or partnership found for this code.</div>
+              <div class="alert alert-warning">No membership, partnership or account benefit found for this code.</div>
             {% endif %}
           {% endif %}
         </td></tr>

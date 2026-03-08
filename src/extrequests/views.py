@@ -47,6 +47,7 @@ from src.extrequests.models import SelfOrganisedSubmission, WorkshopInquiryReque
 from src.extrequests.utils import (
     accept_training_request_and_match_to_event,
     get_account_benefit_from_partnership,
+    get_account_benefit_or_none_from_code,
     get_account_benefit_warnings_after_match,
     get_membership_or_none_from_code,
     get_membership_warnings_after_match,
@@ -126,6 +127,7 @@ class WorkshopRequestDetails(OnlyForAdminsMixin, AMYDetailView[WorkshopRequest])
         member_code = self.get_object().member_code
         context["membership"] = get_membership_or_none_from_code(member_code)
         context["partnership"] = get_partnership_or_none_from_code(member_code)
+        context["account_benefit"] = get_account_benefit_or_none_from_code(member_code)
 
         person_lookup_form = AdminLookupForm()
         if self.object.assigned_to:
