@@ -2182,7 +2182,7 @@ class TrainingRequest(
         max_length=STR_LONG,
         verbose_name="Registration Code",
         help_text="If you have been given a registration code through "
-        "a Carpentries member site or for a specific scheduled "
+        "a Carpentries member or partner site or for a specific scheduled "
         "event, please enter it here:",
     )
     member_code_override = models.BooleanField(
@@ -2973,9 +2973,8 @@ class CommonRequest(SecondaryEmailMixin, models.Model):
         null=False,
         default="",
         verbose_name="Registration code",
-        help_text="If you are affiliated with a Carpentries member organization, "
-        "please enter the registration code associated with the membership or partnership. "
-        "Your Member Affiliate can provide this.",
+        help_text="If you are affiliated with a Carpentries member or partner organization, "
+        "please enter your registration code.",
     )
 
     ONLINE_INPERSON_CHOICES = (
@@ -3226,7 +3225,7 @@ class WorkshopRequest(
         ),
         (
             "member",
-            "I am with a Member organisation so the workshop fee does not apply "
+            "I am with a Member or Partner organisation so the workshop fee does not apply "
             "(instructor travel costs will still apply for in-person workshops).",
         ),
         (
