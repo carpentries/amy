@@ -2181,9 +2181,8 @@ class TrainingRequest(
         null=False,
         max_length=STR_LONG,
         verbose_name="Registration Code",
-        help_text="If you have been given a registration code through "
-        "a Carpentries member or partner site or for a specific scheduled "
-        "event, please enter it here:",
+        help_text="If you have been given a registration code through a Carpentries Member or Partner site or for "
+        "a specific scheduled event, please enter it here:",
     )
     member_code_override = models.BooleanField(
         null=False,
@@ -2973,7 +2972,7 @@ class CommonRequest(SecondaryEmailMixin, models.Model):
         null=False,
         default="",
         verbose_name="Registration code",
-        help_text="If you are affiliated with a Carpentries member or partner organization, "
+        help_text="If you are affiliated with a Carpentries Member or Partner organisation, "
         "please enter your registration code.",
     )
 

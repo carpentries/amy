@@ -15,8 +15,8 @@ class Migration(migrations.Migration):
             field=models.CharField(
                 blank=True,
                 default="",
-                help_text="If you have been given a registration code through a Carpentries member or partner site or "
-                "for a specific scheduled event, please enter it here:",
+                help_text="If you have been given a registration code through a Carpentries Member or Partner site "
+                "or for a specific scheduled event, please enter it here:",
                 max_length=100,
                 verbose_name="Registration Code",
             ),
@@ -62,8 +62,8 @@ class Migration(migrations.Migration):
             field=models.CharField(
                 blank=True,
                 default="",
-                help_text="If you are affiliated with a Carpentries member or partner organization, please enter your "
-                "registration code.",
+                help_text="If you are affiliated with a Carpentries Member or Partner organisation, "
+                "please enter your registration code.",
                 max_length=40,
                 verbose_name="Registration code",
             ),
