@@ -29,7 +29,7 @@ class TrainingRequestCreate(
 ):
     model = TrainingRequest
     form_class = TrainingRequestForm
-    page_title = "Instructor Training Profile Creation Form"
+    page_title = "Carpentries Profile Creation Form"
     template_name = "forms/trainingrequest.html"
     success_url = reverse_lazy("training_request_confirm")
     autoresponder_subject = "Thank you for your application"
