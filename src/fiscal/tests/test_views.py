@@ -65,6 +65,75 @@ class TestPartnershipCreate(TestBase):
         self.assertEqual(partnership.credits, self.partnership_tier.credits)
 
 
+class TestPartnershipUpdate(TestBase):
+    def setUp(self) -> None:
+        super().setUp()
+        self._setUpUsersAndLogin()
+        self.partner = Organization.objects.create(fullname="Test", domain="example.org")
+        self.tier_gold = PartnershipTier.objects.create(name="gold", credits=100)
+        self.tier_platinum = PartnershipTier.objects.create(name="platinum", credits=200)
+        account = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=self.partner,
+        )
+        self.partnership = Partnership.objects.create(
+            name="Test Partnership",
+            tier=self.tier_gold,
+            agreement_start=date(2024, 1, 1),
+            agreement_end=date(2024, 12, 31),
+            agreement_link="http://example.com/agreement.pdf",
+            registration_code="TESTCODE123",
+            public_status="public",
+            partner_organisation=self.partner,
+            credits=111,  # Artificially doesn't match the Tier Gold credits
+            account=account,
+        )
+        self.url = reverse("partnership-update", args=[self.partnership.pk])
+
+    @override_settings(FLAGS={"SERVICE_OFFERING": [("boolean", True)]})
+    def test_credits_updated_when_tier_unchanged(self) -> None:
+        # Arrange
+        data = {
+            "name": self.partnership.name,
+            "tier": self.tier_gold.pk,
+            "agreement_start": "2024-01-01",
+            "agreement_end": "2024-12-31",
+            "agreement_link": "http://example.com/agreement.pdf",
+            "registration_code": "TESTCODE123",
+            "public_status": "public",
+            "partner_organisation": self.partner.pk,
+        }
+
+        # Act
+        self.client.post(self.url, data)
+
+        # Assert
+        self.partnership.refresh_from_db()
+        self.assertEqual(self.partnership.credits, self.tier_gold.credits)  # Updated from 111 to Tier Gold credits
+
+    @override_settings(FLAGS={"SERVICE_OFFERING": [("boolean", True)]})
+    def test_credits_updated_when_tier_changes(self) -> None:
+        # Arrange
+        data = {
+            "name": self.partnership.name,
+            "tier": self.tier_platinum.pk,
+            "agreement_start": "2024-01-01",
+            "agreement_end": "2024-12-31",
+            "agreement_link": "http://example.com/agreement.pdf",
+            "registration_code": "TESTCODE123",
+            "public_status": "public",
+            "partner_organisation": self.partner.pk,
+        }
+
+        # Act
+        self.client.post(self.url, data)
+
+        # Assert
+        self.partnership.refresh_from_db()
+        self.assertEqual(self.partnership.tier, self.tier_platinum)
+        self.assertEqual(self.partnership.credits, self.tier_platinum.credits)
+
+
 class TestPartnershipExtend(TestBase):
     def setUp(self) -> None:
         super().setUp()
