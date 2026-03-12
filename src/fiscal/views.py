@@ -1068,6 +1068,10 @@ class PartnershipUpdate(
                 f"Error when creating or updating scheduled email. {exc}",
             )
 
+        tier = cast(PartnershipTier, form.cleaned_data["tier"])
+        self.object.credits = tier.credits
+        self.object.save()
+
         return result
 
 
