@@ -183,7 +183,7 @@ class GetInvolvedForm(forms.ModelForm[TrainingProgress]):
         label="URL",
         help_text="A link to the activity, if there is one. If you served "
         "at a workshop, enter the workshop website. "
-        "If you made a GitHub contribution, enter that link and ensure it is to a"
+        "If you made a GitHub contribution, enter that link and ensure it is to a "
         "Carpentries GitHub repository (not a fork).",
         required=False,
         assume_scheme="https",
