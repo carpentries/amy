@@ -28,7 +28,7 @@ from src.emails.utils import (
     one_month_before,
 )
 from src.fiscal.models import Partnership
-from src.offering.models import AccountOwner
+from src.offering.models import AccountOwner, Benefit
 
 logger = logging.getLogger("amy")
 
@@ -98,9 +98,13 @@ def get_context(
     **kwargs: Unpack[NewPartnershipOnboardingKwargs],
 ) -> NewPartnershipOnboardingContext:
     partnership = kwargs["partnership"]
+    account_benefits = list(partnership.accountbenefit_set.all())
+    benefits = list(Benefit.objects.filter(accountbenefit__partnership=partnership).distinct())
 
     return {
         "partnership": partnership,
+        "account_benefits": account_benefits,
+        "benefits": benefits,
     }
 
 
@@ -108,6 +112,10 @@ def get_context_json(context: NewPartnershipOnboardingContext) -> ContextModel:
     return ContextModel(
         {
             "partnership": api_model_url("partnership", context["partnership"].pk),
+            "account_benefits": [
+                api_model_url("account_benefit", benefit.pk) for benefit in context["account_benefits"]
+            ],
+            "benefits": [api_model_url("benefit", benefit.pk) for benefit in context["benefits"]],
         },
     )
 

@@ -4,6 +4,7 @@ from typing import TypedDict
 
 from src.extrequests.models import SelfOrganisedSubmission
 from src.fiscal.models import Partnership
+from src.offering.models import AccountBenefit, Benefit
 from src.recruitment.models import InstructorRecruitmentSignup
 from src.workshops.models import (
     Award,
@@ -141,6 +142,8 @@ class NewPartnershipOnboardingKwargs(TypedDict):
 
 class NewPartnershipOnboardingContext(TypedDict):
     partnership: Partnership
+    account_benefits: list[AccountBenefit]
+    benefits: list[Benefit]
 
 
 class HostInstructorsIntroductionContext(TypedDict):
