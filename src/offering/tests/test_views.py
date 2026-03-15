@@ -179,3 +179,4 @@ class TestAccountBenefitCreateView(TestCase):
         self.assertTrue(result["disable_account"])
         self.assertTrue(result["disable_partnership"])
         self.assertTrue(result["disable_dates"])
+        self.assertTrue(result["disable_registration_code"])

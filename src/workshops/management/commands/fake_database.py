@@ -1080,6 +1080,7 @@ class Command(BaseCommand):
             start_date=date.today(),
             end_date=date.today() + timedelta(days=30),
             allocation=1 if all_benefits[0].unit_type == "seat" else 5,
+            registration_code=None,
         )
         AccountBenefit.objects.create(
             account=Account.objects.filter(
@@ -1092,6 +1093,7 @@ class Command(BaseCommand):
             start_date=date.today(),
             end_date=date.today() + timedelta(days=30),
             allocation=1 if all_benefits[1].unit_type == "seat" else 5,
+            registration_code=None,
         )
 
         AccountBenefit.objects.create(
@@ -1105,6 +1107,7 @@ class Command(BaseCommand):
             start_date=date.today(),
             end_date=date.today() + timedelta(days=30),
             allocation=1 if all_benefits[2].unit_type == "seat" else 5,
+            registration_code=None,
         )
         AccountBenefit.objects.create(
             account=Account.objects.filter(
@@ -1117,6 +1120,7 @@ class Command(BaseCommand):
             start_date=date.today(),
             end_date=date.today() + timedelta(days=30),
             allocation=1 if all_benefits[3].unit_type == "seat" else 5,
+            registration_code=None,
         )
 
         AccountBenefit.objects.create(
@@ -1130,6 +1134,7 @@ class Command(BaseCommand):
             start_date=date.today(),
             end_date=date.today() + timedelta(days=30),
             allocation=1 if all_benefits[0].unit_type == "seat" else 5,
+            registration_code="test-code",
         )
 
     def handle(self, *args: Any, **options: Any) -> None:

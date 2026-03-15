@@ -739,6 +739,7 @@ class TestAccountBenefitsLookupView(TestBase):
         self.ab_it = AccountBenefit.objects.create(
             account=account,
             benefit=self.benefit_it,
+            registration_code="test-code1",
             start_date=date(2025, 1, 1),
             end_date=date(2025, 12, 31),
             allocation=10,
@@ -746,6 +747,7 @@ class TestAccountBenefitsLookupView(TestBase):
         self.ab_other = AccountBenefit.objects.create(
             account=account,
             benefit=self.benefit_other,
+            registration_code="test-code2",
             start_date=date(2025, 1, 1),
             end_date=date(2025, 12, 31),
             allocation=5,

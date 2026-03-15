@@ -18,10 +18,21 @@ jQuery(function () {
       id_end_date.removeAttr("disabled");
     }
   }
+  function handleRegistrationCode(record) {
+    const id_registration_code = $("#id_registration_code");
+    if (record.id) {
+      id_registration_code.attr("disabled", "disabled");
+      id_registration_code.removeAttr("required");
+    } else {
+      id_registration_code.removeAttr("disabled");
+      id_registration_code.attr("required", "required");
+    }
+  }
 
   $("#id_partnership").on("change.select2", (e) => {
     const record = $(e.target).select2("data")[0];
     handleDateFields(record);
+    handleRegistrationCode(record);
     e.preventDefault();
   });
 

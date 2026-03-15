@@ -429,6 +429,7 @@ class TestAcceptTrainingRequestAndMatchToEvent(TestBase):
         account_benefit = AccountBenefit.objects.create(
             account=account,
             benefit=benefit,
+            registration_code="test-code",
             start_date=date.today() - timedelta(days=1),
             end_date=date.today() + timedelta(days=30),
             allocation=1,
@@ -682,6 +683,7 @@ class TestGetAccountBenefitWarningsAfterMatch(TestBase):
         return AccountBenefit.objects.create(
             account=self.account,
             benefit=self.benefit,
+            registration_code="test-code",
             start_date=date.today() + timedelta(days=start_offset),
             end_date=date.today() + timedelta(days=end_offset),
             allocation=allocation,

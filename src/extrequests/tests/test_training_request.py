@@ -414,6 +414,7 @@ class TestTrainingRequestsListView(TestBase):
         account_benefit = AccountBenefit.objects.create(
             account=account,
             benefit=benefit,
+            registration_code="test-code",
             allocation=5,
             start_date=date.today(),
             end_date=date.today() + timedelta(days=365),
