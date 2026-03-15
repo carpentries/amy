@@ -377,6 +377,7 @@ class TestBulkMatchTrainingRequestForm(TestCase):
         account_benefit = AccountBenefit.objects.create(
             account=account,
             benefit=benefit,
+            registration_code="test-code",
             start_date=date.today() - timedelta(days=1),
             end_date=date.today() + timedelta(days=365),
             allocation=2,
@@ -451,6 +452,7 @@ class TestBulkMatchTrainingRequestForm(TestCase):
         account_benefit = AccountBenefit.objects.create(
             account=account,
             benefit=benefit,
+            registration_code="test-code",
             start_date=date.today() - timedelta(days=1),
             end_date=date.today() + timedelta(days=365),
             allocation=2,
@@ -504,6 +506,7 @@ class TestBulkMatchTrainingRequestForm(TestCase):
         account_benefit = AccountBenefit.objects.create(
             account=account,
             benefit=benefit,
+            registration_code="test-code",
             start_date=date.today() - timedelta(days=1),
             end_date=date.today() + timedelta(days=365),
             allocation=2,
@@ -570,6 +573,7 @@ class TestBulkMatchTrainingRequestForm(TestCase):
         account_benefit = AccountBenefit.objects.create(
             account=account,
             benefit=benefit,
+            registration_code="test-code",
             start_date=date.today() - timedelta(days=1),
             end_date=date.today() + timedelta(days=365),
             allocation=2,
