@@ -969,7 +969,15 @@ def event_details(request: AuthenticatedHttpRequest, slug: str) -> HttpResponse:
 
     tasks = (
         Task.objects.filter(event__id=event.id)
-        .select_related("event", "person", "role")
+        .select_related(
+            "event",
+            "person",
+            "role",
+            "seat_membership",
+            "allocated_benefit",
+            "allocated_benefit__partnership",
+            "allocated_benefit__account",
+        )
         .prefetch_related(
             person_important_badges,
             person_instructor_community_roles,
@@ -989,6 +997,7 @@ def event_details(request: AuthenticatedHttpRequest, slug: str) -> HttpResponse:
     admin_lookup_form.helper = BootstrapHelper(
         form_action=reverse("event_assign", args=[slug]), add_cancel_button=False
     )
+
     if hasattr(event, "instructorrecruitment"):
         instructor_recruitment_signups = list(
             InstructorRecruitmentSignup.objects.filter(recruitment=event.instructorrecruitment)
