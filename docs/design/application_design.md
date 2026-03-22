@@ -21,7 +21,7 @@ The new application structure contains:
 * `autoemails` - for [automated emails application](./projects/2019_automated_emails.md) (v1, 2019) - now being deprecated and removed from codebase,
 * `communityroles` - for community roles project application,
 * `consents` - for consents project application,
-* `dashboard` - for admin and instructor dashboard views,
+* `dashboard` - for admin and user (instructor) dashboard views,
 * `emails` - for [current automated emails application](./projects/2023_automated_emails/index.md) (v2, 2023),
 * `extcomments` - for overriding some functions from
   [`django-contrib-comments`](https://django-contrib-comments.readthedocs.io/en/latest/quickstart.html)
@@ -72,7 +72,7 @@ users.
 [Consents project documentation](./projects/2021_consents.md).
 
 ### Dashboard
-Contains generic views for admins, and logic for instructor dashboard.
+Contains generic views for admins, and logic for user (instructor) dashboard.
 
 ### (External) Comments
 Contains small extensions or changes applied to

@@ -24,11 +24,12 @@ from django.views.generic import RedirectView
 from django_comments.views.comments import comment_done, post_comment
 from markdownx.views import ImageUploadView, MarkdownifyView
 
+from src.dashboard.views import dispatch
 from src.workshops.utils.access import login_required
 from src.workshops.views import logout_then_login_with_msg
 
 urlpatterns: list[URLPattern | URLResolver] = [
-    path("", RedirectView.as_view(pattern_name="dispatch")),
+    path("", dispatch, name="dispatch"),
     path(settings.ADMIN_URL, admin.site.urls),  # {% url 'admin:index' %}
     path("api/v1/", include("src.api.v1.urls")),  # REST API v1
     path("api/v2/", include("src.api.v2.urls")),  # REST API v2
@@ -46,8 +47,6 @@ urlpatterns: list[URLPattern | URLResolver] = [
     path("recruitment/", include("src.recruitment.urls")),
     path("emails/", include("src.emails.urls")),
     path("offering/", include("src.offering.urls")),
-    # for webhooks from Mailgun
-    # path('mail_hooks/', include('anymail.urls')),
     # django views for authentication
     path(
         "account/login/",
@@ -137,7 +136,7 @@ redirect_urlpatterns = [
     ),
     path(
         "workshops/trainee-dashboard/",
-        RedirectView.as_view(pattern_name="instructor-dashboard"),
+        RedirectView.as_view(pattern_name="user-dashboard"),
     ),
     path(
         "workshops/trainee-dashboard/training_progress/",
