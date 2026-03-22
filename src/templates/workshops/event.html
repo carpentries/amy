@@ -97,7 +97,7 @@
           title="Only Instructor or Trainer badges shown."></i></th>
       <th>Person</th>
       <th>Role</th>
-      <th>Member site seat <i class="fas fa-question-circle" data-toggle="tooltip" title="Applies only to TTT events"></i></th>
+      <th>Member site seat / Account benefit</th>
       <th>Open applicant <i class="fas fa-question-circle" data-toggle="tooltip" title="Applies only to TTT events with open applications"></i></th>
       <th class="additional-links"></th>
     </tr>
@@ -120,6 +120,11 @@
       {% if t.seat_membership %}
         <a href="{{ t.seat_membership.get_absolute_url }}">{{ t.seat_membership }}</a><br>
         <small>{{ t.get_seat_public_display }}</small>
+      {% elif t.allocated_benefit %}
+        Account benefit <a href="{{ t.allocated_benefit.get_absolute_url }}">{{ t.allocated_benefit.benefit.name }}</a>
+        {% if t.allocated_benefit.partnership %}
+        for partnership <a href="{{ t.allocated_benefit.partnership.get_absolute_url }}">{{ t.allocated_benefit.partnership.name }}</a>
+        {% endif %}
       {% else %}&mdash;{% endif %}
     </td>
     <td>{{ t.seat_open_training|yesno }}</td>
