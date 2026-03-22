@@ -3,6 +3,6 @@
   {% if user.is_admin %}
     {% include 'navigation.html' %}
   {% elif not user.is_admin and not user.is_anonymous %}
-    {% include 'navigation_instructor_dashboard.html' %}
+    {% include 'navigation_user_dashboard.html' %}
   {% endif %}
 {% endblock %}

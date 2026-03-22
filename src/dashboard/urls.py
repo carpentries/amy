@@ -4,7 +4,6 @@ from django.views.generic import RedirectView
 from src.dashboard import views
 
 urlpatterns = [
-    path("", views.dispatch, name="dispatch"),
     # admin dashboard main page
     path(
         "admin/",
@@ -20,12 +19,16 @@ urlpatterns = [
             ]
         ),
     ),
-    # instructor dashboard and instructor-available views
+    # redirect from old instructor dashboard link to new user dashboard URL
+    path("instructor/", RedirectView.as_view(pattern_name="user-dashboard")),
+    # redirect from old trainee dashboard link to new user dashboard URL
+    path("trainee/", RedirectView.as_view(pattern_name="user-dashboard")),
+    # user (instructor) dashboard and user-available views
+    path("", views.user_dashboard, name="user-dashboard"),
     path(
-        "instructor/",
+        "",
         include(
             [
-                path("", views.instructor_dashboard, name="instructor-dashboard"),
                 path(
                     "training_progress/",
                     views.training_progress,
@@ -76,6 +79,4 @@ urlpatterns = [
             ]
         ),
     ),
-    # redirect "old" trainee dashboard link to new instructor dashboard
-    path("trainee/", RedirectView.as_view(pattern_name="instructor-dashboard")),
 ]
