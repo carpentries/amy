@@ -10,7 +10,7 @@ from django.urls import reverse
 from django_stubs_ext import Annotations
 from reversion import revisions as reversion
 
-from src.offering.models import Account
+from src.offering.models import Account, AccountBenefitDiscount
 from src.workshops.consts import STR_LONG, STR_LONGEST, STR_MED
 from src.workshops.mixins import CreatedUpdatedMixin
 from src.workshops.models import Membership, Organization, Person
@@ -88,6 +88,7 @@ class Partnership(CreatedUpdatedMixin, models.Model):
         "The credits value has been moved by a cumulative sum of values from this field.",
         default=list,
     )
+    discount = models.ForeignKey(AccountBenefitDiscount, on_delete=models.SET_NULL, null=True, blank=True)
 
     account = models.ForeignKey(
         Account,
