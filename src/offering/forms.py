@@ -217,9 +217,7 @@ class AccountBenefitForm(forms.ModelForm[AccountBenefit]):
         discount = cleaned_data.get("discount")
         # This repeats the logic from the model constraint, but allows for better error messages.
         if partnership and discount:
-            errors["discount"] = ValidationError("Discount must be empty when a partnership is selected.")
-        elif not partnership and not discount:
-            errors["discount"] = ValidationError("Discount is required when no partnership is selected.")
+            errors["discount"] = ValidationError("Discount must not be set when a partnership is selected.")
 
         # `registration_code` is required when no partnership, and must be empty when partnership is set
         registration_code = cleaned_data.get("registration_code")

@@ -7,15 +7,9 @@ from django.db.migrations.state import StateApps
 
 def set_discount_to_satisfy_constraint(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     AccountBenefit = apps.get_model("offering", "AccountBenefit")
-    AccountBenefitDiscount = apps.get_model("offering", "AccountBenefitDiscount")
-    default_discount, _ = AccountBenefitDiscount.objects.get_or_create(name="Other Discount")
 
     # To satisfy the new constraint, we need to ensure that all AccountBenefits linked to a partnership have a null
-    # discount, and all AccountBenefits not linked to a partnership have a non-null discount.
-    for account_benefit in AccountBenefit.objects.filter(partnership__isnull=True, discount__isnull=True):
-        account_benefit.discount = default_discount
-        account_benefit.save()
-
+    # discount. When the AccountBenefit isn't linked to a partnership, the discount can be left as is.
     for account_benefit in AccountBenefit.objects.filter(partnership__isnull=False, discount__isnull=False):
         account_benefit.discount = None
         account_benefit.save()
@@ -38,12 +32,11 @@ class Migration(migrations.Migration):
             constraint=models.CheckConstraint(
                 condition=models.Q(
                     models.Q(("partnership__isnull", False), ("discount__isnull", True)),
-                    models.Q(("partnership__isnull", True), ("discount__isnull", False)),
+                    ("partnership__isnull", True),
                     _connector="OR",
                 ),
                 name="check_partnership_discount",
-                violation_error_message="Account Benefit, if linked to partnership, cannot have a discount. "
-                "If not linked to partnership, the discount is required.",
+                violation_error_message="Account Benefit, if linked to partnership, cannot have a discount.",
             ),
         ),
     ]
