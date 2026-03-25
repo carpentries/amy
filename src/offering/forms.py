@@ -188,9 +188,15 @@ class AccountBenefitForm(forms.ModelForm[AccountBenefit]):
         disable_partnership: bool = False,
         disable_dates: bool = False,
         disable_registration_code: bool = False,
+        disable_discount: bool = False,
         **kwargs: Any,
     ) -> None:
         super().__init__(*args, **kwargs)
+
+        self.fields["discount"].help_text = (
+            "If the account benefit is linked to a partnership, the discount will be inherited from "
+            "the partnership and cannot be set directly on the account benefit."
+        )
 
         if disable_account:
             self.fields["account"].disabled = True
@@ -201,6 +207,8 @@ class AccountBenefitForm(forms.ModelForm[AccountBenefit]):
             self.fields["end_date"].disabled = True
         if disable_registration_code:
             self.fields["registration_code"].disabled = True
+        if disable_discount:
+            self.fields["discount"].disabled = True
 
         # If these fields are disabled, the browser won't send their values and this trips the validation
         # (unless we make them not required).
