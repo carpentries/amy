@@ -156,6 +156,14 @@ class AccountBenefit(CreatedUpdatedMixin, models.Model):
                 violation_error_message="Account Benefit, if linked to partnership, cannot have a registration code. "
                 "If not linked to partnership, the registration code is required.",
             ),
+            # Account Benefit linked to a partnership cannot have a discount (it should use partnership's discount)
+            models.CheckConstraint(
+                condition=(Q(partnership__isnull=False) & Q(discount__isnull=True))
+                | (Q(partnership__isnull=True) & Q(discount__isnull=False)),
+                name="check_partnership_discount",
+                violation_error_message="Account Benefit, if linked to partnership, cannot have a discount. "
+                "If not linked to partnership, the discount is required.",
+            ),
         ]
 
     @property
