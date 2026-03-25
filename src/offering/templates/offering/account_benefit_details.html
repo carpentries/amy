@@ -47,7 +47,7 @@
       {% if object.discount %}
         {{ object.discount }}
       {% elif object.partnership.discount %}
-        {{ object.partnership.discount }} (from partnership)
+        {{ object.partnership.discount }} <br><small>from partnership</small>
       {% else %}&mdash;{% endif %}
     </td>
   </tr>
@@ -57,7 +57,7 @@
       {% if object.registration_code %}
         <code>{{ object.registration_code }}</code>
       {% elif object.partnership.registration_code %}
-        <code>{{ object.partnership.registration_code }}</code> (from partnership)
+        <code>{{ object.partnership.registration_code }}</code> <br><small>from partnership</small>
       {% else %}&mdash;{% endif %}
     </td>
   </tr>

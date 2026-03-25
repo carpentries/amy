@@ -4,7 +4,7 @@ from django.test import TestCase
 
 from src.fiscal.models import Partnership, PartnershipTier
 from src.offering.forms import AccountBenefitForm, AccountForm
-from src.offering.models import Account, Benefit
+from src.offering.models import Account, AccountBenefitDiscount, Benefit
 from src.workshops.models import Membership, Organization
 
 
@@ -385,3 +385,36 @@ class TestAccountBenefitForm(TestCase):
         # Assert
         self.assertFalse(form.is_valid())
         self.assertIn("registration_code", form.errors)
+
+    def test_clean__discount_not_present_with_partnership(self) -> None:
+        """Form is invalid when both a partnership and a discount are provided."""
+        # Arrange
+        org = Organization.objects.create(fullname="Test Org", domain="example.com")
+        account = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=org,
+        )
+        partnership = Partnership.objects.create(
+            name="Test Partnership",
+            partner_organisation=org,
+            account=account,
+            agreement_start=date(2025, 1, 1),
+            agreement_end=date(2025, 12, 31),
+            credits=10,
+        )
+        benefit = Benefit.objects.create(name="Test Benefit", unit_type="seat", credits=2)
+        discount = AccountBenefitDiscount.objects.create(name="Test Discount")
+        data = {
+            "account": account.pk,
+            "partnership": partnership.pk,
+            "benefit": benefit.pk,
+            "discount": discount.pk,
+            "allocation": 10,
+        }
+
+        # Act
+        form = AccountBenefitForm(data)
+
+        # Assert
+        self.assertFalse(form.is_valid())
+        self.assertIn("Discount must not be set when a partnership is selected.", form.errors["discount"])
