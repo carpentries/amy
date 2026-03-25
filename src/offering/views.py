@@ -352,6 +352,7 @@ class AccountBenefitCreate(
             kwargs["disable_partnership"] = True
             kwargs["disable_dates"] = True
             kwargs["disable_registration_code"] = True
+            kwargs["disable_discount"] = True
 
         return kwargs
 

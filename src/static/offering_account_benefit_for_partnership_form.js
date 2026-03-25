@@ -28,11 +28,20 @@ jQuery(function () {
       id_registration_code.attr("required", "required");
     }
   }
+  function handleDiscount(record) {
+    const id_discount = $("#id_discount");
+    if (record.id) {
+      id_discount.attr("disabled", "disabled");
+    } else {
+      id_discount.removeAttr("disabled");
+    }
+  }
 
   $("#id_partnership").on("change.select2", (e) => {
     const record = $(e.target).select2("data")[0];
     handleDateFields(record);
     handleRegistrationCode(record);
+    handleDiscount(record);
     e.preventDefault();
   });
 

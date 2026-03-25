@@ -43,11 +43,23 @@
   </tr>
   <tr>
     <th>Discount:</th>
-    <td>{{ object.discount|default:"&mdash;" }}</td>
+    <td>
+      {% if object.discount %}
+        {{ object.discount }}
+      {% elif object.partnership.discount %}
+        {{ object.partnership.discount }} <br><small>from partnership</small>
+      {% else %}&mdash;{% endif %}
+    </td>
   </tr>
   <tr>
     <th>Registration code:</th>
-    <td>{% if object.registration_code %}<code>{{ object.registration_code }}</code>{% else %}&mdash;{% endif %}</td>
+    <td>
+      {% if object.registration_code %}
+        <code>{{ object.registration_code }}</code>
+      {% elif object.partnership.registration_code %}
+        <code>{{ object.partnership.registration_code }}</code> <br><small>from partnership</small>
+      {% else %}&mdash;{% endif %}
+    </td>
   </tr>
   <tr>
     <th>Curriculum:</th>

@@ -101,6 +101,10 @@
     </td>
   </tr>
   <tr>
+    <th>Discount:</th>
+    <td>{{ object.discount|default_if_none:"&mdash;" }}</td>
+  </tr>
+  <tr>
     <th>Agreement start:</th>
     <td>{{ object.agreement_start }}</td>
   </tr>

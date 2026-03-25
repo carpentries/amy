@@ -569,6 +569,7 @@ class PartnershipForm(forms.ModelForm[Partnership]):
             "partner_organisation",
             "name",
             "tier",
+            "discount",
             "agreement_start",
             "agreement_end",
             "agreement_link",
