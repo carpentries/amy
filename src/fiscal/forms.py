@@ -11,7 +11,7 @@ from django.urls import reverse
 from markdownx.fields import MarkdownxFormField
 
 from src.fiscal.fields import FlexibleSplitArrayField
-from src.fiscal.models import Consortium, MembershipTask, Partnership
+from src.fiscal.models import Consortium, MembershipTask, Partnership, PartnershipTier
 from src.offering.models import AccountBenefit
 
 # this is used instead of Django Autocomplete Light widgets
@@ -569,6 +569,7 @@ class PartnershipForm(forms.ModelForm[Partnership]):
             "partner_organisation",
             "name",
             "tier",
+            "credits",
             "discount",
             "agreement_start",
             "agreement_end",
@@ -584,6 +585,12 @@ class PartnershipForm(forms.ModelForm[Partnership]):
 
     class Media:
         js = ("partnership_form.js",)
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        # credits is always optional at the form field level;
+        # custom validation in clean() requires it for custom tiers.
+        self.fields["credits"].required = False
 
     def clean(self) -> None:
         super().clean()
@@ -611,6 +618,12 @@ class PartnershipForm(forms.ModelForm[Partnership]):
                 errors["registration_code"] = ValidationError(
                     f'This registration code is used by account benefit "{existing_account_benefit}".'
                 )
+
+        # Credits are required when the Custom tier is selected.
+        tier: PartnershipTier | None = self.cleaned_data.get("tier")
+        credits = self.cleaned_data.get("credits")
+        if tier and tier.is_custom and credits is None:
+            errors["credits"] = ValidationError("Credits are required for the Custom tier.")
 
         if errors:
             raise ValidationError(errors)
@@ -703,6 +716,7 @@ class PartnershipRollOverForm(PartnershipForm):
         fields = [
             "name",
             "tier",
+            "credits",
             "agreement_start",
             "agreement_end",
             "agreement_link",
