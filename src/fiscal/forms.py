@@ -581,6 +581,10 @@ class PartnershipForm(forms.ModelForm[Partnership]):
         widgets = {
             "partner_consortium": Select2Widget(attrs=SELECT2_SIDEBAR),
             "partner_organisation": Select2Widget(attrs=SELECT2_SIDEBAR),
+            "tier": ModelSelect2Widget(  # type: ignore[no-untyped-call]
+                data_view="partnership-tier-lookup",
+                attrs=SELECT2_SIDEBAR,
+            ),
         }
 
     class Media:

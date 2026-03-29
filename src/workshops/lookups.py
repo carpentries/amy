@@ -18,7 +18,7 @@ from django.urls import path
 from django_select2.views import AutoResponseView
 
 from src.communityroles.models import CommunityRoleConfig
-from src.fiscal.models import Consortium, MembershipPersonRole, Partnership
+from src.fiscal.models import Consortium, MembershipPersonRole, Partnership, PartnershipTier
 from src.offering.models import Account, AccountBenefit, Benefit
 from src.workshops import models
 from src.workshops.base_views import AuthenticatedHttpRequest
@@ -565,6 +565,25 @@ class PartnershipLookupView(OnlyForAdminsNoRedirectMixin, ExtensibleAutoResponse
         ]
 
 
+class PartnershipTierLookupView(OnlyForAdminsNoRedirectMixin, ExtensibleAutoResponseView):
+    def get_queryset(self) -> QuerySet[PartnershipTier]:
+        q = PartnershipTier.objects.order_by("name")
+        if self.term:
+            q = q.filter(name__icontains=self.term)
+        return q
+
+    def parse_results(self, object_list: Sequence[PartnershipTier]) -> list[Any]:  # type: ignore[override]
+        return [
+            {
+                "id": str(obj.pk),
+                "text": self.widget.label_from_instance(obj),
+                "credits": obj.credits,
+                "is_custom": obj.is_custom,
+            }
+            for obj in object_list
+        ]
+
+
 class AccountBenefitsLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
     unit_type: str
 
@@ -685,6 +704,7 @@ urlpatterns = [
     path("offering-account-relation/", OfferingAccountRelation.as_view(), name="offering-account-relation-lookup"),
     path("airports/", AirportsLookupView.as_view(), name="airports-lookup"),
     path("partnerships/", PartnershipLookupView.as_view(), name="partnership-lookup"),
+    path("partnership-tiers/", PartnershipTierLookupView.as_view(), name="partnership-tier-lookup"),
     path("account-benefits-seats/", AccountBenefitSeatsLookupView.as_view(), name="account-benefit-seats-lookup"),
     path("account-benefits-events/", AccountBenefitEventsLookupView.as_view(), name="account-benefit-events-lookup"),
     path("benefits-seats/", BenefitSeatsLookupView.as_view(), name="benefit-seats-lookup"),
