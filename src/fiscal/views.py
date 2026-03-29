@@ -1167,6 +1167,7 @@ class PartnershipExtend(
         return self.partnership.get_absolute_url()
 
 
+# Note: View disabled as per https://github.com/carpentries/amy/issues/2926#issuecomment-4069672393
 class PartnershipExtendCredits(
     OnlyForAdminsMixin,
     FlaggedViewMixin,  # type: ignore[misc]
