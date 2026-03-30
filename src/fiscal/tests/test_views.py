@@ -17,6 +17,7 @@ class TestPartnershipCreate(TestBase):
         self._setUpUsersAndLogin()
         self.partner = Organization.objects.create(fullname="Test", domain="example.org")
         self.partnership_tier = PartnershipTier.objects.create(name="gold", credits=100)
+        self.custom_tier = PartnershipTier.objects.create(name="Custom", credits=0, is_custom=True)
         self.data = {
             "name": "Test Partnership",
             "tier": self.partnership_tier.pk,
@@ -64,6 +65,25 @@ class TestPartnershipCreate(TestBase):
         self.assertEqual(partnership.account, account)
         self.assertEqual(partnership.credits, self.partnership_tier.credits)
 
+    @override_settings(FLAGS={"SERVICE_OFFERING": [("boolean", True)]})
+    def test_sets_custom_credits_for_custom_tier(self) -> None:
+        """Test that credits from the form are used when the Custom tier is selected."""
+        # Arrange
+        url = reverse("partnership-create")
+        data = {
+            **self.data,
+            "tier": self.custom_tier.pk,
+            "credits": 75,
+            "registration_code": "CUSTOM123",
+        }
+
+        # Act
+        self.client.post(url, data)
+
+        # Assert
+        partnership = Partnership.objects.get(name="Test Partnership")
+        self.assertEqual(partnership.credits, 75)
+
 
 class TestPartnershipUpdate(TestBase):
     def setUp(self) -> None:
@@ -72,6 +92,7 @@ class TestPartnershipUpdate(TestBase):
         self.partner = Organization.objects.create(fullname="Test", domain="example.org")
         self.tier_gold = PartnershipTier.objects.create(name="gold", credits=100)
         self.tier_platinum = PartnershipTier.objects.create(name="platinum", credits=200)
+        self.tier_custom = PartnershipTier.objects.create(name="Custom", credits=0, is_custom=True)
         account = Account.objects.create(
             account_type=Account.AccountTypeChoices.ORGANISATION,
             generic_relation=self.partner,
@@ -132,6 +153,30 @@ class TestPartnershipUpdate(TestBase):
         self.partnership.refresh_from_db()
         self.assertEqual(self.partnership.tier, self.tier_platinum)
         self.assertEqual(self.partnership.credits, self.tier_platinum.credits)
+
+    @override_settings(FLAGS={"SERVICE_OFFERING": [("boolean", True)]})
+    def test_credits_from_form_used_for_custom_tier(self) -> None:
+        """Test that credits from the form are used when tier is changed to Custom."""
+        # Arrange
+        data = {
+            "name": self.partnership.name,
+            "tier": self.tier_custom.pk,
+            "credits": 150,
+            "agreement_start": "2024-01-01",
+            "agreement_end": "2024-12-31",
+            "agreement_link": "http://example.com/agreement.pdf",
+            "registration_code": "TESTCODE123",
+            "public_status": "public",
+            "partner_organisation": self.partner.pk,
+        }
+
+        # Act
+        self.client.post(self.url, data)
+
+        # Assert
+        self.partnership.refresh_from_db()
+        self.assertEqual(self.partnership.tier, self.tier_custom)
+        self.assertEqual(self.partnership.credits, 150)
 
 
 class TestPartnershipExtend(TestBase):

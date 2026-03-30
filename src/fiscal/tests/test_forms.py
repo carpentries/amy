@@ -16,6 +16,7 @@ class TestPartnershipForm(TestCase):
             generic_relation=self.organisation,
         )
         self.tier = PartnershipTier.objects.create(name="Gold", credits=10)
+        self.custom_tier = PartnershipTier.objects.create(name="Custom", credits=0, is_custom=True)
 
     def test_clean__valid_dates(self) -> None:
         """Test that form is valid when agreement_end is after agreement_start."""
@@ -162,6 +163,71 @@ class TestPartnershipForm(TestCase):
             "partner_organisation": self.organisation.pk,
             "name": "Test Partnership",
             "tier": self.tier.pk,
+            "agreement_start": date(2025, 1, 1),
+            "agreement_end": date(2025, 12, 31),
+            "agreement_link": "http://example.com/agreement.pdf",
+            "registration_code": "UNIQUE123",
+            "public_status": "public",
+        }
+
+        # Act
+        form = PartnershipForm(data)
+
+        # Assert
+        self.assertTrue(form.is_valid())
+
+    def test_clean__credits_required_for_custom_tier(self) -> None:
+        """Test that credits are required when the Custom tier is selected."""
+        # Arrange
+        data = {
+            "partner_organisation": self.organisation.pk,
+            "name": "Test Partnership",
+            "tier": self.custom_tier.pk,
+            "agreement_start": date(2025, 1, 1),
+            "agreement_end": date(2025, 12, 31),
+            "agreement_link": "http://example.com/agreement.pdf",
+            "registration_code": "UNIQUE123",
+            "public_status": "public",
+            # credits not provided
+        }
+
+        # Act
+        form = PartnershipForm(data)
+
+        # Assert
+        self.assertFalse(form.is_valid())
+        self.assertIn("credits", form.errors)
+        self.assertEqual(form.errors["credits"], ["Credits are required for the Custom tier."])
+
+    def test_clean__credits_valid_for_custom_tier(self) -> None:
+        """Test that form is valid when credits are provided for the Custom tier."""
+        # Arrange
+        data = {
+            "partner_organisation": self.organisation.pk,
+            "name": "Test Partnership",
+            "tier": self.custom_tier.pk,
+            "credits": 50,
+            "agreement_start": date(2025, 1, 1),
+            "agreement_end": date(2025, 12, 31),
+            "agreement_link": "http://example.com/agreement.pdf",
+            "registration_code": "UNIQUE123",
+            "public_status": "public",
+        }
+
+        # Act
+        form = PartnershipForm(data)
+
+        # Assert
+        self.assertTrue(form.is_valid())
+
+    def test_clean__credits_not_required_for_non_custom_tier(self) -> None:
+        """Test that credits are not required when a non-Custom tier is selected."""
+        # Arrange
+        data = {
+            "partner_organisation": self.organisation.pk,
+            "name": "Test Partnership",
+            "tier": self.tier.pk,
+            # credits not provided
             "agreement_start": date(2025, 1, 1),
             "agreement_end": date(2025, 12, 31),
             "agreement_link": "http://example.com/agreement.pdf",

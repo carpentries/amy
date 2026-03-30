@@ -284,6 +284,12 @@ class BenefitSerializer(serializers.ModelSerializer[Benefit]):
         )
 
 
+class PartnershipTierSerializer(serializers.ModelSerializer[PartnershipTier]):
+    class Meta:
+        model = PartnershipTier
+        fields = ("pk", "name", "credits", "is_custom", "created_at", "last_updated_at")
+
+
 class ConsortiumSerializer(serializers.ModelSerializer[Consortium]):
     organizations = serializers.SlugRelatedField[Organization](many=True, read_only=True, slug_field="domain")
 

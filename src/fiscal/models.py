@@ -59,6 +59,10 @@ class PartnershipTier(CreatedUpdatedMixin, models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=STR_LONG, blank=False, null=False)
     credits = models.IntegerField()
+    is_custom = models.BooleanField(
+        default=False,
+        help_text="If set, credits value can be customized per partnership instead of using the tier default.",
+    )
 
     def __str__(self) -> str:
         return f"{self.name} ({self.credits} credits)"

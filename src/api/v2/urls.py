@@ -17,6 +17,7 @@ router.register("instructorrecruitmentsignup", views.InstructorRecruitmentSignup
 router.register("membership", views.MembershipViewSet)
 router.register("organization", views.OrganizationViewSet)
 router.register("partnership", views.PartnershipViewSet)
+router.register("partnershiptier", views.PartnershipTierViewSet)
 router.register("person", views.PersonViewSet)
 router.register("scheduledemail", views.ScheduledEmailViewSet)
 router.register("selforganisedsubmission", views.SelfOrganisedSubmissionViewSet)

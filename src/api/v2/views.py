@@ -24,6 +24,7 @@ from src.api.v2.serializers import (
     MembershipSerializer,
     OrganizationSerializer,
     PartnershipSerializer,
+    PartnershipTierSerializer,
     PersonSerializer,
     ScheduledEmailLogDetailsSerializer,
     ScheduledEmailSerializer,
@@ -35,7 +36,7 @@ from src.api.v2.serializers import (
 from src.emails.controller import EmailController
 from src.emails.models import Attachment, ScheduledEmail, ScheduledEmailStatus
 from src.extrequests.models import SelfOrganisedSubmission
-from src.fiscal.models import Consortium, Partnership
+from src.fiscal.models import Consortium, Partnership, PartnershipTier
 from src.offering.models import AccountBenefit, Benefit
 from src.recruitment.models import InstructorRecruitmentSignup
 from src.workshops.models import (
@@ -207,6 +208,20 @@ class ConsortiumViewSet(viewsets.ReadOnlyModelViewSet[Consortium]):
     )
     queryset = Consortium.objects.prefetch_related("organisations").order_by("pk").all()
     serializer_class = ConsortiumSerializer
+    pagination_class = StandardResultsSetPagination
+
+
+class PartnershipTierViewSet(viewsets.ReadOnlyModelViewSet[PartnershipTier]):
+    authentication_classes = (
+        TokenAuthentication,
+        SessionAuthentication,
+    )
+    permission_classes = (
+        IsAuthenticated,
+        ApiAccessPermission,
+    )
+    queryset = PartnershipTier.objects.order_by("name").all()
+    serializer_class = PartnershipTierSerializer
     pagination_class = StandardResultsSetPagination
 
 
