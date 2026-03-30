@@ -14,6 +14,7 @@ uv run python manage.py runscript seed_emails
 uv run python manage.py runscript seed_event_categories
 uv run python manage.py runscript seed_benefits
 uv run python manage.py runscript seed_account_benefit_discounts
+uv run python manage.py runscript seed_partnership_tiers
 
 uv run python manage.py create_superuser
 
