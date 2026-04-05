@@ -185,8 +185,8 @@ class CurriculumModelMultipleChoiceField(SafeModelMultipleChoiceField):
         # auto-hides and doesn't require clicking on the element, whereas
         # popover by clicking will automatically select the clicked item)
         data = (
-            '<a tabindex="0" role="button" data-toggle="tooltip" '
-            f'data-placement="top" title="{obj.description}">{obj}</a>'
+            '<a tabindex="0" role="button" data-bs-toggle="tooltip" '
+            f'data-bs-placement="top" title="{obj.description}">{obj}</a>'
         )
         return super().label_from_instance(data)
 
@@ -196,7 +196,7 @@ class CurriculumModelMultipleChoiceField(SafeModelMultipleChoiceField):
 
 class Select2BootstrapMixin:
     def build_attrs(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
-        self.attrs.setdefault("data-theme", "bootstrap4")  # type: ignore
+        self.attrs.setdefault("data-theme", "bootstrap-5")  # type: ignore
         attrs = cast(dict[str, Any], super().build_attrs(*args, **kwargs))  # type: ignore
         return attrs
 

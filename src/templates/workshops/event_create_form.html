@@ -3,7 +3,7 @@
 {% load crispy_forms_tags %}
 
 {% block content %}
-  <a href="#import_url_modal" class="btn btn-secondary" id="import_url_button" data-toggle="modal" data-target="#import_url_modal">Import from URL</a>
+  <a href="#import_url_modal" class="btn btn-secondary" id="import_url_button" data-bs-toggle="modal" data-bs-target="#import_url_modal">Import from URL</a>
   {% crispy form %}
 
   {% include "includes/event_import_update_from_url.html" with update=False %}

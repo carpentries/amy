@@ -8,11 +8,11 @@
 {% block content %}
 <nav class="col-12">
   <ul class="nav nav-tabs" role="tablist" id="tabs">
-    <li role="presentation" class="nav-item"><a class="nav-link active" href="#person" role="tab" data-toggle="tab" aria-controls="person" aria-selected="true" id="person-tab">Person</a></li>
-    <li role="presentation" class="nav-item"><a class="nav-link" href="#awards" role="tab" data-toggle="tab" aria-controls="awards">Awards</a></li>
-    <li role="presentation" class="nav-item"><a class="nav-link" href="#tasks" role="tab" data-toggle="tab" aria-controls="tasks">Tasks</a></li>
-    <li role="presentation" class="nav-item"><a class="nav-link" href="#consents" role="tab" data-toggle="tab" aria-controls="consents">Consents</a></li>
-    <li role="presentation" class="nav-item"><a class="nav-link" href="#communityroles" role="tab" data-toggle="tab" aria-controls="communityroles">Community Roles</a></li>
+    <li role="presentation" class="nav-item"><a class="nav-link active" href="#person" role="tab" data-bs-toggle="tab" aria-controls="person" aria-selected="true" id="person-tab">Person</a></li>
+    <li role="presentation" class="nav-item"><a class="nav-link" href="#awards" role="tab" data-bs-toggle="tab" aria-controls="awards">Awards</a></li>
+    <li role="presentation" class="nav-item"><a class="nav-link" href="#tasks" role="tab" data-bs-toggle="tab" aria-controls="tasks">Tasks</a></li>
+    <li role="presentation" class="nav-item"><a class="nav-link" href="#consents" role="tab" data-bs-toggle="tab" aria-controls="consents">Consents</a></li>
+    <li role="presentation" class="nav-item"><a class="nav-link" href="#communityroles" role="tab" data-bs-toggle="tab" aria-controls="communityroles">Community Roles</a></li>
   </ul>
 </nav>
 
@@ -85,8 +85,8 @@
       <tr>
         <th>Event</th>
         <th>Role</th>
-        <th>Member site seat <i class="fas fa-question-circle" data-toggle="tooltip" title="Applies only to TTT events"></i></th>
-        <th>Open applicant <i class="fas fa-question-circle" data-toggle="tooltip" title="Applies only to TTT events with open applications"></i></th>
+        <th>Member site seat <i class="fas fa-question-circle" data-bs-toggle="tooltip" title="Applies only to TTT events"></i></th>
+        <th>Open applicant <i class="fas fa-question-circle" data-bs-toggle="tooltip" title="Applies only to TTT events with open applications"></i></th>
         <th class="additional-links-wider"></th>
       </tr>
       {% for t in tasks %}

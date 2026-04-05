@@ -91,7 +91,7 @@ caption {
     color: #000000;
 }
 
-.form-group small {
+.mb-3 small {
     font-size: 0.8rem;
 }
 
@@ -112,7 +112,7 @@ caption {
     word-wrap: break-word;       /* Internet Explorer 5.5+ */
 }
 
-/* Bootstrap4 styles for <a> applied to bare <button> */
+/* Bootstrap styles for <a> applied to bare <button> */
 .no-btn {
     border-radius: 0;
     margin: 0;
@@ -155,7 +155,7 @@ caption {
 }
 
 
-/* enable showing of field errors - crispy forms and bootstrap 4 */
+/* enable showing of field errors - crispy forms and bootstrap 5 */
 .invalid-feedback {
     display: block;
 }
@@ -220,7 +220,7 @@ select[readonly].select2-hidden-accessible + .select2-container
 
 /* Special case: multiple inputs in one form row (e.g. extensions in membership form on
    membership edit page) */
-.form-group.row input + input {
+.mb-3.row input + input {
     margin-top: 0.25em;
 }
 

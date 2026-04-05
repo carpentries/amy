@@ -189,7 +189,7 @@ class TestUserTrainingStatus(TestBase):
         rv = self.client.get(self.progress_url)
         self.assertContains(
             rv,
-            '<p>Training <span class="badge-success">passed</span> as of June 5, 2023.</p>',
+            '<p>Training <span class="text-bg-success">passed</span> as of June 5, 2023.</p>',
             html=True,
         )
 
@@ -198,7 +198,7 @@ class TestUserTrainingStatus(TestBase):
         rv = self.client.get(self.progress_url)
         self.assertContains(
             rv,
-            '<p>Training <span class="badge-danger">failed</span> as of June 5, 2023.</p>',
+            '<p>Training <span class="text-bg-danger">failed</span> as of June 5, 2023.</p>',
             html=True,
         )
 
@@ -207,7 +207,7 @@ class TestUserTrainingStatus(TestBase):
         rv = self.client.get(self.progress_url)
         self.assertContains(
             rv,
-            '<p>Training <span class="badge-info">asked to repeat</span> as of June 5, 2023.</p>',
+            '<p>Training <span class="text-bg-info">asked to repeat</span> as of June 5, 2023.</p>',
             html=True,
         )
 
@@ -280,7 +280,7 @@ class TestGetInvolvedStatus(TestBase):
         # Assert
         self.assertContains(
             rv,
-            '<p>Get Involved <span class="badge-warning">not evaluated yet</span> '
+            '<p>Get Involved <span class="text-bg-warning">not evaluated yet</span> '
             f"as of {datetime.today().strftime('%B %-d, %Y')}.</p>",
             html=True,
         )
@@ -300,7 +300,7 @@ class TestGetInvolvedStatus(TestBase):
         # Assert
         self.assertContains(
             rv,
-            '<p>Get Involved <span class="badge-success">passed</span> '
+            '<p>Get Involved <span class="text-bg-success">passed</span> '
             f"as of {datetime.today().strftime('%B %-d, %Y')}.</p>",
             html=True,
         )
@@ -320,7 +320,7 @@ class TestGetInvolvedStatus(TestBase):
         # Assert
         self.assertContains(
             rv,
-            '<p>Get Involved <span class="badge-danger">failed</span> '
+            '<p>Get Involved <span class="text-bg-danger">failed</span> '
             f"as of {datetime.today().strftime('%B %-d, %Y')}.</p>",
             html=True,
         )
@@ -340,7 +340,7 @@ class TestGetInvolvedStatus(TestBase):
         # Assert
         self.assertContains(
             rv,
-            '<p>Get Involved <span class="badge-info">asked to repeat</span> '
+            '<p>Get Involved <span class="text-bg-info">asked to repeat</span> '
             f"as of {datetime.today().strftime('%B %-d, %Y')}.</p>",
             html=True,
         )
@@ -393,7 +393,7 @@ class TestWelcomeSessionStatus(TestBase):
         rv = self.client.get(self.progress_url)
         self.assertContains(
             rv,
-            '<p>Welcome Session <span class="badge-success">completed</span> '
+            '<p>Welcome Session <span class="text-bg-success">completed</span> '
             f"as of {datetime.today().strftime('%B %-d, %Y')}.</p>",
             html=True,
         )
@@ -404,7 +404,7 @@ class TestWelcomeSessionStatus(TestBase):
         rv = self.client.get(self.progress_url)
         self.assertContains(
             rv,
-            '<p>Welcome Session <span class="badge-danger">failed</span> '
+            '<p>Welcome Session <span class="text-bg-danger">failed</span> '
             f"as of {datetime.today().strftime('%B %-d, %Y')}.</p>",
             html=True,
         )
@@ -431,7 +431,7 @@ class TestDemoSessionStatus(TestBase):
         rv = self.client.get(self.progress_url)
         self.assertContains(
             rv,
-            f'<p>Demo <span class="badge-success">passed</span> as of {datetime.today().strftime("%B %-d, %Y")}.</p>',
+            f'<p>Demo <span class="text-bg-success">passed</span> as of {datetime.today().strftime("%B %-d, %Y")}.</p>',
             html=True,
         )
         self.assertNotContains(rv, self.SESSION_LINK_TEXT)
@@ -441,7 +441,7 @@ class TestDemoSessionStatus(TestBase):
         rv = self.client.get(self.progress_url)
         self.assertContains(
             rv,
-            '<p>Demo <span class="badge-info">asked to repeat</span> '
+            '<p>Demo <span class="text-bg-info">asked to repeat</span> '
             f"as of {datetime.today().strftime('%B %-d, %Y')}.</p>",
             html=True,
         )
@@ -452,7 +452,7 @@ class TestDemoSessionStatus(TestBase):
         rv = self.client.get(self.progress_url)
         self.assertContains(
             rv,
-            f'<p>Demo <span class="badge-danger">failed</span> as of {datetime.today().strftime("%B %-d, %Y")}.</p>',
+            f'<p>Demo <span class="text-bg-danger">failed</span> as of {datetime.today().strftime("%B %-d, %Y")}.</p>',
             html=True,
         )
         self.assertNotContains(rv, self.SESSION_LINK_TEXT)

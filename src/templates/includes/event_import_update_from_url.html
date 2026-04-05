@@ -13,7 +13,7 @@
         {% else %}
         <h5 class="modal-title" id="import_url_modal_label">Import event data from URL</h5>
         {% endif %}
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
         <div class="alert alert-danger d-none" id="error_message"></div>
@@ -24,7 +24,7 @@
         {% endif %}
 
           {% csrf_token %}
-          <div class="form-group">
+          <div class="mb-3">
             {% if update %}
             <label for="event_update_url"><strong>Event URL:</strong></label>
             <input type="url" id="event_update_url" name="url" required="required" class="form-control" value="{{ object.url|default:'' }}" aria-describedby="url_help" />
@@ -36,7 +36,7 @@
           </div>
 
           {% if update %}
-          <div class="form-group">
+          <div class="mb-3">
             <div class="form-check">
               <input class="form-check-input" type="radio" name="event_update_action" value="skip" checked="checked" id="id_event_update_action1" />
               <label class="form-check-label" for="id_event_update_action1">
@@ -57,7 +57,7 @@
         </form>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
       </div>
     </div>
   </div>

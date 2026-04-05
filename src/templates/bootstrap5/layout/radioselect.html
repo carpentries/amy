@@ -1,0 +1,34 @@
+{% load crispy_forms_filters %}
+{% load crispy_forms_field %}
+{% load l10n %}
+
+<div {% if field_class %}class="{{ field_class }}"{% endif %}>
+    {% include 'bootstrap5/layout/help_text.html' %}
+
+    {% for group, options, index in field|optgroups %}
+    {% if group %}<strong>{{ group }}</strong>{% endif %}
+    {% for option in options %}
+      <div class="form-check{% if inline_class %} form-check-inline{% endif %}">
+        <input type="radio" class="form-check-input{% if field.errors %} is-invalid{% endif %}" name="{{ field.html_name }}" value="{{ option.value|unlocalize }}" {% include "bootstrap5/layout/attrs.html" with widget=option %}>
+        <label class="form-check-label" for="{{ option.attrs.id }}">
+            {{ option.label|unlocalize }}
+        </label>
+        {% if forloop.last and forloop.parentloop.last %}
+            {% if field.field.widget.other_field_name %}
+            {% crispy_field field.field.widget.other_field 'class' 'form-control form-control-sm' %}
+            {% endif %}
+        {% endif %}
+        {% if field.errors and forloop.last and not inline_class and forloop.parentloop.last %}
+            {% include 'bootstrap5/layout/field_errors_block.html' %}
+        {% endif %}
+     </div>
+    {% endfor %}
+    {% endfor %}
+    {% if field.errors and inline_class %}
+    <div class="w-100 form-check{% if inline_class %} form-check-inline{% endif %}">
+        {# the following input is only meant to allow bootstrap to render the error message as it has to be after an invalid input. As the input has no name, no data will be sent. #}
+        <input type="checkbox" class="form-check-input {% if field.errors %}is-invalid{%endif%}">
+        {% include 'bootstrap5/layout/field_errors_block.html' %}
+    </div>
+    {% endif %}
+</div>

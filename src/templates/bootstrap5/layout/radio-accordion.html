@@ -1,0 +1,32 @@
+{% load attrs %}
+{% load crispy_forms_tags %}
+<label class="col-form-label {{ label_class }}">
+  {{ field.label }}
+</label>
+<div class="{{ field_class }}">
+  {% include 'bootstrap5/layout/field_errors.html' %}
+  <div class="accordion" id="accordion_{{ field.auto_id }}">
+    {% for option in field %}
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="heading_{{ field.auto_id }}_{{ forloop.counter }}">
+        <label for="{{ option.id_for_label }}" class="accordion-button{% if not option.data.attrs.checked %} collapsed{% endif %}" data-bs-toggle="collapse" data-bs-target="#collapse_{{ field.auto_id }}_{{ forloop.counter }}" aria-expanded="{% if option.data.attrs.checked %}true{% else %}false{% endif %}" aria-controls="collapse_{{ field.auto_id }}_{{ forloop.counter }}">
+            <input type="radio" id="{{ option.data.attrs.id }}" name="{{ option.data.name }}" value="{{ option.data.value }}" {% if option.data.attrs.required %}required{% endif %} {% if option.data.attrs.checked %}checked{% endif %} class="form-check-input me-2">
+            {{ option.choice_label }}
+        </label>
+      </h2>
+
+      <div id="collapse_{{ field.auto_id }}_{{ forloop.counter }}" class="accordion-collapse collapse {% if option.data.attrs.checked %}show{% endif %}" aria-labelledby="heading_{{ field.auto_id }}_{{ forloop.counter }}" data-bs-parent="#accordion_{{ field.auto_id }}">
+        <div class="accordion-body">
+          <p>{{ field.field.widget.notes|get_key:option.data.value }}</p>
+
+          {% with subfields=field.field.widget.subfields|get_key:option.data.value %}
+          {% for sf in subfields %}
+          <p>{{ sf|as_crispy_field }}</p>
+          {% endfor %}
+          {% endwith %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>

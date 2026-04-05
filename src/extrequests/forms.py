@@ -169,10 +169,10 @@ class BulkMatchTrainingRequestForm(forms.Form):
                 "match",
                 "Accept & match selected trainees to chosen training",
                 **{
-                    "data-toggle": "popover",
-                    "data-html": "true",
-                    "data-trigger": "hover",
-                    "data-content": "If you want to <strong>re</strong>match "
+                    "data-bs-toggle": "popover",
+                    "data-bs-html": "true",
+                    "data-bs-trigger": "hover",
+                    "data-bs-content": "If you want to <strong>re</strong>match "
                     "trainees to other training, first "
                     "<strong>unmatch</strong> them!",
                 },
@@ -417,7 +417,7 @@ class WorkshopRequestBaseForm(forms.ModelForm[WorkshopRequest]):
                     css_class="alert alert-warning offset-lg-2 col-lg-8 col-12",
                 ),
                 id="preferred_dates_warning",
-                css_class="form-group row d-none",
+                css_class="mb-3 row d-none",
             ),
         )
 
@@ -799,7 +799,7 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm[WorkshopInquiryRequest]):
                     css_class="alert alert-warning offset-lg-2 col-lg-8 col-12",
                 ),
                 id="computing_levels_warning",
-                css_class="form-group row d-none",
+                css_class="mb-3 row d-none",
             ),
         )
 
@@ -820,7 +820,7 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm[WorkshopInquiryRequest]):
                     css_class="alert alert-warning offset-lg-2 col-lg-8 col-12",
                 ),
                 id="preferred_dates_warning",
-                css_class="form-group row d-none",
+                css_class="mb-3 row d-none",
             ),
         )
 
@@ -1155,7 +1155,7 @@ class SelfOrganisedSubmissionBaseForm(forms.ModelForm[SelfOrganisedSubmission]):
                     css_class="alert alert-warning offset-lg-2 col-lg-8 col-12",
                 ),
                 id="workshop_url_repo_warning",
-                css_class="form-group row d-none",
+                css_class="mb-3 row d-none",
             ),
         )
         self.helper.layout.insert(
@@ -1166,7 +1166,7 @@ class SelfOrganisedSubmissionBaseForm(forms.ModelForm[SelfOrganisedSubmission]):
                     css_class="alert alert-warning offset-lg-2 col-lg-8 col-12",
                 ),
                 id="workshop_url_warning",
-                css_class="form-group row d-none",
+                css_class="mb-3 row d-none",
             ),
         )
 

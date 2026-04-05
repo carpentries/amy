@@ -14,7 +14,7 @@ $gray-300: #dee2e6;
 $gray-400: #ced4da;
 $gray-500: #adb5bd;
 $gray-600: #6c757d; // hsl(208, 7, 46)
-$gray-650: hsl(209, 8, 38); // custom
+$gray-650: hsl(209, 8%, 38%); // custom
 $gray-700: #495057; // hsl(210, 9, 31)
 $gray-800: #343a40;
 $gray-900: #212529;
@@ -90,7 +90,7 @@ $theme-colors: (
     color: $white;
 }
 
-// rarely used; prefer .badge-info and .badge-warning
+// rarely used; prefer .text-bg-info and .text-bg-warning
 .text-info,
 .text-warning {
     background-color: $dark; // necessary for contrast
