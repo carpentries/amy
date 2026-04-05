@@ -4,19 +4,20 @@ from django.test import TestCase
 
 from src.extrequests.tests.test_training_request import create_training_request
 from src.extrequests.utils import (
-    MemberCodeValidationError,
     accept_training_request_and_match_to_event,
     get_account_benefit_from_partnership,
+    get_account_benefit_or_none_from_code,
     get_account_benefit_warnings_after_match,
     get_eventbrite_id_from_url_or_return_input,
     get_membership_or_none_from_code,
     get_membership_warnings_after_match,
+    get_partnership_or_none_from_code,
     membership_code_valid,
     membership_code_valid_training,
 )
 from src.fiscal.models import Partnership, PartnershipTier
 from src.offering.models import Account, AccountBenefit, Benefit
-from src.workshops.models import Event, Membership, Role, Tag, Task
+from src.workshops.models import Event, Membership, Organization, Role, Tag, Task
 from src.workshops.tests.base import TestBase
 
 
@@ -67,25 +68,24 @@ class TestMemberCodeValid(TestBase):
         code = self.valid_code
 
         # Act
-        result = membership_code_valid(
+        is_valid, _ = membership_code_valid(
             code=code,
             date=self.date,
         )
 
         # Assert
-        self.assertTrue(result)
+        self.assertTrue(is_valid)
 
     def test_code_invalid(self) -> None:
         """Invalid member code should not pass."""
         # Arrange
         code = "invalid"
 
-        # Act & Assert
-        with self.assertRaises(MemberCodeValidationError, msg='No membership found for code "invalid".'):
-            membership_code_valid(
-                code=code,
-                date=self.date,
-            )
+        # Act
+        is_valid, _ = membership_code_valid(code=code, date=self.date)
+
+        # Assert
+        self.assertFalse(is_valid)
 
     def test__code_inactive_early(self) -> None:
         """Code used before membership start date should not pass."""
@@ -96,19 +96,11 @@ class TestMemberCodeValid(TestBase):
         code = self.valid_code
         test_date = date.today() - timedelta(weeks=30)
 
-        # Act & Assert
-        with self.assertRaises(
-            MemberCodeValidationError,
-            msg=(
-                "Membership is inactive "
-                f"(start {self.membership.agreement_start}, "
-                f"end {self.membership.agreement_end})."
-            ),
-        ):
-            membership_code_valid(
-                code=code,
-                date=test_date,
-            )
+        # Act
+        is_valid, _ = membership_code_valid(code=code, date=test_date)
+
+        # Assert
+        self.assertFalse(is_valid)
 
     def test__code_inactive_late(self) -> None:
         """Code used after membership end date should not pass."""
@@ -119,19 +111,11 @@ class TestMemberCodeValid(TestBase):
         code = self.valid_code
         test_date = date.today() + timedelta(weeks=30)
 
-        # Act & Assert
-        with self.assertRaises(
-            MemberCodeValidationError,
-            msg=(
-                "Membership is inactive "
-                f"(start {self.membership.agreement_start}, "
-                f"end {self.membership.agreement_end})."
-            ),
-        ):
-            membership_code_valid(
-                code=code,
-                date=test_date,
-            )
+        # Act
+        is_valid, _ = membership_code_valid(code=code, date=test_date)
+
+        # Assert
+        self.assertFalse(is_valid)
 
     def test_code_valid_within_grace_before(self) -> None:
         """Code used within a grace period should pass."""
@@ -144,10 +128,10 @@ class TestMemberCodeValid(TestBase):
         code = self.valid_code
 
         # Act
-        result = membership_code_valid(code=code, date=self.date, grace_before=30)
+        is_valid, _ = membership_code_valid(code=code, date=self.date, grace_before=30)
 
         # Assert
-        self.assertTrue(result)
+        self.assertTrue(is_valid)
 
     def test_code_valid_within_grace_after(self) -> None:
         """Code used within a grace period should pass."""
@@ -160,10 +144,10 @@ class TestMemberCodeValid(TestBase):
         code = self.valid_code
 
         # Act
-        result = membership_code_valid(code=code, date=self.date, grace_after=30)
+        is_valid, _ = membership_code_valid(code=code, date=self.date, grace_after=30)
 
         # Assert
-        self.assertTrue(result)
+        self.assertTrue(is_valid)
 
     def test_code_invalid_beyond_grace_before(self) -> None:
         """Code used outside a grace period should not pass."""
@@ -175,18 +159,13 @@ class TestMemberCodeValid(TestBase):
         self.membership.save()
         code = self.valid_code
 
-        # Act & Assert
-        with self.assertRaises(
-            MemberCodeValidationError,
-            msg=(
-                "Membership is inactive "
-                f"(start {self.membership.agreement_start}, "
-                f"end {self.membership.agreement_end})."
-            ),
-        ):
-            membership_code_valid(code=code, date=self.date, grace_before=30)
+        # Act
+        is_valid, _ = membership_code_valid(code=code, date=self.date, grace_before=30)
 
-    def test_code_valid_beyond_grace_after(self) -> None:
+        # Assert
+        self.assertFalse(is_valid)
+
+    def test_code_invalid_beyond_grace_after(self) -> None:
         """Code used outside a grace period should not pass."""
         # Arrange
         self.setUpMembership()
@@ -196,16 +175,11 @@ class TestMemberCodeValid(TestBase):
         self.membership.save()
         code = self.valid_code
 
-        # Act & Assert
-        with self.assertRaises(
-            MemberCodeValidationError,
-            msg=(
-                "Membership is inactive "
-                f"(start {self.membership.agreement_start}, "
-                f"end {self.membership.agreement_end})."
-            ),
-        ):
-            membership_code_valid(code=code, date=self.date, grace_after=30)
+        # Act
+        is_valid, _ = membership_code_valid(code=code, date=self.date, grace_after=30)
+
+        # Assert
+        self.assertFalse(is_valid)
 
     def test_code_no_seats_remaining(self) -> None:
         """Code with no seats remaining should not pass."""
@@ -214,9 +188,11 @@ class TestMemberCodeValid(TestBase):
         self.setUpUsedSeats()
         code = self.valid_code
 
-        # Act & Assert
-        with self.assertRaises(MemberCodeValidationError, msg="Membership has no training seats remaining."):
-            membership_code_valid_training(code=code, date=self.date)
+        # Act
+        is_valid, _ = membership_code_valid_training(code=code, date=self.date)
+
+        # Assert
+        self.assertFalse(is_valid)
 
     def test_code_only_public_seats_remaining(self) -> None:
         """Code with only public seats remaining should pass."""
@@ -227,13 +203,10 @@ class TestMemberCodeValid(TestBase):
         code = self.valid_code
 
         # Act
-        result = membership_code_valid_training(
-            code=code,
-            date=self.date,
-        )
+        is_valid, _ = membership_code_valid_training(code=code, date=self.date)
 
         # Assert
-        self.assertTrue(result)
+        self.assertTrue(is_valid)
 
     def test_member_code_validation__code_only_inhouse_seats_remaining(self) -> None:
         """Code with only inhouse seats remaining should pass."""
@@ -244,13 +217,10 @@ class TestMemberCodeValid(TestBase):
         code = self.valid_code
 
         # Act
-        result = membership_code_valid_training(
-            code=code,
-            date=self.date,
-        )
+        is_valid, _ = membership_code_valid_training(code=code, date=self.date)
 
         # Assert
-        self.assertTrue(result)
+        self.assertTrue(is_valid)
 
 
 class TestGetMembershipOrNoneFromCode(TestBase):
@@ -289,6 +259,97 @@ class TestGetMembershipOrNoneFromCode(TestBase):
 
         # Assert
         self.assertEqual(result, self.membership)
+
+
+class TestGetPartnershipOrNoneFromCode(TestCase):
+    def setUp(self) -> None:
+        self.valid_code = "valid123"
+
+        self.organisation = Organization.objects.create(fullname="Test Organisation", domain="test.org")
+        self.benefit = Benefit.objects.create(name="Instructor Training", unit_type="seat", credits=1)
+        self.account = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=self.organisation,
+        )
+        tier = PartnershipTier.objects.create(name="Standard", credits=10)
+        self.partnership = Partnership.objects.create(
+            name="Partner Org",
+            tier=tier,
+            credits=10,
+            account=self.account,
+            registration_code=self.valid_code,
+            agreement_start=date.today(),
+            agreement_end=date.today() + timedelta(days=365),
+            agreement_link="https://example.com/agreement",
+            public_status="public",
+            partner_organisation=self.organisation,
+        )
+
+    def test_returns_none_if_code_empty(self) -> None:
+        # Act
+        result_empty_string = get_partnership_or_none_from_code("")
+        result_none = get_partnership_or_none_from_code(None)
+
+        # Assert
+        self.assertIsNone(result_empty_string)
+        self.assertIsNone(result_none)
+
+    def test_returns_none_if_no_match(self) -> None:
+        # Act
+        result = get_partnership_or_none_from_code("invalid")
+
+        # Assert
+        self.assertIsNone(result)
+
+    def test_returns_matching_partnership(self) -> None:
+        # Act
+        result = get_partnership_or_none_from_code(self.valid_code)
+
+        # Assert
+        self.assertEqual(result, self.partnership)
+
+
+class TestGetAccountBenefitOrNoneFromCode(TestCase):
+    def setUp(self) -> None:
+        self.valid_code = "valid123"
+
+        self.organisation = Organization.objects.create(fullname="Test Organisation", domain="test.org")
+        self.benefit = Benefit.objects.create(name="Instructor Training", unit_type="seat", credits=1)
+        self.account = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=self.organisation,
+        )
+        self.account_benefit = AccountBenefit.objects.create(
+            account=self.account,
+            benefit=self.benefit,
+            start_date=date.today(),
+            end_date=date.today() + timedelta(days=30),
+            allocation=10,
+            registration_code=self.valid_code,
+        )
+
+    def test_returns_none_if_code_empty(self) -> None:
+        # Act
+        result_empty_string = get_account_benefit_or_none_from_code("")
+        result_none = get_account_benefit_or_none_from_code(None)
+
+        # Assert
+        self.assertIsNone(result_empty_string)
+        self.assertIsNone(result_none)
+
+    def test_returns_none_if_no_match(self) -> None:
+        # Act
+        result = get_account_benefit_or_none_from_code("invalid")
+
+        # Assert
+        self.assertIsNone(result)
+
+    def test_returns_matching_partnership(self) -> None:
+        # Act
+        result = get_account_benefit_or_none_from_code(self.valid_code)
+
+        # Assert
+        self.assertEqual(result, self.account_benefit)
 
 
 class TestAcceptTrainingRequestAndMatchToEvent(TestBase):
@@ -368,6 +429,7 @@ class TestAcceptTrainingRequestAndMatchToEvent(TestBase):
         account_benefit = AccountBenefit.objects.create(
             account=account,
             benefit=benefit,
+            registration_code="test-code",
             start_date=date.today() - timedelta(days=1),
             end_date=date.today() + timedelta(days=30),
             allocation=1,
@@ -621,6 +683,7 @@ class TestGetAccountBenefitWarningsAfterMatch(TestBase):
         return AccountBenefit.objects.create(
             account=self.account,
             benefit=self.benefit,
+            registration_code="test-code",
             start_date=date.today() + timedelta(days=start_offset),
             end_date=date.today() + timedelta(days=end_offset),
             allocation=allocation,

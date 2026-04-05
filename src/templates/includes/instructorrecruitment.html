@@ -67,26 +67,31 @@
         </span>
       </td>
       <td>
-        <form action="{% url 'instructorrecruitmentsignup_changestate' signup.pk %}" onsubmit='return confirm("Do you want to CONFIRM this application?")' method="POST" class="d-inline-block my-1 mr-1">
-          {% csrf_token %}
-          <input type="hidden" name="action" value="confirm">
-          <input type="hidden" name="next" value="{{ request.get_full_path }}">
-          {% if signup.state == "p" %}
-          <button type="submit" class="btn btn-sm btn-success">Confirm</button>
-          {% else %}
-          <button type="submit" class="btn btn-sm btn-secondary">Confirm</button>
-          {% endif %}
-        </form>
-        <form action="{% url 'instructorrecruitmentsignup_changestate' signup.pk %}" onsubmit='return confirm("Do you want to DECLINE this application?")' method="POST" class="d-inline-block my-1 mr-1">
-          {% csrf_token %}
-          <input type="hidden" name="action" value="decline">
-          <input type="hidden" name="next" value="{{ request.get_full_path }}">
-          {% if signup.state == "p" %}
-          <button type="submit" class="btn btn-sm btn-danger">Decline</button>
-          {% else %}
-          <button type="submit" class="btn btn-sm btn-secondary">Decline</button>
-          {% endif %}
-        </form>
+        <div class="dropdown mb-2">
+          <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false">
+            Change status
+          </button>
+          <div class="dropdown-menu">
+            <form action="{% url 'instructorrecruitmentsignup_changestate' signup.pk %}" onsubmit='return confirm("Do you want to ACCEPT this application?")' method="POST">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="accept">
+              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <button type="submit" class="dropdown-item">Accepted</button>
+            </form>
+            <form action="{% url 'instructorrecruitmentsignup_changestate' signup.pk %}" onsubmit='return confirm("Do you want to DISCARD this application?")' method="POST">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="discard">
+              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <button type="submit" class="dropdown-item">Discarded</button>
+            </form>
+            <form action="{% url 'instructorrecruitmentsignup_changestate' signup.pk %}" onsubmit='return confirm("Do you want to move this application back to PENDING?")' method="POST">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="pending">
+              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <button type="submit" class="dropdown-item">Pending</button>
+            </form>
+          </div>
+        </div>
         <a href="{% url 'instructorrecruitmentsignup_edit' signup.pk %}" class="btn btn-sm btn-primary">Edit</a>
       </td>
       <td>

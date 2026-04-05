@@ -12,15 +12,19 @@ from rest_framework.response import Response
 
 from src.api.v2.permissions import ApiAccessPermission
 from src.api.v2.serializers import (
+    AccountBenefitSerializer,
     AttachmentPresignedUrlPayloadSerializer,
     AttachmentSerializer,
     AwardSerializer,
+    BenefitSerializer,
     ConsortiumSerializer,
+    CurriculumSerializer,
     EventSerializer,
     InstructorRecruitmentSignupSerializer,
     MembershipSerializer,
     OrganizationSerializer,
     PartnershipSerializer,
+    PartnershipTierSerializer,
     PersonSerializer,
     ScheduledEmailLogDetailsSerializer,
     ScheduledEmailSerializer,
@@ -32,10 +36,12 @@ from src.api.v2.serializers import (
 from src.emails.controller import EmailController
 from src.emails.models import Attachment, ScheduledEmail, ScheduledEmailStatus
 from src.extrequests.models import SelfOrganisedSubmission
-from src.fiscal.models import Consortium, Partnership
+from src.fiscal.models import Consortium, Partnership, PartnershipTier
+from src.offering.models import AccountBenefit, Benefit
 from src.recruitment.models import InstructorRecruitmentSignup
 from src.workshops.models import (
     Award,
+    Curriculum,
     Event,
     Membership,
     Organization,
@@ -149,6 +155,48 @@ class PersonViewSet(viewsets.ReadOnlyModelViewSet[Person]):
     pagination_class = StandardResultsSetPagination
 
 
+class CurriculumViewSet(viewsets.ReadOnlyModelViewSet[Curriculum]):
+    authentication_classes = (
+        TokenAuthentication,
+        SessionAuthentication,
+    )
+    permission_classes = (
+        IsAuthenticated,
+        ApiAccessPermission,
+    )
+    queryset = Curriculum.objects.order_by("pk").all()
+    serializer_class = CurriculumSerializer
+    pagination_class = StandardResultsSetPagination
+
+
+class AccountBenefitViewSet(viewsets.ReadOnlyModelViewSet[AccountBenefit]):
+    authentication_classes = (
+        TokenAuthentication,
+        SessionAuthentication,
+    )
+    permission_classes = (
+        IsAuthenticated,
+        ApiAccessPermission,
+    )
+    queryset = AccountBenefit.objects.select_related("account", "benefit", "partnership").order_by("pk").all()
+    serializer_class = AccountBenefitSerializer
+    pagination_class = StandardResultsSetPagination
+
+
+class BenefitViewSet(viewsets.ReadOnlyModelViewSet[Benefit]):
+    authentication_classes = (
+        TokenAuthentication,
+        SessionAuthentication,
+    )
+    permission_classes = (
+        IsAuthenticated,
+        ApiAccessPermission,
+    )
+    queryset = Benefit.objects.all()
+    serializer_class = BenefitSerializer
+    pagination_class = StandardResultsSetPagination
+
+
 class ConsortiumViewSet(viewsets.ReadOnlyModelViewSet[Consortium]):
     authentication_classes = (
         TokenAuthentication,
@@ -160,6 +208,20 @@ class ConsortiumViewSet(viewsets.ReadOnlyModelViewSet[Consortium]):
     )
     queryset = Consortium.objects.prefetch_related("organisations").order_by("pk").all()
     serializer_class = ConsortiumSerializer
+    pagination_class = StandardResultsSetPagination
+
+
+class PartnershipTierViewSet(viewsets.ReadOnlyModelViewSet[PartnershipTier]):
+    authentication_classes = (
+        TokenAuthentication,
+        SessionAuthentication,
+    )
+    permission_classes = (
+        IsAuthenticated,
+        ApiAccessPermission,
+    )
+    queryset = PartnershipTier.objects.order_by("name").all()
+    serializer_class = PartnershipTierSerializer
     pagination_class = StandardResultsSetPagination
 
 

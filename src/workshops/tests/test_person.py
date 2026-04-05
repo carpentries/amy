@@ -6,6 +6,7 @@ from urllib.parse import urlencode
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import Group, Permission
 from django.core.exceptions import ValidationError
+from django.test import TestCase
 from django.urls import reverse
 from django_comments.models import Comment
 from reversion.models import Version
@@ -243,7 +244,7 @@ class TestPerson(TestBase):
             "family": "Test",
             "gender": "U",
             "airport_iata": "CDG",
-            "lessons": [1, 2],  # just IDs
+            "lessons": [self.git.pk, self.sql.pk],
         }
         rv = self.client.post(reverse("person_add"), data)
         assert rv.status_code == 302
@@ -269,7 +270,7 @@ class TestPerson(TestBase):
             "family": "Test",
             "gender": "U",
             "airport_iata": "CDG",
-            "lessons": [1, 2],  # just IDs
+            "lessons": [self.git.pk, self.sql.pk],
         }
         rv = self.client.post(reverse("person_add"), data, follow=True)
         assert rv.status_code == 200
@@ -526,6 +527,7 @@ class TestPerson(TestBase):
         self.assertEqual(person.airport_country, cdg_airport["country"])
         self.assertEqual(person.airport_lat, cdg_airport["lat"])
         self.assertEqual(person.airport_lon, cdg_airport["lon"])
+        self.assertEqual(person.airport_timezone, cdg_airport["tz"])
 
     def test_save__airport_invalid(self) -> None:
         # Arrange
@@ -544,6 +546,7 @@ class TestPerson(TestBase):
         self.assertEqual(person.airport_country, "")
         self.assertEqual(person.airport_lat, 0.0)
         self.assertEqual(person.airport_lon, 0.0)
+        self.assertEqual(person.airport_timezone, "")
 
     def test_clean_airport_iata(self) -> None:
         # Arrange
@@ -1635,3 +1638,95 @@ class TestArchivePerson(TestBase):
         self.assertEqual(len(self.admin.user_permissions.all()), 0)
         self.assertEqual(len(self.admin.groups.all()), 0)
         self.assertFalse(self.admin.is_superuser)
+
+
+class TestPersonContactFieldValidation(TestCase):
+    """Validate that Person contact fields enforce their format constraints."""
+
+    # Exclude fields that are required by AbstractBaseUser but irrelevant here.
+    _EXCLUDE = ["password"]
+
+    def _make_person(self, **kwargs: Any) -> Person:
+        defaults: dict[str, Any] = dict(personal="Test", family="User", username="test_user_cv")
+        defaults.update(kwargs)
+        return Person(**defaults)
+
+    def _assert_valid(self, person: Person) -> None:
+        person.full_clean(exclude=self._EXCLUDE)
+
+    def _assert_field_invalid(self, person: Person, field: str) -> None:
+        with self.assertRaises(ValidationError) as ctx:
+            person.full_clean(exclude=self._EXCLUDE)
+        self.assertIn(field, ctx.exception.message_dict)
+
+    # ------------------------------------------------------------------
+    # email
+    # ------------------------------------------------------------------
+
+    def test_email_valid(self) -> None:
+        self._assert_valid(self._make_person(email="valid@example.org"))
+
+    def test_email_invalid(self) -> None:
+        self._assert_field_invalid(self._make_person(email="not-an-email"), "email")
+
+    def test_email_null_allowed(self) -> None:
+        self._assert_valid(self._make_person(email=None))
+
+    # ------------------------------------------------------------------
+    # orcid
+    # ------------------------------------------------------------------
+
+    def test_orcid_full_uri_valid(self) -> None:
+        self._assert_valid(self._make_person(orcid="https://orcid.org/0000-0001-2345-678X"))
+
+    def test_orcid_blank_valid(self) -> None:
+        self._assert_valid(self._make_person(orcid=""))
+
+    def test_orcid_bare_id_invalid(self) -> None:
+        self._assert_field_invalid(self._make_person(orcid="0000-0001-2345-6789"), "orcid")
+
+    def test_orcid_invalid(self) -> None:
+        self._assert_field_invalid(self._make_person(orcid="not-an-orcid"), "orcid")
+
+    def test_orcid_http_scheme_invalid(self) -> None:
+        """Only https:// URIs are accepted."""
+        self._assert_field_invalid(self._make_person(orcid="http://orcid.org/0000-0001-2345-6789"), "orcid")
+
+    # ------------------------------------------------------------------
+    # bluesky
+    # ------------------------------------------------------------------
+
+    def test_bluesky_handle_valid(self) -> None:
+        self._assert_valid(self._make_person(bluesky="alice.bsky.social"))
+
+    def test_bluesky_handle_blank_valid(self) -> None:
+        self._assert_valid(self._make_person(bluesky=""))
+
+    def test_bluesky_null_allowed(self) -> None:
+        self._assert_valid(self._make_person(bluesky=None))
+
+    def test_bluesky_handle_with_at_invalid(self) -> None:
+        self._assert_field_invalid(self._make_person(bluesky="@alice.bsky.social"), "bluesky")
+
+    def test_bluesky_no_tld_invalid(self) -> None:
+        self._assert_field_invalid(self._make_person(bluesky="alice"), "bluesky")
+
+    # ------------------------------------------------------------------
+    # mastodon
+    # ------------------------------------------------------------------
+
+    def test_mastodon_valid(self) -> None:
+        self._assert_valid(self._make_person(mastodon="alice@mastodon.social"))
+
+    def test_mastodon_handle_blank_valid(self) -> None:
+        self._assert_valid(self._make_person(mastodon=""))
+
+    def test_mastodon_null_allowed(self) -> None:
+        self._assert_valid(self._make_person(mastodon=None))
+
+    def test_mastodon_url_invalid(self) -> None:
+        self._assert_field_invalid(self._make_person(mastodon="https://mastodon.social/@alice"), "mastodon")
+
+    def test_mastodon_handle_format_invalid(self) -> None:
+        """@user@instance handle format is not accepted (not a URL)."""
+        self._assert_field_invalid(self._make_person(mastodon="@alice@mastodon.social"), "mastodon")

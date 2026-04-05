@@ -351,6 +351,8 @@ class AccountBenefitCreate(
         if kwargs.get("initial", {}).get("partnership") is not None:
             kwargs["disable_partnership"] = True
             kwargs["disable_dates"] = True
+            kwargs["disable_registration_code"] = True
+            kwargs["disable_discount"] = True
 
         return kwargs
 

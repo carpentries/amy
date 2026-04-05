@@ -7,8 +7,8 @@ from src.workshops.models import Award, Event, Person, TrainingProgress, Trainin
 from src.workshops.tests.base import TestBase
 
 
-class TestInstructorDashboard(TestBase):
-    """Tests for instructor dashboard."""
+class TestUserDashboard(TestBase):
+    """Tests for user dashboard."""
 
     def setUp(self) -> None:
         self.user = Person.objects.create_user(
@@ -22,15 +22,15 @@ class TestInstructorDashboard(TestBase):
         self.client.login(username="user", password="pass")
 
     def test_dashboard_loads(self) -> None:
-        rv = self.client.get(reverse("instructor-dashboard"))
+        rv = self.client.get(reverse("user-dashboard"))
         self.assertEqual(rv.status_code, 200)
         content = rv.content.decode("utf-8")
         self.assertIn("Log out", content)
         self.assertIn("Update your profile", content)
 
 
-class TestInstructorStatus(TestBase):
-    """Test that instructor dashboard displays information about awarded SWC/DC
+class TestUserStatus(TestBase):
+    """Test that user dashboard displays information about awarded SWC/DC
     Instructor badges."""
 
     def setUp(self) -> None:
@@ -166,8 +166,8 @@ class TestInstructorStatus(TestBase):
         )
 
 
-class TestInstructorTrainingStatus(TestBase):
-    """Test that instructor dashboard displays status of passing Instructor
+class TestUserTrainingStatus(TestBase):
+    """Test that user dashboard displays status of passing Instructor
     Training."""
 
     def setUp(self) -> None:

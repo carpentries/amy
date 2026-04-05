@@ -618,14 +618,15 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
         mock_get_success_url.assert_called_once()
         self.assertEqual(result.status_code, 302)
 
-    def test_form_valid(self) -> None:
+    def test_form_valid__accept(self) -> None:
         # Arrange
         request = RequestFactory().post("/")
         mock_signup = mock.MagicMock()
         view = InstructorRecruitmentSignupChangeState(object=mock_signup, request=request)
         view.accept_signup = mock.MagicMock()  # type: ignore[method-assign]
         view.decline_signup = mock.MagicMock()  # type: ignore[method-assign]
-        data = {"action": "confirm"}
+        view.pending_signup = mock.MagicMock()  # type: ignore[method-assign]
+        data = {"action": "accept"}
         form = InstructorRecruitmentSignupChangeStateForm(data)
         form.is_valid()
         # Act
@@ -636,6 +637,51 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
         view.accept_signup.assert_called_once_with(
             request, mock_signup, mock_signup.person, mock_signup.recruitment.event
         )
+        view.decline_signup.assert_not_called()
+        view.pending_signup.assert_not_called()
+
+    def test_form_valid__discard(self) -> None:
+        # Arrange
+        request = RequestFactory().post("/")
+        mock_signup = mock.MagicMock()
+        view = InstructorRecruitmentSignupChangeState(object=mock_signup, request=request)
+        view.accept_signup = mock.MagicMock()  # type: ignore[method-assign]
+        view.decline_signup = mock.MagicMock()  # type: ignore[method-assign]
+        view.pending_signup = mock.MagicMock()  # type: ignore[method-assign]
+        data = {"action": "discard"}
+        form = InstructorRecruitmentSignupChangeStateForm(data)
+        form.is_valid()
+        # Act
+        view.form_valid(form)
+        # Assert
+        self.assertEqual(mock_signup.state, "d")
+        mock_signup.save.assert_called_once()
+        view.decline_signup.assert_called_once_with(
+            request, mock_signup, mock_signup.person, mock_signup.recruitment.event
+        )
+        view.accept_signup.assert_not_called()
+        view.pending_signup.assert_not_called()
+
+    def test_form_valid__pending(self) -> None:
+        # Arrange
+        request = RequestFactory().post("/")
+        mock_signup = mock.MagicMock()
+        view = InstructorRecruitmentSignupChangeState(object=mock_signup, request=request)
+        view.accept_signup = mock.MagicMock()  # type: ignore[method-assign]
+        view.decline_signup = mock.MagicMock()  # type: ignore[method-assign]
+        view.pending_signup = mock.MagicMock()  # type: ignore[method-assign]
+        data = {"action": "pending"}
+        form = InstructorRecruitmentSignupChangeStateForm(data)
+        form.is_valid()
+        # Act
+        view.form_valid(form)
+        # Assert
+        self.assertEqual(mock_signup.state, "p")
+        mock_signup.save.assert_called_once()
+        view.pending_signup.assert_called_once_with(
+            request, mock_signup, mock_signup.person, mock_signup.recruitment.event
+        )
+        view.accept_signup.assert_not_called()
         view.decline_signup.assert_not_called()
 
     @mock.patch("src.recruitment.views.messages")
@@ -722,6 +768,48 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
         # Act & Assert - no error
         view.decline_signup(request, signup, person, event)
 
+    @mock.patch("src.recruitment.views.messages")
+    def test_pending_signup(self, mock_messages: mock.MagicMock) -> None:
+        # Arrange - existing instructor task triggers a warning
+        super()._setUpRoles()
+        request = RequestFactory().post("/")
+        view = InstructorRecruitmentSignupChangeState(request=request)
+        person = Person.objects.create(personal="Test", family="User", username="test_user")
+        organization = Organization.objects.all()[0]
+        event = Event.objects.create(
+            slug="test-event",
+            host=organization,
+            administrator=organization,
+            start=timezone.now().date(),
+        )
+        recruitment = InstructorRecruitment(event=event)
+        signup = InstructorRecruitmentSignup(recruitment=recruitment, person=person)
+        role = Role.objects.get(name="instructor")
+        Task.objects.create(person=person, event=event, role=role)
+        # Act
+        view.pending_signup(request, signup, person, event)
+        # Assert
+        mock_messages.warning.assert_called_once()
+
+    def test_pending_signup__no_task(self) -> None:
+        # Arrange - no instructor task, no warning expected
+        super()._setUpRoles()
+        request = RequestFactory().post("/")
+        view = InstructorRecruitmentSignupChangeState(request=request)
+        person = Person.objects.create(personal="Test", family="User", username="test_user")
+        organization = Organization.objects.all()[0]
+        event = Event.objects.create(
+            slug="test-event",
+            host=organization,
+            administrator=organization,
+        )
+        recruitment = InstructorRecruitment(event=event)
+        signup = InstructorRecruitmentSignup(recruitment=recruitment, person=person)
+        # Act & Assert - no error, no warning
+        with mock.patch("src.recruitment.views.messages") as mock_messages:
+            view.pending_signup(request, signup, person, event)
+        mock_messages.warning.assert_not_called()
+
     def test_post__form_valid(self) -> None:
         # Arrange
         request = RequestFactory().post("/")
@@ -767,7 +855,7 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
         mock_form_invalid.assert_called_once_with(mock_get_form.return_value)
 
     @override_settings(INSTRUCTOR_RECRUITMENT_ENABLED=True)
-    def test_integration(self) -> None:
+    def test_integration__accept(self) -> None:
         # Arrange
         super()._setUpUsersAndLogin()
         organization = Organization.objects.all()[0]
@@ -780,7 +868,7 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
         person = Person.objects.create(personal="Test", family="User", username="test_user")
         signup = InstructorRecruitmentSignup.objects.create(recruitment=recruitment, person=person)
         role = Role.objects.create(name="instructor")
-        data = {"action": "confirm"}
+        data = {"action": "accept"}
         url = reverse("instructorrecruitmentsignup_changestate", args=[signup.pk])
         success_url = reverse("all_instructorrecruitment")
         # Act
@@ -791,6 +879,31 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
         self.assertRedirects(response, success_url)
         self.assertEqual(signup.state, "a")
         self.assertTrue(Task.objects.get(event=event, person=person, role=role))
+
+    @override_settings(INSTRUCTOR_RECRUITMENT_ENABLED=True)
+    def test_integration__pending(self) -> None:
+        # Arrange - signup starts accepted, moved back to pending
+        super()._setUpUsersAndLogin()
+        super()._setUpRoles()
+        organization = Organization.objects.all()[0]
+        event = Event.objects.create(
+            slug="test-event",
+            host=organization,
+            administrator=organization,
+        )
+        recruitment = InstructorRecruitment.objects.create(event=event, notes="Test notes")
+        person = Person.objects.create(personal="Test", family="User", username="test_user")
+        signup = InstructorRecruitmentSignup.objects.create(recruitment=recruitment, person=person, state="a")
+        data = {"action": "pending"}
+        url = reverse("instructorrecruitmentsignup_changestate", args=[signup.pk])
+        success_url = reverse("all_instructorrecruitment")
+        # Act
+        response = self.client.post(url, data, follow=False)
+        signup.refresh_from_db()
+        # Assert
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, success_url)
+        self.assertEqual(signup.state, "p")
 
 
 class TestInstructorRecruitmentChangeState(TestBase):

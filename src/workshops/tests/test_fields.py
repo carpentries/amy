@@ -1,7 +1,14 @@
 from django.core.exceptions import ValidationError
 
 from src.workshops.consts import COUNTRIES, IATA_AIRPORTS
-from src.workshops.fields import AirportSelect2Widget, NullableGithubUsernameField, Select2TagWidget
+from src.workshops.fields import (
+    AirportSelect2Widget,
+    BlueSkyHandleField,
+    MastodonHandleField,
+    NullableGithubUsernameField,
+    OrcidField,
+    Select2TagWidget,
+)
 from src.workshops.tests.base import TestBase
 
 
@@ -31,13 +38,114 @@ class TestNullableGHUsernameField(TestBase):
     def test_passing_usernames(self) -> None:
         """All correct usernames pass the field validation."""
         for username in self.passing:
-            self.field.run_validators(username)
+            with self.subTest(username=username):
+                self.field.run_validators(username)
 
     def test_failing_usernames(self) -> None:
         """All incorrect usernames don't pass the field validation."""
         for username in self.failing:
-            with self.assertRaises(ValidationError):
+            with self.subTest(username=username), self.assertRaises(ValidationError):
                 self.field.run_validators(username)
+
+
+class TestOrcidField(TestBase):
+    def setUp(self) -> None:
+        self.passing = [
+            "https://orcid.org/0000-0001-2345-6789",
+            "https://orcid.org/0000-0001-2345-678X",
+            "",  # blank is allowed
+        ]
+        self.failing = [
+            "0000-0001-2345-6789",  # only URI form is accepted
+            "0000-0001-2345-678X",  # only URI form is accepted
+            "0000-0001-2345-678",  # last group only 3 digits, no X
+            "0000-0001-2345-6789X",  # extra character
+            "000-0001-2345-6789",  # first group too short
+            "0000_0001_2345_6789",  # underscores instead of hyphens
+            "http://orcid.org/0000-0001-2345-6789",  # http not https
+            "orcid.org/0000-0001-2345-6789",  # missing scheme
+            "not-an-orcid",
+            "aaaa-bbbb-cccc-dddd",  # non-digit characters
+        ]
+        self.field = OrcidField()
+
+    def test_passing_orcids(self) -> None:
+        """Valid ORCID identifiers pass field validation."""
+        for value in self.passing:
+            with self.subTest(value=value):
+                self.field.run_validators(value)
+
+    def test_failing_orcids(self) -> None:
+        """Invalid ORCID identifiers do not pass field validation."""
+        for value in self.failing:
+            with self.subTest(value=value), self.assertRaises(ValidationError):
+                self.field.run_validators(value)
+
+
+class TestBlueSkyHandleField(TestBase):
+    def setUp(self) -> None:
+        self.passing = [
+            "alice.bsky.social",
+            "alice.com",
+            "my-handle.bsky.social",
+            "user123.example.org",
+            "",  # blank is allowed
+        ]
+        self.failing = [
+            "@alice.bsky.social",  # @ is not allowed
+            "@alice.com",
+            "alice",  # no TLD
+            "@alice",  # no TLD
+            ".alice.bsky.social",  # leading dot
+            "alice.bsky.social.",  # trailing dot
+            "alice..bsky.social",  # consecutive dots
+            "-alice.bsky.social",  # label starts with hyphen
+            "alice-.bsky.social",  # label ends with hyphen
+        ]
+        self.field = BlueSkyHandleField()
+
+    def test_passing_handles(self) -> None:
+        """Valid Bluesky handles pass field validation."""
+        for value in self.passing:
+            with self.subTest(value=value):
+                self.field.run_validators(value)
+
+    def test_failing_handles(self) -> None:
+        """Invalid Bluesky handles do not pass field validation."""
+        for value in self.failing:
+            with self.subTest(value=value), self.assertRaises(ValidationError):
+                self.field.run_validators(value)
+
+
+class TestMastodonHandleField(TestBase):
+    def setUp(self) -> None:
+        self.passing = [
+            "alice@mastodon.social",
+            "",  # blank is allowed
+        ]
+        self.failing = [
+            "alice@",  # no domain
+            "alice@mastodon",  # missing TLD
+            "@mastodon.social",  # no username
+            "@alice@mastodon.social",  # leading @ not allowed
+            "https://mastodon.social/alice",  # URI
+            "https://mastodon.social/",  # URI
+            "mastodon.social/@alice",  # partial URI
+            "not-a-handle",
+        ]
+        self.field = MastodonHandleField()
+
+    def test_passing_handles(self) -> None:
+        """Valid Mastodon handles pass field validation."""
+        for value in self.passing:
+            with self.subTest(value=value):
+                self.field.run_validators(value)
+
+    def test_failing_handles(self) -> None:
+        """Invalid Mastodon handles do not pass field validation."""
+        for value in self.failing:
+            with self.subTest(value=value), self.assertRaises(ValidationError):
+                self.field.run_validators(value)
 
 
 class TestSelect2TagWidget(TestBase):

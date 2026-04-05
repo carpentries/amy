@@ -283,6 +283,8 @@ class TestTrainingRequestsListView(TestBase):
         self.learner = Role.objects.get(name="learner")
         self.ttt = Tag.objects.get(name="TTT")
 
+        self.benefit = Benefit.objects.get(name="Instructor Training")
+
         self.first_training = Event.objects.create(slug="ttt-event", host=self.org)
         self.first_training.tags.add(self.ttt)
         Task.objects.create(person=self.spiderman, role=self.learner, event=self.first_training)
@@ -363,6 +365,7 @@ class TestTrainingRequestsListView(TestBase):
             "match": "",
             "event": self.second_training.pk,
             "requests": [self.first_req.pk],
+            "benefit_override": self.benefit.pk,
             # "seat_public": "True",
         }
         rv = self.client.post(reverse("all_trainingrequests"), data, follow=True)
@@ -385,6 +388,7 @@ class TestTrainingRequestsListView(TestBase):
             "match": "",
             "event": self.first_training.pk,
             "requests": [self.first_req.pk],
+            "benefit_override": self.benefit.pk,
         }
         # Spiderman is already matched with first_training
         assert self.spiderman.get_training_tasks()[0].event == self.first_training
@@ -410,6 +414,7 @@ class TestTrainingRequestsListView(TestBase):
         account_benefit = AccountBenefit.objects.create(
             account=account,
             benefit=benefit,
+            registration_code="test-code",
             allocation=5,
             start_date=date.today(),
             end_date=date.today() + timedelta(days=365),
@@ -419,6 +424,7 @@ class TestTrainingRequestsListView(TestBase):
             "event": self.second_training.pk,
             "requests": [self.first_req.pk],
             "allocated_benefit": account_benefit.pk,
+            "benefit_override": benefit.pk,
         }
 
         # Act
@@ -442,6 +448,7 @@ class TestTrainingRequestsListView(TestBase):
             "match": "",
             "event": self.second_training.pk,
             "requests": [self.second_req.pk],
+            "benefit_override": self.benefit.pk,
             # "seat_public": "True",
         }
         rv = self.client.post(reverse("all_trainingrequests"), data, follow=True)
@@ -561,6 +568,7 @@ class TestTrainingRequestsListView(TestBase):
             "requests": [self.first_req.pk, self.third_req.pk],
             "event": self.second_training.pk,
             "seat_membership": membership1.pk,
+            "benefit_override": self.benefit.pk,
             # "seat_public": True,
         }
         msg1 = f"Membership &quot;{membership1}&quot; is using more training seats than it&#x27;s been allowed."
@@ -571,6 +579,7 @@ class TestTrainingRequestsListView(TestBase):
             "requests": [self.second_req.pk],
             "event": self.second_training.pk,
             "seat_membership": membership2.pk,
+            "benefit_override": self.benefit.pk,
             # "seat_public": True,
         }
         msg2 = f"Membership &quot;{membership2}&quot; is using more training seats than it&#x27;s been allowed."
@@ -649,6 +658,7 @@ class TestTrainingRequestsListView(TestBase):
             "event": self.first_training.pk,
             "auto_assign": "True",
             "requests": [req1.pk, req2.pk, req3.pk, self.first_req.pk],
+            "benefit_override": self.benefit.pk,
             # "seat_public": "True",
         }
 
@@ -664,7 +674,10 @@ class TestTrainingRequestsListView(TestBase):
         self.assertContains(rv, "2 request(s) were skipped due to errors")
         self.assertEqual(Task.objects.filter(seat_membership=membership_alpha).count(), 1)
         self.assertEqual(Task.objects.filter(seat_membership=membership_beta).count(), 1)
-        self.assertContains(rv, "No membership found for registration code &quot;invalid&quot;")
+        self.assertContains(
+            rv,
+            "No membership, partnership, or account benefit found for registration code &quot;invalid&quot;",
+        )
         self.assertContains(
             rv,
             "Request does not include a member registration code, so cannot be matched to a membership seat.",
@@ -821,7 +834,7 @@ class TestTrainingRequestsListView(TestBase):
         # Assert
         self.assertEqual(rv.status_code, 200)
         self.assertEqual(rv.resolver_match.view_name, "all_trainingrequests")
-        self.assertContains(rv, "associated with both a membership and a partnership")
+        self.assertContains(rv, "associated with two or more: membership, partnership, or account benefit")
         self.assertContains(rv, "1 request(s) were skipped due to errors")
 
     @override_settings(FLAGS={"SERVICE_OFFERING": [("boolean", True)]})
@@ -991,6 +1004,172 @@ class TestTrainingRequestsListView(TestBase):
         # Task is still created despite over-allocation
         self.assertTrue(Task.objects.filter(person=self.ironman, role__name="learner").exists())
 
+    @override_settings(FLAGS={"SERVICE_OFFERING": [("boolean", True)]})
+    def test_auto_assign_with_account_benefit_direct(self) -> None:
+        """Test that auto_assign matches a trainee directly to an AccountBenefit
+        when the registration code is set on the AccountBenefit itself."""
+        # Arrange
+        account = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=self.org,
+        )
+        benefit = Benefit.objects.get(name="Instructor Training")
+        account_benefit = AccountBenefit.objects.create(
+            account=account,
+            benefit=benefit,
+            registration_code="valid_code",
+            allocation=5,
+            start_date=date.today(),
+            end_date=date.today() + timedelta(days=365),
+        )
+        req = create_training_request("p", self.ironman, open_review=False, reg_code="valid_code")
+
+        data = {
+            "match": "",
+            "event": self.first_training.pk,
+            "auto_assign": True,
+            "requests": [req.pk],
+            "benefit_override": benefit.pk,
+        }
+
+        # Act
+        rv = self.client.post(reverse("all_trainingrequests"), data, follow=True)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertContains(rv, "Successfully accepted and matched selected people to training.")
+        task = Task.objects.get(person=self.ironman, role__name="learner", event=self.first_training)
+        self.assertEqual(task.allocated_benefit, account_benefit)
+        self.assertIsNone(task.seat_membership)
+
+    @override_settings(FLAGS={"SERVICE_OFFERING": [("boolean", False)]})
+    def test_auto_assign_account_benefit_without_service_offering_flag(self) -> None:
+        """Test that auto_assign ignores AccountBenefit registration codes when
+        SERVICE_OFFERING flag is disabled, and produces an error."""
+        # Arrange
+        account = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=self.org,
+        )
+        benefit = Benefit.objects.get(name="Instructor Training")
+        AccountBenefit.objects.create(
+            account=account,
+            benefit=benefit,
+            registration_code="benefit_only_code",
+            allocation=5,
+            start_date=date.today(),
+            end_date=date.today() + timedelta(days=365),
+        )
+        req = create_training_request("p", self.ironman, open_review=False, reg_code="benefit_only_code")
+
+        data = {
+            "match": "",
+            "event": self.first_training.pk,
+            "auto_assign": True,
+            "requests": [req.pk],
+        }
+
+        # Act
+        rv = self.client.post(reverse("all_trainingrequests"), data, follow=True)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertContains(rv, "No membership found for registration code &quot;benefit_only_code&quot;")
+        self.assertContains(rv, "1 request(s) were skipped due to errors")
+        self.assertFalse(Task.objects.filter(person=self.ironman, role__name="learner").exists())
+
+    @override_settings(FLAGS={"SERVICE_OFFERING": [("boolean", True)]})
+    def test_auto_assign_account_benefit_direct_warns_when_exhausted(self) -> None:
+        """Test that a warning is shown when an AccountBenefit matched directly
+        by registration code is over-allocated."""
+        # Arrange
+        account = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=self.org,
+        )
+        benefit = Benefit.objects.get(name="Instructor Training")
+        account_benefit = AccountBenefit.objects.create(
+            account=account,
+            benefit=benefit,
+            registration_code="exhausted_benefit_code",
+            allocation=1,
+            start_date=date.today(),
+            end_date=date.today() + timedelta(days=365),
+        )
+        # Exhaust the allocation
+        role = Role.objects.get(name="learner")
+        Task.objects.create(
+            event=self.first_training, person=self.blackwidow, role=role, allocated_benefit=account_benefit
+        )
+
+        req = create_training_request("p", self.ironman, open_review=False, reg_code="exhausted_benefit_code")
+
+        data = {
+            "match": "",
+            "event": self.first_training.pk,
+            "auto_assign": True,
+            "requests": [req.pk],
+            "benefit_override": benefit.pk,
+        }
+
+        # Act
+        rv = self.client.post(reverse("all_trainingrequests"), data, follow=True)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertContains(rv, "is exceeding (2) allocation (1).")
+        # Task is still created despite over-allocation
+        task = Task.objects.get(person=self.ironman, role__name="learner", event=self.first_training)
+        self.assertEqual(task.allocated_benefit, account_benefit)
+
+    @override_settings(FLAGS={"SERVICE_OFFERING": [("boolean", True)]})
+    def test_auto_assign_account_benefit_direct_conflict_with_membership(self) -> None:
+        """Test error when both a Membership and an AccountBenefit share the same
+        registration code (data integrity violation)."""
+        # Arrange
+        account = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=self.org,
+        )
+        benefit = Benefit.objects.get(name="Instructor Training")
+        shared_code = "shared_membership_benefit_code"
+
+        Membership.objects.create(
+            name="Conflicting Membership",
+            variant="bronze",
+            registration_code=shared_code,
+            agreement_start=date.today(),
+            agreement_end=date.today() + timedelta(days=365),
+            contribution_type="financial",
+        )
+        AccountBenefit.objects.create(
+            account=account,
+            benefit=benefit,
+            registration_code=shared_code,
+            allocation=5,
+            start_date=date.today(),
+            end_date=date.today() + timedelta(days=365),
+        )
+
+        req = create_training_request("p", self.ironman, open_review=False, reg_code=shared_code)
+
+        data = {
+            "match": "",
+            "event": self.first_training.pk,
+            "auto_assign": True,
+            "requests": [req.pk],
+            "benefit_override": benefit.pk,
+        }
+
+        # Act
+        rv = self.client.post(reverse("all_trainingrequests"), data, follow=True)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertContains(rv, "associated with two or more: membership, partnership, or account benefit")
+        self.assertContains(rv, "1 request(s) were skipped due to errors")
+        self.assertFalse(Task.objects.filter(person=self.ironman, role__name="learner").exists())
+
     def test_matching_without_membership_or_benefit(self) -> None:
         """Test basic matching when no membership or benefit is specified (Method 4)."""
         # This is the case where neither seat_membership nor allocated_benefit is provided
@@ -998,6 +1177,7 @@ class TestTrainingRequestsListView(TestBase):
             "match": "",
             "event": self.second_training.pk,
             "requests": [self.first_req.pk],
+            "benefit_override": self.benefit.pk,
             # No seat_membership or allocated_benefit provided
         }
 
@@ -1037,6 +1217,7 @@ class TestTrainingRequestsListView(TestBase):
             "event": self.first_training.pk,
             "auto_assign": "True",
             "requests": [req_valid.pk, req_invalid.pk, req_no_code.pk],
+            "benefit_override": self.benefit.pk,
         }
 
         # Act

@@ -24,11 +24,6 @@ class TestViewsFor404ing(TestBase):
         rv = self.client.get(url)
         self.assertEqual(rv.status_code, 404)
 
-    def test_validate_event(self) -> None:
-        url = reverse("validate_event", args=["non-existing-event"])
-        rv = self.client.get(url)
-        self.assertEqual(rv.status_code, 404)
-
     def test_task_details(self) -> None:
         url = reverse("task_details", args=[404])
         rv = self.client.get(url)

@@ -91,14 +91,8 @@
     {% endif %}
   </tr>
   <tr>
-    <th>Credits extensions:</th>
-    <td>
-      {% if not object.credits_extensions %}
-        None
-      {% else %}
-        By {% for value in object.credits_extensions %}{{ value }}{% if not forloop.last %}, {% endif %}{% endfor %} credits
-      {% endif %}
-    </td>
+    <th>Discount:</th>
+    <td>{{ object.discount|default_if_none:"&mdash;" }}</td>
   </tr>
   <tr>
     <th>Agreement start:</th>
@@ -156,11 +150,9 @@
       {% if perms.fiscal.change_partnership %}
       <a href="{% url 'partnership-update' partnership.id %}" class="btn btn-primary">Edit</a>
       <a href="{% url 'partnership-extend' partnership.id %}" class="btn btn-secondary">Extend dates</a>
-      <a href="{% url 'partnership-extend-credits' partnership.id %}" class="btn btn-secondary">Extend credits</a>
       {% else %}
       <a class="btn btn-primary disabled" aria-disabled="true">Edit</a>
       <a class="btn btn-secondary disabled" aria-disabled="true">Extend dates</a>
-      <a class="btn btn-secondary disabled" aria-disabled="true">Extend credits</a>
       {% endif %}
       {% if perms.fiscal.create_partnership and perms.fiscal.change_partnership and partnership.rolled_to_partnership is None %}
       <a href="{% url 'partnership-roll-over' partnership.id %}" class="btn btn-success">Create new &amp; roll-over</a>

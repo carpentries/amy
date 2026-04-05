@@ -199,7 +199,15 @@ A workshop can be requested from a host site, and this information can be used t
 
 This will take you to a summary view of the workshop requests, workshop inquiries, or self-organised submissions.  Click on the "information" icon at the right of each row to see more details.
 
+The workshop requests list includes a filter to find requests submitted by a member organisation that did not include a member code.
+
 ![AMY workshop request list](images/workshop_requests.png)
+
+!!! note "Member code validation on workshop requests"
+
+    Workshop requests include a field for a registration (member) code. The code is validated against active memberships, partnerships and account benefits. If the code is invalid or inactive, the form displays an error — unlike training requests, there is no option for the submitter to override an invalid code.
+
+    When viewing a workshop request detail page, an info box shows the membership associated with the submitted member code (if applicable) and the number of workshops remaining for that membership. If the request is submitted with a member code from a partnership or account benefit, then a link to that model is shown.
 
 At the bottom of the request information page, the user has the option to accept or discard the request. All requests should be accepted (unless spam or otherwise inappropriate) so The Carpentries can maintain a history of workshop requests. Events can later be tagged as stalled or cancelled. Choosing "Change state to Accepted" will mark it as accepted in the workshop request list but will not create a new event. Select "Accept and create a new event" to create a new event from this request.
 
@@ -350,7 +358,7 @@ See [section above](#adding-bulk-person-records).
 
 #### Accepting Trainee Applications
 
-In addition to tracking workshops, AMY also allows us to track applications to instructor training events. [The public facing application is here](https://amy.carpentries.org/forms/request_training/). Applicants are given a registration code if participating in a member training event and should select "Profile Creation for Pre-approved Trainees" using this code. Open applicants will not have a registration code.
+In addition to tracking workshops, AMY also allows us to track applications to instructor training events. [The public facing application is here](https://amy.carpentries.org/forms/request_training/). Applicants are given a registration code if participating in a member training event. Open applicants will not have a registration code.
 
 Once an individual submits the form, they receive an email that confirms their application has been received and includes a copy of the individual's responses. An admin user can then view the record by going to Requests --> [Training Requests](https://amy.carpentries.org/requests/training_requests/).
 
@@ -358,7 +366,13 @@ Once an individual submits the form, they receive an email that confirms their a
 
 This will display a list of all applications that are *Pending or Accepted* and *Unmatched* to an existing person. Applications can then be searched by individual name, email address, group (registration code), status (pending, accepted, discarded, or withdrawn), affiliation, or location.  Affiliation and location searches rely on text strings, so *UCLA* will not return *University of California Los Angeles* and *Joburg ZA* will not return *Johannesburg* or *South Africa*.
 
+There is also a filter to show only applications where the applicant submitted with an invalid registration code using the override option (see below). This can be used to manually check these applications.
+
 ![Training request list view](images/amy_training_requests.png)
+
+!!! note "Member code validation on training requests"
+
+    AMY validates the registration code entered by applicants. If the code is invalid, inactive, or has no seats remaining (applicable for memberships), the form will display an error. However, applicants may check a box labelled "Continue with registration code marked as invalid" to submit the application anyway.
 
 Some trainees will already be in AMY. If there is a record with a matching name and email address, they will show up with a "matched trainee" when you search for them. You can match the application to this trainee, or if the match was incorrect, search for a different Person record or create a new Person.
 

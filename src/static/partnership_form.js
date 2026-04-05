@@ -1,4 +1,32 @@
 jQuery(function () {
+  const creditsField = $("#id_credits");
+
+  function updateCreditsField(tier) {
+    if (tier !== undefined && tier.is_custom) {
+      creditsField.prop("disabled", false);
+    } else {
+      creditsField.prop("disabled", true).val(tier.credits);
+    }
+  }
+
+  // On page load, fetch the selected tier's data from the API to initialise the credits field.
+  const initialTierId = $("#id_tier").val();
+  if (initialTierId) {
+    fetch(`/api/v2/partnershiptier/${initialTierId}`, { credentials: "same-origin" })
+      .then((res) => res.json())
+      .then((tier) => updateCreditsField(tier));
+  } else {
+    creditsField.prop("disabled", true);
+  }
+
+  // The lookup view returns is_custom and credits alongside id and text,
+  // so they are available on e.params.data after the user selects a tier.
+  $("#id_tier").on("change.select2", (e) => {
+    const data = $(e.target).select2("data");
+    updateCreditsField(data[0]);
+    e.preventDefault();
+  });
+
   $("#id_partner_organisation").on("change.select2", (e) => {
     const data = $(e.target).select2("data");
     const empty_data = (data.length == 0) || data[0].text === "";

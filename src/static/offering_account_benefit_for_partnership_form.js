@@ -18,10 +18,30 @@ jQuery(function () {
       id_end_date.removeAttr("disabled");
     }
   }
+  function handleRegistrationCode(record) {
+    const id_registration_code = $("#id_registration_code");
+    if (record.id) {
+      id_registration_code.attr("disabled", "disabled");
+      id_registration_code.removeAttr("required");
+    } else {
+      id_registration_code.removeAttr("disabled");
+      id_registration_code.attr("required", "required");
+    }
+  }
+  function handleDiscount(record) {
+    const id_discount = $("#id_discount");
+    if (record.id) {
+      id_discount.attr("disabled", "disabled");
+    } else {
+      id_discount.removeAttr("disabled");
+    }
+  }
 
   $("#id_partnership").on("change.select2", (e) => {
     const record = $(e.target).select2("data")[0];
     handleDateFields(record);
+    handleRegistrationCode(record);
+    handleDiscount(record);
     e.preventDefault();
   });
 

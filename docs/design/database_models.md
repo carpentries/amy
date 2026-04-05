@@ -151,6 +151,10 @@ organisations) in The Carpentries project. Memberships can be paid. With
 each membership comes a number of fields defining perks like allowable
 number of centrally-organised workshops that don't need to pay fee.
 
+Includes a `registration_code` field — a unique code shared with member organisations
+and used by trainees and workshop requesters to identify their membership when submitting
+forms (see [Member Code Enforcement](./projects/2023_member_code_enforcement.md)).
+
 ### `Airport`
 Represents an airport (used for example to locate instructors).
 
@@ -198,6 +202,10 @@ Represents a knowledge domain (like High Performance Computing) a person is enga
 Represents a request for instructor training. Usually these requests come from people
 who are not AMY users.
 
+Includes a `member_code` field (the registration code entered by the applicant), which is validated against active memberships, partnerships or account benefits, and a
+`member_code_override` boolean field, which records whether the applicant chose to
+submit despite an invalid member code (see [Member Code Enforcement](./projects/2023_member_code_enforcement.md)).
+
 This model falls into `external requests` domain, which also includes `WorkshopRequest`,
 `WorkshopInquiryRequest`, and `SelfOrganisedSubmission`.
 
@@ -242,6 +250,10 @@ some common parts were extracted into `CommonRequest` abstract model (mixin).
 ### `WorkshopRequest`
 Represents a request for teaching a Carpentries workshop.
 
+Includes a `member_code` field for the registration code entered by the requester, which
+is validated against active memberships, partnerships or account benefits when member code enforcement is
+enabled (see [Member Code Enforcement](./projects/2023_member_code_enforcement.md)).
+
 This model falls into `external requests` domain.
 
 ----------------------------------------------------------------------------------------
@@ -255,6 +267,21 @@ Simple model, represents person role within a membership (see
 ### `MembershipTask`
 Similar to [`Task`](#task) model, but it's for a person task within a membership. Links
 to `MembershipPersonRole`.
+
+### `Consortium`
+Represents a consortium of multiple organisations. A consortium can be the partner in a
+[`Partnership`](#partnership).
+
+### `PartnershipTier`
+Represents a tier level for a partnership (e.g. "Bronze", "Silver", "Gold"), with an
+associated credit count.
+
+### `Partnership`
+Represents a service partnership between The Carpentries and an organisation or
+consortium. A follow-up to the [`Membership`](#membership) model, introduced as part of
+the [Service Offering 2025 project](./projects/2025_service_offering.md).
+
+Includes a `registration_code` field — a unique code used to identify the partnership in trainee applications or workshop requests (see also [Member Code Enforcement](./projects/2023_member_code_enforcement.md)).
 
 ----------------------------------------------------------------------------------------
 
@@ -375,3 +402,31 @@ be sent by the email worker.
 ### `ScheduledEmailLog`
 Represents a log entry for a scheduled email. This is used to track the status changes
 of an email.
+
+----------------------------------------------------------------------------------------
+
+## Offering application - `offering/models.py`
+
+The offering application models support the [Service Offering 2025](./projects/2025_service_offering.md) project. They represent
+the purchasing and allocation of benefits to partner organisations and individuals.
+
+### `Account`
+Represents the individual or organisation that purchases benefits. An `Account` is linked
+to a `Person`, `Organization`, or `Consortium` via a generic foreign key.
+
+### `AccountOwner`
+Represents a person appointed as the owner of an account. Stores the permission type
+(owner, programmatic contact, or billing contact).
+
+### `Benefit`
+Represents a single good available to be purchased for an account (e.g. training seats
+or workshop events). Stores a unit type and credit count.
+
+### `AccountBenefitDiscount`
+Simple model representing a discount that can be applied to an account benefit purchase. The discount is just a text, no logic is applied to it in AMY, but it can be used for reporting and tracking purposes.
+
+### `AccountBenefit`
+Represents a single benefit purchased for an account. Links an [`Account`](#account) to
+a [`Benefit`](#benefit), optionally via a [`Partnership`](#partnership). Stores
+allocation, date range, and a unique `registration_code` used to identify the benefit in
+training requests and workshop requests (see [Member Code Enforcement](./projects/2023_member_code_enforcement.md)).

@@ -13,3 +13,6 @@ Documentation provided for each of the functional projects.
 * [Instructor Selection](./2021_instructor_selection.md)
 * [Single Instructor Badge](./2021_single_instructor_badge.md)
 * [Automated emails v2 (2023)](./2023_automated_emails/index.md)
+* [Instructor Checkout Changes (2023)](./2023_instructor_checkout_changes.md)
+* [Member Code Enforcement (2023)](./2023_member_code_enforcement.md)
+* [Service Offering (2025)](./2025_service_offering.md)

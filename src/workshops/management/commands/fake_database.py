@@ -1076,10 +1076,11 @@ class Command(BaseCommand):
             )[0],
             partnership=partnership1,
             benefit=all_benefits[0],
-            discount=all_discounts[0],
+            discount=None,
             start_date=date.today(),
             end_date=date.today() + timedelta(days=30),
             allocation=1 if all_benefits[0].unit_type == "seat" else 5,
+            registration_code=None,
         )
         AccountBenefit.objects.create(
             account=Account.objects.filter(
@@ -1088,10 +1089,11 @@ class Command(BaseCommand):
             )[0],
             partnership=partnership1,
             benefit=all_benefits[1],
-            discount=all_discounts[1],
+            discount=None,
             start_date=date.today(),
             end_date=date.today() + timedelta(days=30),
             allocation=1 if all_benefits[1].unit_type == "seat" else 5,
+            registration_code=None,
         )
 
         AccountBenefit.objects.create(
@@ -1101,10 +1103,11 @@ class Command(BaseCommand):
             )[0],
             partnership=partnership2,
             benefit=all_benefits[2],
-            discount=all_discounts[2],
+            discount=None,
             start_date=date.today(),
             end_date=date.today() + timedelta(days=30),
             allocation=1 if all_benefits[2].unit_type == "seat" else 5,
+            registration_code=None,
         )
         AccountBenefit.objects.create(
             account=Account.objects.filter(
@@ -1113,10 +1116,11 @@ class Command(BaseCommand):
             )[0],
             partnership=partnership2,
             benefit=all_benefits[3],
-            discount=all_discounts[3],
+            discount=None,
             start_date=date.today(),
             end_date=date.today() + timedelta(days=30),
             allocation=1 if all_benefits[3].unit_type == "seat" else 5,
+            registration_code=None,
         )
 
         AccountBenefit.objects.create(
@@ -1130,6 +1134,7 @@ class Command(BaseCommand):
             start_date=date.today(),
             end_date=date.today() + timedelta(days=30),
             allocation=1 if all_benefits[0].unit_type == "seat" else 5,
+            registration_code="test-code",
         )
 
     def handle(self, *args: Any, **options: Any) -> None:

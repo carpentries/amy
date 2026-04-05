@@ -15,7 +15,6 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from flags.state import flag_enabled  # type: ignore[import-untyped]
-from requests.exceptions import HTTPError, RequestException
 
 from src.consents.models import Term, TermOption, TrainingRequestConsent
 from src.consents.util import reconsent_for_term_option_type
@@ -47,9 +46,11 @@ from src.extrequests.models import SelfOrganisedSubmission, WorkshopInquiryReque
 from src.extrequests.utils import (
     accept_training_request_and_match_to_event,
     get_account_benefit_from_partnership,
+    get_account_benefit_or_none_from_code,
     get_account_benefit_warnings_after_match,
     get_membership_or_none_from_code,
     get_membership_warnings_after_match,
+    get_partnership_or_none_from_code,
 )
 from src.fiscal.models import Partnership
 from src.offering.models import AccountBenefit, Benefit
@@ -63,7 +64,7 @@ from src.workshops.base_views import (
     RedirectSupportMixin,
     StateFilterMixin,
 )
-from src.workshops.exceptions import InternalError, WrongWorkshopURL
+from src.workshops.exceptions import InternalError
 from src.workshops.forms import (
     AdminLookupForm,
     BootstrapHelper,
@@ -72,7 +73,6 @@ from src.workshops.forms import (
 )
 from src.workshops.models import (
     Event,
-    Language,
     Membership,
     Organization,
     Person,
@@ -83,7 +83,6 @@ from src.workshops.models import (
 )
 from src.workshops.utils.access import OnlyForAdminsMixin, admin_required
 from src.workshops.utils.merge import merge_objects
-from src.workshops.utils.metadata import fetch_workshop_metadata, parse_workshop_metadata
 from src.workshops.utils.trainingrequest_upload import (
     clean_upload_trainingrequest_manual_score,
     update_manual_score,
@@ -124,6 +123,8 @@ class WorkshopRequestDetails(OnlyForAdminsMixin, AMYDetailView[WorkshopRequest])
 
         member_code = self.get_object().member_code
         context["membership"] = get_membership_or_none_from_code(member_code)
+        context["partnership"] = get_partnership_or_none_from_code(member_code)
+        context["account_benefit"] = get_account_benefit_or_none_from_code(member_code)
 
         person_lookup_form = AdminLookupForm()
         if self.object.assigned_to:
@@ -404,51 +405,18 @@ class SelfOrganisedSubmissionAcceptEvent(
     other_object: SelfOrganisedSubmission
 
     def get_form_kwargs(self) -> dict[str, Any]:
-        """Extend form kwargs with `initial` values.
-
-        The initial values are read from SelfOrganisedSubmission request
-        object, and from corresponding workshop page (if it's possible)."""
+        """Extend form kwargs with `initial` values from the SelfOrganisedSubmission request."""
         kwargs = super().get_form_kwargs()
 
         # no matter what, don't show "lessons" field; previously they were shown
         # when mix&match was selected
         kwargs["show_lessons"] = False
 
-        url = self.other_object.workshop_url.strip()
         data: dict[str, Any] = {
-            "url": url,
+            "url": self.other_object.workshop_url.strip(),
             "host": self.other_object.host_organization() or self.other_object.institution,
             "administrator": Organization.objects.get(domain="self-organized"),
         }
-
-        try:
-            metadata = fetch_workshop_metadata(url)
-            parsed_data = parse_workshop_metadata(metadata)
-        except (AttributeError, HTTPError, RequestException, WrongWorkshopURL):
-            # ignore errors, but show warning instead
-            messages.warning(
-                self.request,
-                "Cannot automatically fill the form from provided workshop URL.",
-            )
-        else:
-            # keep working only if no exception occurred
-            language = None
-            try:
-                language = Language.objects.get(subtag=parsed_data["language"].lower())
-            except (KeyError, ValueError, Language.DoesNotExist):
-                # ignore non-existing
-                messages.warning(self.request, "Cannot automatically fill language.")
-                # clear bad value
-                parsed_data["language"] = ""
-
-            data.update(parsed_data)
-            if language:
-                data["language"] = language.pk
-
-            if "instructors" in data or "helpers" in data:
-                instructors = data.get("instructors") or ["none"]
-                helpers = data.get("helpers") or ["none"]
-                data["comment"] = f"Instructors: {','.join(instructors)}\n\nHelpers: {','.join(helpers)}"
 
         initial = super().get_initial()
         initial.update(data)
@@ -574,14 +542,18 @@ def all_trainingrequests(request: AuthenticatedHttpRequest) -> HttpResponse:
                         if service_offering_enabled
                         else None
                     )
-                    account_benefit = None
+                    account_benefit = (
+                        AccountBenefit.objects.filter(registration_code=member_code).first()
+                        if service_offering_enabled
+                        else None
+                    )
 
-                    if membership and partnership:
+                    if membership and partnership or membership and account_benefit or partnership and account_benefit:
                         # It should never happen beacause of the unique check on both models against each other's codes.
                         errors.append(
                             f'{training_request}: Registration code "{member_code}" is associated '
-                            "with both a membership and a partnership; cannot auto-assign. This is a problem with "
-                            "internal data, please contact an administrator."
+                            "with two or more: membership, partnership, or account benefit; cannot auto-assign. "
+                            "This is a problem with internal data, please contact an administrator."
                         )
                         continue
 
@@ -600,11 +572,15 @@ def all_trainingrequests(request: AuthenticatedHttpRequest) -> HttpResponse:
                             )
                             continue
 
-                    # both cases below are related to "not found registration code" situations
+                    elif account_benefit and service_offering_enabled:
+                        # found account benefit directly via registration code
+                        pass
+
+                    # all cases below are related to "not found registration code" situations
                     elif service_offering_enabled:
                         errors.append(
-                            f"{training_request}: No membership or partnership found for registration code "
-                            f'"{member_code}".'
+                            f"{training_request}: No membership, partnership, or account benefit found for "
+                            f'registration code "{member_code}".'
                         )
                         continue
                     else:

@@ -9,7 +9,7 @@ from django.urls import reverse
 from django.utils import timezone
 from reversion import revisions as reversion
 
-from src.workshops.consts import STR_LONG, STR_LONGEST
+from src.workshops.consts import STR_LONG, STR_LONGEST, STR_MED
 from src.workshops.mixins import ActiveMixin, CreatedUpdatedMixin
 from src.workshops.models import Curriculum, Event, Person, Task
 from src.workshops.utils.dates import human_daterange
@@ -129,10 +129,40 @@ class AccountBenefit(CreatedUpdatedMixin, models.Model):
     # null if event category is workshop, defined if skillup
     curriculum = models.ForeignKey(Curriculum, on_delete=models.PROTECT, null=True, blank=True)
 
+    registration_code = models.CharField(
+        max_length=STR_MED,
+        null=True,
+        blank=True,
+        unique=True,
+        verbose_name="Registration Code",
+        help_text="Unique registration code used for account benefit identification. "
+        "Required if the account benefit is not linked to a partnership. If the account benefit is linked "
+        "to a partnership, the registration code will be inherited from the partnership and cannot be set directly on "
+        "the account benefit.",
+    )
+
     start_date = models.DateField()
     end_date = models.DateField()
     allocation = models.PositiveIntegerField()
     frozen = models.BooleanField(default=False)
+
+    class Meta:
+        constraints = [
+            # Account Benefit linked to a partnership cannot have a registration code (it should use partnership's code)
+            models.CheckConstraint(
+                condition=(Q(partnership__isnull=False) & Q(registration_code__isnull=True))
+                | (Q(partnership__isnull=True) & Q(registration_code__isnull=False)),
+                name="check_partnership_registration_code",
+                violation_error_message="Account Benefit, if linked to partnership, cannot have a registration code. "
+                "If not linked to partnership, the registration code is required.",
+            ),
+            # Account Benefit linked to a partnership cannot have a discount (it should use partnership's discount)
+            models.CheckConstraint(
+                condition=(Q(partnership__isnull=False) & Q(discount__isnull=True)) | (Q(partnership__isnull=True)),
+                name="check_partnership_discount",
+                violation_error_message="Account Benefit, if linked to partnership, cannot have a discount.",
+            ),
+        ]
 
     @property
     def human_daterange(self) -> str:

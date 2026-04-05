@@ -81,13 +81,7 @@ urlpatterns = [
             [
                 path("", views.AllEvents.as_view(), name="all_events"),
                 path("add/", views.EventCreate.as_view(), name="event_add"),
-                path("import/", views.event_import, name="event_import"),
                 path("merge/", views.events_merge, name="events_merge"),
-                path(
-                    "metadata_changed/",
-                    views.events_metadata_changed,
-                    name="events_metadata_changed",
-                ),
             ]
         ),
     ),
@@ -99,22 +93,6 @@ urlpatterns = [
                 path("assign/", views.EventAssign.as_view(), name="event_assign"),
                 path("edit/", views.EventUpdate.as_view(), name="event_edit"),
                 path("delete/", views.EventDelete.as_view(), name="event_delete"),
-                path("validate/", views.validate_event, name="validate_event"),
-                path(
-                    "review_metadata_changes/",
-                    views.event_review_metadata_changes,
-                    name="event_review_metadata_changes",
-                ),
-                path(
-                    "review_metadata_changes/accept/",
-                    views.event_accept_metadata_changes,
-                    name="event_accept_metadata_changes",
-                ),
-                path(
-                    "review_metadata_changes/dismiss/",
-                    views.event_dismiss_metadata_changes,
-                    name="event_dismiss_metadata_changes",
-                ),
             ]
         ),
     ),

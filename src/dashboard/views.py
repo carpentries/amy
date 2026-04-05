@@ -86,7 +86,7 @@ def dispatch(request: AuthenticatedHttpRequest) -> HttpResponse:
     if request.user.is_admin:
         return redirect(reverse("admin-dashboard"))
     else:
-        return redirect(reverse("instructor-dashboard"))
+        return redirect(reverse("user-dashboard"))
 
 
 @admin_required
@@ -144,7 +144,7 @@ def admin_dashboard(request: AuthenticatedHttpRequest) -> HttpResponse:
 
 
 @login_required
-def instructor_dashboard(request: AuthenticatedHttpRequest) -> HttpResponse:
+def user_dashboard(request: AuthenticatedHttpRequest) -> HttpResponse:
     qs = Person.objects.annotate_with_role_count().prefetch_related(
         "badges",
         "lessons",
@@ -214,7 +214,7 @@ def autoupdate_profile(request: AuthenticatedHttpRequest) -> HttpResponse:
 
             messages.success(request, "Your profile was updated.")
 
-            return redirect(reverse("instructor-dashboard"))
+            return redirect(reverse("user-dashboard"))
         else:
             messages.error(request, "Fix errors below.")
 

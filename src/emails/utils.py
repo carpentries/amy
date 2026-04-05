@@ -4,6 +4,7 @@ from datetime import UTC, date, datetime, time, timedelta
 from functools import partial
 from typing import Any, Literal, TypeVar, cast
 from urllib.parse import ParseResult, urlparse
+from uuid import UUID
 
 from django.apps import apps
 from django.conf import settings
@@ -187,7 +188,7 @@ def find_signal_by_name(signal_name: str, all_signals: Iterable[Signal]) -> Sign
     )
 
 
-def api_model_url(model: str, pk: int) -> str:
+def api_model_url(model: str, pk: int | UUID) -> str:
     return f"api:{model}#{pk}"
 
 

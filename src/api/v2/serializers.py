@@ -6,7 +6,7 @@ from rest_framework import serializers
 from src.emails.models import MAX_LENGTH, Attachment, EmailTemplate, ScheduledEmail
 from src.extrequests.models import SelfOrganisedSubmission
 from src.fiscal.models import Consortium, Partnership, PartnershipTier
-from src.offering.models import Account
+from src.offering.models import Account, AccountBenefit, AccountBenefitDiscount, Benefit
 from src.recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
 from src.trainings.models import Involvement
 from src.workshops.models import (
@@ -224,6 +224,70 @@ class MembershipSerializer(serializers.ModelSerializer[Membership]):
             "inhouse_instructor_training_seats_utilized",
             "inhouse_instructor_training_seats_remaining",
         )
+
+
+class CurriculumSerializer(serializers.ModelSerializer[Curriculum]):
+    class Meta:
+        model = Curriculum
+        fields = (
+            "pk",
+            "carpentry",
+            "slug",
+            "name",
+            "description",
+            "other",
+            "unknown",
+            "mix_match",
+            "website",
+            "active",
+        )
+
+
+class AccountBenefitSerializer(serializers.ModelSerializer[AccountBenefit]):
+    account = serializers.PrimaryKeyRelatedField[Account](read_only=True)
+    partnership = serializers.PrimaryKeyRelatedField[Partnership](read_only=True)
+    benefit = serializers.PrimaryKeyRelatedField[Benefit](read_only=True)
+    discount = serializers.SlugRelatedField[AccountBenefitDiscount](read_only=True, slug_field="name")
+    curriculum = serializers.PrimaryKeyRelatedField[Curriculum](read_only=True)
+
+    class Meta:
+        model = AccountBenefit
+        fields = (
+            "pk",
+            "account",
+            "partnership",
+            "benefit",
+            "discount",
+            "curriculum",
+            "registration_code",
+            "start_date",
+            "end_date",
+            "allocation",
+            "frozen",
+            "created_at",
+            "last_updated_at",
+        )
+
+
+class BenefitSerializer(serializers.ModelSerializer[Benefit]):
+    class Meta:
+        model = Benefit
+        fields = (
+            "pk",
+            "name",
+            "description",
+            "active",
+            "unit_type",
+            "credits",
+            "created_at",
+            "last_updated_at",
+        )
+
+
+class PartnershipTierSerializer(serializers.ModelSerializer[PartnershipTier]):
+    class Meta:
+        model = PartnershipTier
+        fields = ("pk", "name", "credits", "is_custom", "created_at", "last_updated_at")
 
 
 class ConsortiumSerializer(serializers.ModelSerializer[Consortium]):

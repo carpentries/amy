@@ -10,7 +10,7 @@ from django.urls import reverse
 from django_stubs_ext import Annotations
 from reversion import revisions as reversion
 
-from src.offering.models import Account
+from src.offering.models import Account, AccountBenefitDiscount
 from src.workshops.consts import STR_LONG, STR_LONGEST, STR_MED
 from src.workshops.mixins import CreatedUpdatedMixin
 from src.workshops.models import Membership, Organization, Person
@@ -59,6 +59,10 @@ class PartnershipTier(CreatedUpdatedMixin, models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=STR_LONG, blank=False, null=False)
     credits = models.IntegerField()
+    is_custom = models.BooleanField(
+        default=False,
+        help_text="If set, credits value can be customized per partnership instead of using the tier default.",
+    )
 
     def __str__(self) -> str:
         return f"{self.name} ({self.credits} credits)"
@@ -88,6 +92,7 @@ class Partnership(CreatedUpdatedMixin, models.Model):
         "The credits value has been moved by a cumulative sum of values from this field.",
         default=list,
     )
+    discount = models.ForeignKey(AccountBenefitDiscount, on_delete=models.SET_NULL, null=True, blank=True)
 
     account = models.ForeignKey(
         Account,
@@ -161,7 +166,6 @@ class Partnership(CreatedUpdatedMixin, models.Model):
 
     class Meta:
         # Ensure only 1 partner is selected, either consortium or organization.
-        # TODO: different arguments in Django 5.2
         constraints = [
             models.CheckConstraint(
                 condition=Q(partner_consortium__isnull=True) ^ Q(partner_organisation__isnull=True),

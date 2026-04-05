@@ -225,7 +225,7 @@ class WorkshopInquiryRequest(
         ),
         (
             "member",
-            "I am with a Member organisation so the workshop fee does not apply "
+            "I am with a Member or Partner organisation so the workshop fee does not apply "
             "(instructor travel costs will still apply for in-person workshops).",
         ),
         (

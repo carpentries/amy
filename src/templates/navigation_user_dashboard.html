@@ -11,9 +11,9 @@
       <div class="collapse navbar-collapse" id="navbarSupportedContent">
         <ul class="navbar-nav">
           {% if user.is_admin %}
-            {% navbar_element "Dashboard" "admin-dashboard" %}
+            {% navbar_element "Admin Dashboard" "admin-dashboard" %}
           {% endif %}
-          {% navbar_element "Your profile" "instructor-dashboard" %}
+          {% navbar_element "Your profile" "user-dashboard" %}
           {% navbar_element "Update data" "autoupdate_profile" %}
           {% navbar_element "Training progress" "training-progress" %}
 

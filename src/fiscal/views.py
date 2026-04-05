@@ -1025,9 +1025,10 @@ class PartnershipCreate(
             defaults=dict(account_type=account_type),
         )
 
-        self.object.credits = 0
         tier = cast(PartnershipTier, form.cleaned_data["tier"])
-        if tier:
+        if tier.is_custom:
+            self.object.credits = form.cleaned_data["credits"] or 0
+        else:
             self.object.credits = tier.credits
         self.object.account = account
         self.object.save()
@@ -1054,7 +1055,21 @@ class PartnershipUpdate(
         return context
 
     def form_valid(self, form: PartnershipForm) -> HttpResponse:
-        result = super().form_valid(form)
+        # Use commit=False so we can set credits before saving to the database.
+        self.object = form.save(commit=False)
+
+        tier = cast(PartnershipTier, form.cleaned_data["tier"])
+        if tier.is_custom:
+            self.object.credits = form.cleaned_data["credits"] or 0
+        else:
+            self.object.credits = tier.credits
+
+        self.object.save()
+        form.save_m2m()
+
+        success_message = self.get_success_message(form.cleaned_data)
+        if success_message:
+            messages.success(self.request, success_message)
 
         try:
             run_new_partnership_onboarding_strategy(
@@ -1068,7 +1083,7 @@ class PartnershipUpdate(
                 f"Error when creating or updating scheduled email. {exc}",
             )
 
-        return result
+        return HttpResponseRedirect(self.get_success_url())
 
 
 class PartnershipDelete(
@@ -1152,6 +1167,7 @@ class PartnershipExtend(
         return self.partnership.get_absolute_url()
 
 
+# Note: View disabled as per https://github.com/carpentries/amy/issues/2926#issuecomment-4069672393
 class PartnershipExtendCredits(
     OnlyForAdminsMixin,
     FlaggedViewMixin,  # type: ignore[misc]
@@ -1239,6 +1255,7 @@ class PartnershipRollOver(
         return {
             "name": self.partnership.name,
             "tier": self.partnership.tier,
+            "credits": self.partnership.credits,
             "agreement_start": self.partnership.agreement_end + timedelta(days=1),
             "agreement_end": date(
                 self.partnership.agreement_end.year + 1,
@@ -1258,8 +1275,11 @@ class PartnershipRollOver(
 
     def form_valid(self, form: PartnershipRollOverForm) -> HttpResponse:
         self.object = form.save(commit=False)
-        # Rewrite credits from "parent" partnership because it's the same tier
-        self.object.credits = self.partnership.credits or 0
+        tier = cast(PartnershipTier, form.cleaned_data["tier"])
+        if tier.is_custom:
+            self.object.credits = form.cleaned_data["credits"] or 0
+        else:
+            self.object.credits = tier.credits
         # Rewrite account from "parent" partnership
         self.object.account = self.partnership.account
         self.object.save()

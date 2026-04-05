@@ -390,8 +390,9 @@ class InstructorRecruitmentSignupChangeState(
 
     def form_valid(self, form: InstructorRecruitmentSignupChangeStateForm) -> HttpResponse:
         action_to_state_mapping = {
-            "confirm": "a",
-            "decline": "d",
+            "accept": "a",
+            "discard": "d",
+            "pending": "p",
         }
         self.object.state = action_to_state_mapping[form.cleaned_data["action"]]
         self.object.save()
@@ -402,6 +403,7 @@ class InstructorRecruitmentSignupChangeState(
         ] = {
             "a": self.accept_signup,
             "d": self.decline_signup,
+            "p": self.pending_signup,
         }
         handler = state_to_method_action_mapping[self.object.state]
         try:
@@ -476,6 +478,44 @@ class InstructorRecruitmentSignupChangeState(
                 request,
                 format_html(
                     'The signup was declined, but instructor task was <a href="{}">found</a>. ',
+                    task.get_absolute_url(),
+                ),
+            )
+        except Task.DoesNotExist:
+            pass
+
+        run_instructor_confirmed_for_workshop_strategy(
+            instructor_confirmed_for_workshop_strategy(signup),
+            request,
+            signup=signup,
+            person_id=person.pk,
+            event_id=event.pk,
+            instructor_recruitment_id=signup.recruitment.pk,
+            instructor_recruitment_signup_id=signup.pk,
+        )
+        run_instructor_declined_from_workshop_strategy(
+            instructor_declined_from_workshop_strategy(signup),
+            request,
+            signup=signup,
+            person_id=person.pk,
+            event_id=event.pk,
+            instructor_recruitment_id=signup.recruitment.pk,
+            instructor_recruitment_signup_id=signup.pk,
+        )
+
+    def pending_signup(
+        self,
+        request: HttpRequest,
+        signup: InstructorRecruitmentSignup,
+        person: Person,
+        event: Event,
+    ) -> None:
+        try:
+            task = Task.objects.get(role__name="instructor", person=person, event=event)
+            messages.warning(
+                request,
+                format_html(
+                    'The signup was marked as pending, but instructor task was <a href="{}">found</a>. ',
                     task.get_absolute_url(),
                 ),
             )

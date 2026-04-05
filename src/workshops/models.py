@@ -50,7 +50,13 @@ from src.workshops.consts import (
     STR_REG_KEY,
     STR_SHORT,
 )
-from src.workshops.fields import NullableGithubUsernameField, choice_field_with_other
+from src.workshops.fields import (
+    BlueSkyHandleField,
+    MastodonHandleField,
+    NullableGithubUsernameField,
+    OrcidField,
+    choice_field_with_other,
+)
 from src.workshops.mixins import (
     ActiveMixin,
     AssignmentMixin,
@@ -752,8 +758,7 @@ class Person(
         default="",
         verbose_name="Family (last) name",
     )
-    email = models.CharField(  # emailfield?
-        max_length=STR_LONG,
+    email = models.EmailField(
         unique=True,
         null=True,
         blank=True,
@@ -775,6 +780,9 @@ class Person(
     )
     airport_lat = models.FloatField(default=0.0, help_text="Airport latitude (copied from airport data package)")
     airport_lon = models.FloatField(default=0.0, help_text="Airport longitude (copied from airport data package)")
+    airport_timezone = models.CharField(
+        default="", help_text="Airport timezone (copied from airport data package)", blank=True
+    )
     country = CountryField(
         null=False,
         blank=True,
@@ -801,19 +809,17 @@ class Person(
         blank=True,
         verbose_name="Twitter username",
     )
-    bluesky = models.CharField(
-        max_length=STR_LONG,
+    bluesky = BlueSkyHandleField(
         unique=True,
         null=True,
         blank=True,
         verbose_name="BlueSky username",
     )
-
-    mastodon = models.URLField(
+    mastodon = MastodonHandleField(
         unique=True,
         null=True,
         blank=True,
-        verbose_name="Mastodon URL",
+        verbose_name="Mastodon username",
     )
 
     url = models.CharField(
@@ -867,8 +873,7 @@ class Person(
         blank=True,
         default="",
     )
-    orcid = models.CharField(
-        max_length=STR_LONG,
+    orcid = OrcidField(
         verbose_name="ORCID ID",
         blank=True,
         default="",
@@ -1040,11 +1045,13 @@ class Person(
             self.airport_country = airport["country"]
             self.airport_lat = airport["lat"]
             self.airport_lon = airport["lon"]
+            self.airport_timezone = airport["tz"]
         except KeyError:
             self.airport_iata = ""
             self.airport_country = ""
             self.airport_lat = 0.0
             self.airport_lon = 0.0
+            self.airport_timezone = ""
 
         super().save(*args, **kwargs)
 
@@ -2174,9 +2181,8 @@ class TrainingRequest(
         null=False,
         max_length=STR_LONG,
         verbose_name="Registration Code",
-        help_text="If you have been given a registration code through "
-        "a Carpentries member site or for a specific scheduled "
-        "event, please enter it here:",
+        help_text="If you have been given a registration code through a Carpentries Member or Partner site or for "
+        "a specific scheduled event, please enter it here:",
     )
     member_code_override = models.BooleanField(
         null=False,
@@ -2965,10 +2971,9 @@ class CommonRequest(SecondaryEmailMixin, models.Model):
         blank=True,
         null=False,
         default="",
-        verbose_name="Membership registration code",
-        help_text="If you are affiliated with a Carpentries member organization, "
-        "please enter the registration code associated with the membership. "
-        "Your Member Affiliate can provide this.",
+        verbose_name="Registration code",
+        help_text="If you are affiliated with a Carpentries Member or Partner organisation, "
+        "please enter your registration code.",
     )
 
     ONLINE_INPERSON_CHOICES = (
@@ -3219,7 +3224,7 @@ class WorkshopRequest(
         ),
         (
             "member",
-            "I am with a Member organisation so the workshop fee does not apply "
+            "I am with a Member or Partner organisation so the workshop fee does not apply "
             "(instructor travel costs will still apply for in-person workshops).",
         ),
         (

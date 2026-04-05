@@ -11,7 +11,8 @@ from django.urls import reverse
 from markdownx.fields import MarkdownxFormField
 
 from src.fiscal.fields import FlexibleSplitArrayField
-from src.fiscal.models import Consortium, MembershipTask, Partnership
+from src.fiscal.models import Consortium, MembershipTask, Partnership, PartnershipTier
+from src.offering.models import AccountBenefit
 
 # this is used instead of Django Autocomplete Light widgets
 # see issue #1330: https://github.com/swcarpentry/amy/issues/1330
@@ -194,12 +195,18 @@ class MembershipForm(forms.ModelForm[Membership]):
                     "assigned. Remove the members so that at most 1 is left."
                 )
 
+        # Ensure unique registration code across Partnerships and Account Benefits.
         registration_code = self.cleaned_data["registration_code"]
         if registration_code:
             existing_partnership = Partnership.objects.filter(registration_code=registration_code).first()
             if existing_partnership:
                 errors["registration_code"] = ValidationError(
                     f'This registration code is used by partnership "{existing_partnership}".'
+                )
+            existing_account_benefit = AccountBenefit.objects.filter(registration_code=registration_code).first()
+            if existing_account_benefit:
+                errors["registration_code"] = ValidationError(
+                    f'This registration code is used by account benefit "{existing_account_benefit}".'
                 )
 
         if errors:
@@ -562,6 +569,8 @@ class PartnershipForm(forms.ModelForm[Partnership]):
             "partner_organisation",
             "name",
             "tier",
+            "credits",
+            "discount",
             "agreement_start",
             "agreement_end",
             "agreement_link",
@@ -572,10 +581,20 @@ class PartnershipForm(forms.ModelForm[Partnership]):
         widgets = {
             "partner_consortium": Select2Widget(attrs=SELECT2_SIDEBAR),
             "partner_organisation": Select2Widget(attrs=SELECT2_SIDEBAR),
+            "tier": ModelSelect2Widget(  # type: ignore[no-untyped-call]
+                data_view="partnership-tier-lookup",
+                attrs=SELECT2_SIDEBAR,
+            ),
         }
 
     class Media:
         js = ("partnership_form.js",)
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        # credits is always optional at the form field level;
+        # custom validation in clean() requires it for custom tiers.
+        self.fields["credits"].required = False
 
     def clean(self) -> None:
         super().clean()
@@ -590,6 +609,7 @@ class PartnershipForm(forms.ModelForm[Partnership]):
         except TypeError:
             pass
 
+        # Ensure unique registration code across Memberships and Account Benefits.
         registration_code = self.cleaned_data["registration_code"]
         if registration_code:
             existing_membership = Membership.objects.filter(registration_code=registration_code).first()
@@ -597,6 +617,17 @@ class PartnershipForm(forms.ModelForm[Partnership]):
                 errors["registration_code"] = ValidationError(
                     f'This registration code is used by membership "{existing_membership}".'
                 )
+            existing_account_benefit = AccountBenefit.objects.filter(registration_code=registration_code).first()
+            if existing_account_benefit:
+                errors["registration_code"] = ValidationError(
+                    f'This registration code is used by account benefit "{existing_account_benefit}".'
+                )
+
+        # Credits are required when the Custom tier is selected.
+        tier: PartnershipTier | None = self.cleaned_data.get("tier")
+        credits = self.cleaned_data.get("credits")
+        if tier and tier.is_custom and credits is None:
+            errors["credits"] = ValidationError("Credits are required for the Custom tier.")
 
         if errors:
             raise ValidationError(errors)
@@ -689,6 +720,7 @@ class PartnershipRollOverForm(PartnershipForm):
         fields = [
             "name",
             "tier",
+            "credits",
             "agreement_start",
             "agreement_end",
             "agreement_link",

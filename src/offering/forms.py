@@ -6,9 +6,11 @@ from django.core.exceptions import ValidationError
 from django.utils.html import format_html
 
 from src.fiscal.forms import EditableFormsetFormMixin
+from src.fiscal.models import Partnership
 from src.offering.models import Account, AccountBenefit, AccountOwner, Benefit
 from src.workshops.fields import HeavySelect2Widget, ModelSelect2Widget
 from src.workshops.forms import BootstrapHelper
+from src.workshops.models import Membership
 
 
 class AccountForm(forms.ModelForm[Account]):
@@ -164,6 +166,7 @@ class AccountBenefitForm(forms.ModelForm[AccountBenefit]):
             "benefit",
             "discount",
             "curriculum",
+            "registration_code",
             "start_date",
             "end_date",
             "allocation",
@@ -184,9 +187,16 @@ class AccountBenefitForm(forms.ModelForm[AccountBenefit]):
         disable_account: bool = False,
         disable_partnership: bool = False,
         disable_dates: bool = False,
+        disable_registration_code: bool = False,
+        disable_discount: bool = False,
         **kwargs: Any,
     ) -> None:
         super().__init__(*args, **kwargs)
+
+        self.fields["discount"].help_text = (
+            "If the account benefit is linked to a partnership, the discount will be inherited from "
+            "the partnership and cannot be set directly on the account benefit."
+        )
 
         if disable_account:
             self.fields["account"].disabled = True
@@ -195,6 +205,10 @@ class AccountBenefitForm(forms.ModelForm[AccountBenefit]):
         if disable_dates:
             self.fields["start_date"].disabled = True
             self.fields["end_date"].disabled = True
+        if disable_registration_code:
+            self.fields["registration_code"].disabled = True
+        if disable_discount:
+            self.fields["discount"].disabled = True
 
         # If these fields are disabled, the browser won't send their values and this trips the validation
         # (unless we make them not required).
@@ -205,9 +219,41 @@ class AccountBenefitForm(forms.ModelForm[AccountBenefit]):
         cleaned_data = cast(dict[str, Any], super().clean())
         errors = {}
 
+        partnership = cleaned_data.get("partnership")
+
+        # `discount` is required when no partnership, and must be empty when partnership is set
+        discount = cleaned_data.get("discount")
+        # This repeats the logic from the model constraint, but allows for better error messages.
+        if partnership and discount:
+            errors["discount"] = ValidationError("Discount must not be set when a partnership is selected.")
+
+        # `registration_code` is required when no partnership, and must be empty when partnership is set
+        registration_code = cleaned_data.get("registration_code")
+        # This repeats the logic from the model constraint, but allows for better error messages.
+        if partnership and registration_code:
+            errors["registration_code"] = ValidationError(
+                "Registration code must be empty when a partnership is selected."
+            )
+        elif not partnership and not registration_code:
+            errors["registration_code"] = ValidationError(
+                "Registration code is required when no partnership is selected."
+            )
+
+        # Ensure unique registration code across Memberships and Partnerships.
+        elif registration_code and not partnership:
+            existing_membership = Membership.objects.filter(registration_code=registration_code).first()
+            if existing_membership:
+                errors["registration_code"] = ValidationError(
+                    f'This registration code is used by membership "{existing_membership}".'
+                )
+            existing_partnership = Partnership.objects.filter(registration_code=registration_code).first()
+            if existing_partnership:
+                errors["registration_code"] = ValidationError(
+                    f'This registration code is used by partnership "{existing_partnership}".'
+                )
+
         # Verify if partnership belongs to the account
         account = cleaned_data["account"]
-        partnership = cleaned_data["partnership"]
         if partnership and partnership.account != account:
             errors["partnership"] = ValidationError("Selected partnership does not belong to the selected account.")
 

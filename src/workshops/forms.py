@@ -468,6 +468,8 @@ class EventForm(forms.ModelForm[Event]):
 
     class Media:
         js = (
+            "js-yaml.min.js",
+            "workshop_metadata.js",
             "date_yyyymmdd.js",
             "edit_from_url.js",
             "online_country.js",

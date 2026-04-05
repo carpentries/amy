@@ -5,6 +5,7 @@
         <th>Dates</th>
         <th>Tier</th>
         <th>Credits (allocated / allowed)</th>
+        <th>Discount</th>
       </tr>
       {% for object in object_list %}
       <tr>
@@ -34,6 +35,7 @@
         </td>
         {% endif %}
         </td>
+        <td>{{ object.discount|default_if_none:"&mdash;" }}</td>
       </tr>
       {% endfor %}
     </table>

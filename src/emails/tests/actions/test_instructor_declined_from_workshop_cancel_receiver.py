@@ -257,7 +257,7 @@ class TestInstructorDeclinedFromWorkshopCancelIntegration(TestBase):
         scheduled_email = ScheduledEmail.objects.get(template=template)
 
         url = reverse("instructorrecruitmentsignup_changestate", args=[signup.pk])
-        payload = {"action": "confirm"}
+        payload = {"action": "accept"}
 
         # Act
         rv = self.client.post(url, payload)

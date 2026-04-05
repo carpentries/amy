@@ -11,7 +11,7 @@ from src.emails.actions.new_partnership_onboarding import (
 )
 from src.emails.types import NewPartnershipOnboardingContext
 from src.fiscal.models import Partnership, PartnershipTier
-from src.offering.models import Account, AccountOwner
+from src.offering.models import Account, AccountBenefit, AccountOwner, Benefit
 from src.workshops.models import Organization, Person
 
 
@@ -28,6 +28,8 @@ class TestNewPartnershipOnboardingCommonFunctions(TestCase):
     def setUpContext(self, partnership: Partnership) -> NewPartnershipOnboardingContext:
         return {
             "partnership": partnership,
+            "account_benefits": list(partnership.accountbenefit_set.select_related("benefit").all()),
+            "benefits": list(Benefit.objects.filter(accountbenefit__partnership=partnership).distinct()),
         }
 
     @patch("src.emails.actions.new_partnership_onboarding.immediate_action")
@@ -94,7 +96,7 @@ class TestNewPartnershipOnboardingCommonFunctions(TestCase):
             generic_relation=partner,
         )
         agreement_start_date = date(2023, 1, 1)
-        partnership = Partnership(
+        partnership = Partnership.objects.create(
             name="Test Partnership",
             credits=100,
             account=account,
@@ -102,6 +104,15 @@ class TestNewPartnershipOnboardingCommonFunctions(TestCase):
             agreement_end=agreement_start_date,
             agreement_link="https://example.org/agreement",
             partner_organisation=partner,
+        )
+        benefit = Benefit.objects.create(name="Benefit 1", description="Description 1", credits=10)
+        account_benefit = AccountBenefit.objects.create(
+            account=account,
+            partnership=partnership,
+            benefit=benefit,
+            allocation=1,
+            start_date=date(2026, 3, 15),
+            end_date=date(2027, 3, 15),
         )
 
         # Act
@@ -112,6 +123,8 @@ class TestNewPartnershipOnboardingCommonFunctions(TestCase):
             context,
             {
                 "partnership": partnership,
+                "account_benefits": [account_benefit],
+                "benefits": [benefit],
             },
         )
 
@@ -123,7 +136,7 @@ class TestNewPartnershipOnboardingCommonFunctions(TestCase):
             generic_relation=partner,
         )
         agreement_start_date = date(2023, 1, 1)
-        partnership = Partnership(
+        partnership = Partnership.objects.create(
             name="Test Partnership",
             credits=100,
             account=account,
