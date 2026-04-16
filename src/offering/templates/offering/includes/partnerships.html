@@ -27,7 +27,7 @@
         </td>
         {% elif object.credits_used > object.credits %}
         <td class="bg-warning">
-          {{ object.credits_used }} / {{ object.credits }} <i class="fas fa-exclamation-circle" data-toggle="tooltip" title="Credits allocated exceed allowed"></i>
+          {{ object.credits_used }} / {{ object.credits }} <i class="fas fa-exclamation-circle" data-bs-toggle="tooltip" title="Credits allocated exceed allowed"></i>
         </td>
         {% else %}
         <td>

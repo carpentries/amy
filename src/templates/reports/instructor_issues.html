@@ -11,7 +11,7 @@
 <table class="table table-striped">
   <tr>
     <th>Instructor</th>
-    <th>Location <i class="fas fa-question-circle" data-toggle="tooltip" title="Nearest airport is missing"></i></th>
+    <th>Location <i class="fas fa-question-circle" data-bs-toggle="tooltip" title="Nearest airport is missing"></i></th>
   </tr>
   {% for person in instructors %}
   <tr>
@@ -43,7 +43,7 @@ Thanks for your help.{% endfilter %}">
   <table class="table table-striped">
     <tr>
       <th>Person</th>
-      <th>Training(s) <i class="fas fa-question-circle" data-toggle="tooltip" title="Instructor Training(s) not finished"></i></th>
+      <th>Training(s) <i class="fas fa-question-circle" data-bs-toggle="tooltip" title="Instructor Training(s) not finished"></i></th>
       <th>Email</th>
     </tr>
     {% regroup pending by person as trainings %}
@@ -80,7 +80,7 @@ Thanks for your help.{% endfilter %}">
   <table class="table table-striped">
     <tr>
       <th>Person</th>
-      <th>Training(s) <i class="fas fa-question-circle" data-toggle="tooltip" title="Instructor Training(s) not finished and marked as stalled"></i></th>
+      <th>Training(s) <i class="fas fa-question-circle" data-bs-toggle="tooltip" title="Instructor Training(s) not finished and marked as stalled"></i></th>
     </tr>
     {% regroup stalled by person as trainings %}
     {% for person_training in trainings %}

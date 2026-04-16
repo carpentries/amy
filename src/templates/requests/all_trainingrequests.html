@@ -22,8 +22,8 @@
           <th>Reg. Code</th>
           <th>Affiliation
               <i class="fas fa-question-circle"
-                 data-toggle="popover" data-html="true" data-trigger="hover"
-                 data-content="<p>If two lines are presented:
+                 data-bs-toggle="popover" data-bs-html="true" data-bs-trigger="hover"
+                 data-bs-content="<p>If two lines are presented:
                                <ul><li>the first line shows affiliation from training request,</li>
                                <li>and the second line shows affiliation from trainee's profile</li></ul></p>"></i>
           </th>
@@ -35,11 +35,11 @@
           <th width="50px">
             State
             <i class="fas fa-question-circle"
-               data-toggle="popover" data-html="true" data-trigger="hover"
-               data-content="<p>
-                             <span class='badge badge-warning'>Pending</span>
-                             <span class='badge badge-success'>Accepted</span>
-                             <span class='badge badge-danger'>Discarded</span>
+               data-bs-toggle="popover" data-bs-html="true" data-bs-trigger="hover"
+               data-bs-content="<p>
+                             <span class='badge text-bg-warning'>Pending</span>
+                             <span class='badge text-bg-success'>Accepted</span>
+                             <span class='badge text-bg-danger'>Discarded</span>
                              </p>
                              <p>Click one of
                              <a href='#'><i class='fas fa-info-circle'></i></a>
@@ -96,8 +96,8 @@
           <td>
             {% if req.state == 'p' %}
               <span class="{% state_label req %}"
-                    data-toggle="popover" data-html="true"
-                    data-content='
+                    data-bs-toggle="popover" data-bs-html="true"
+                    data-bs-content='
                       Click
                       <a href="#"><i class="fas fa-info-circle"></i></a>
                       icon on the right side to start accepting this request.

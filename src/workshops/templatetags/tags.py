@@ -11,16 +11,16 @@ def bootstrap_tag_class(name: str) -> SafeString:
     name_low = name.lower()
 
     mapping = {
-        "swc": "badge-primary",
-        "dc": "badge-success",
-        "online": "badge-info",
-        "lc": "badge-warning",
-        "ttt": "badge-danger",
-        "itt": "badge-danger",
-        "instructor": "badge-primary",
-        "trainer": "badge-dark",
+        "swc": "text-bg-primary",
+        "dc": "text-bg-success",
+        "online": "text-bg-info",
+        "lc": "text-bg-warning",
+        "ttt": "text-bg-danger",
+        "itt": "text-bg-danger",
+        "instructor": "text-bg-primary",
+        "trainer": "text-bg-dark",
     }
-    default = "badge-secondary"
+    default = "text-bg-secondary"
 
     return mark_safe(
         next(

@@ -25,12 +25,12 @@
       <th width="40%">
         Progress
         <i class="fas fa-question-circle"
-           data-toggle="popover" data-html="true" data-trigger="hover"
-           data-content="<p>
-                         <span class='badge badge-success'>Passed</span>
-                         <span class='badge badge-warning'>Not evaluated</span>
-                         <span class='badge badge-danger'>Failed</span>
-                         <span class='badge badge-info'>Asked to repeat</span>
+           data-bs-toggle="popover" data-bs-html="true" data-bs-trigger="hover"
+           data-bs-content="<p>
+                         <span class='badge text-bg-success'>Passed</span>
+                         <span class='badge text-bg-warning'>Not evaluated</span>
+                         <span class='badge text-bg-danger'>Failed</span>
+                         <span class='badge text-bg-info'>Asked to repeat</span>
                          <p>Click one of labels below to edit or delete it.</p>
                         "></i>
       </th>
@@ -39,10 +39,10 @@
       <th width="90px">
         Eligible
         <i class="fas fa-question-circle"
-           data-toggle="popover" data-html="true" data-trigger="hover"
-           data-content="<span class='badge badge-dark'><strike>Not eligible to be certified</strike></span><br />
-                         <span class='badge badge-success'>Eligible to be certified</span><br />
-                         <span class='badge badge-secondary'>Certified</span>
+           data-bs-toggle="popover" data-bs-html="true" data-bs-trigger="hover"
+           data-bs-content="<span class='badge text-bg-dark'><strike>Not eligible to be certified</strike></span><br />
+                         <span class='badge text-bg-success'>Eligible to be certified</span><br />
+                         <span class='badge text-bg-secondary'>Certified</span>
                         "></i>
       </th>
       <th class="additional-links"></th>
@@ -79,12 +79,12 @@
         </td>
         <td>
           {% if trainee.is_instructor %}
-            <span class="badge badge-secondary" data-toggle="popover" data-trigger="hover"
-                  data-content="This person is an instructor">Instructor</span>
+            <span class="badge text-bg-secondary" data-bs-toggle="popover" data-bs-trigger="hover"
+                  data-bs-content="This person is an instructor">Instructor</span>
           {% endif %}
           {% if trainee.get_missing_instructor_requirements %}
-            <a class="badge badge-dark" data-toggle="popover" data-html="true" data-trigger="hover"
-               data-content="
+            <a class="badge text-bg-dark" data-bs-toggle="popover" data-bs-html="true" data-bs-trigger="hover"
+               data-bs-content="
                  Not eligible to be certified as an Instructor. Needs to pass:
                    <ul>
                      {% for requirement in trainee.get_missing_instructor_requirements %}
@@ -95,8 +95,8 @@
                "
                href="{% url 'award_add' %}?person={{ trainee.pk }}&amp;find-training&amp;next={{ request.get_full_path|urlencode }}"><strike>instructor badge</strike></a>
           {% else %}
-            <a class="badge badge-success" data-toggle="popover" data-html="true" data-trigger="hover"
-               data-content="<p>Eligible to be certified as an Instructor.</p><p>Click to start awarding the badge.</p>"
+            <a class="badge text-bg-success" data-bs-toggle="popover" data-bs-html="true" data-bs-trigger="hover"
+               data-bs-content="<p>Eligible to be certified as an Instructor.</p><p>Click to start awarding the badge.</p>"
                href="{% url 'award_add' %}?person={{ trainee.pk }}&amp;find-training&amp;next={{ request.get_full_path|urlencode }}">instructor badge</a>
           {% endif %}
         </td>

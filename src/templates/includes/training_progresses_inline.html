@@ -3,14 +3,14 @@
 {% for progress in person.trainingprogress_set.all %}
   <a href="{% url 'trainingprogress_edit' progress.id %}?next={{ request.get_full_path|urlencode }}"
      class="{% progress_label progress %}"
-     data-toggle="popover"
-     data-content="{% progress_description progress %}<br />Click to edit or delete."
-     data-html="true"
-     data-trigger="hover">
+     data-bs-toggle="popover"
+     data-bs-content="{% progress_description progress %}<br />Click to edit or delete."
+     data-bs-html="true"
+     data-bs-trigger="hover">
       {{ progress.requirement }}
   </a>
   &nbsp;
 {% endfor %}
 <a href="{% url 'trainingprogress_add' %}?trainee={{ person.id|urlencode }}&amp;next={{ request.get_full_path|urlencode }}"
-   class="badge badge-secondary"
-   data-toggle="popover" data-content="Click to add new progress" data-trigger="hover">+</a>
+   class="badge text-bg-secondary"
+   data-bs-toggle="popover" data-bs-content="Click to add new progress" data-bs-trigger="hover">+</a>

@@ -21,7 +21,7 @@
   <tbody>
     <tr>
       {# selecting an ID basically shows which object should stay, and which should go #}
-      <th>ID <i class="fas fa-question-circle" data-toggle="tooltip" title="This indicates which training request (as database object) will stay; the other one will be removed."></i></th>
+      <th>ID <i class="fas fa-question-circle" data-bs-toggle="tooltip" title="This indicates which training request (as database object) will stay; the other one will be removed."></i></th>
       <td>{{ obj_a.id|default:"—" }}</td><td>{{ obj_b.id|default:"—" }}</td>
       <th>{% include "includes/merge_radio.html" with field=form.id %}</th>
     </tr>

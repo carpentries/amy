@@ -176,8 +176,8 @@ class TrainingRequestForm(forms.ModelForm[TrainingRequest]):
         layout.insert(
             pos_index,
             Div(  # type: ignore[no-untyped-call]
-                Field("review_process", template="bootstrap4/layout/radio-accordion.html"),  # type: ignore
-                css_class="form-group row",
+                Field("review_process", template="bootstrap5/layout/radio-accordion.html"),  # type: ignore
+                css_class="mb-3 row",
             ),
         )
 

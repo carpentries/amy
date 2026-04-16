@@ -14,10 +14,10 @@ class StateProtocol(Protocol):
 def state_label(req: StateProtocol) -> SafeString:
     assert hasattr(req, "state")
     switch = {
-        "p": "badge badge-warning",
-        "a": "badge badge-success",
-        "d": "badge badge-danger",
-        "w": "badge badge-secondary",
+        "p": "badge text-bg-warning",
+        "a": "badge text-bg-success",
+        "d": "badge text-bg-danger",
+        "w": "badge text-bg-secondary",
     }
     result = switch[req.state]
     return mark_safe(result)

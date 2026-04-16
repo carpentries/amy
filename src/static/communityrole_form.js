@@ -1,8 +1,11 @@
 jQuery(function () {
-  $("#id_award-awarded").datepicker({
-    format: "yyyy-mm-dd",
-    todayHighlight: true,
-  });
+  var awardEl = document.getElementById("id_award-awarded");
+  if (awardEl) {
+    new Datepicker(awardEl, {
+      format: "yyyy-mm-dd",
+      todayHighlight: true,
+    });
+  }
   $("#tabs").stickyTabs();
 
   let award_badge; // hold badge filter for award selection

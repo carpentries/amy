@@ -9,7 +9,7 @@
 <div class="row">
   <div class="col-12">
     <div class="alert alert-warning alert-dismissible" role="alert">
-      <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
       <strong>Attention!</strong> {{ updated_metadata }} of your events had data on website updated. <a href="{% url 'events_metadata_changed' %}">See more</a>
     </div>
   </div>
@@ -45,7 +45,7 @@
     <table class="table table-striped">
       <tr>
         <th>Name</th>
-        <th width="70px">#I <i class="fas fa-question-circle" data-toggle="tooltip" title="Number of instructors"></i></th>
+        <th width="70px">#I <i class="fas fa-question-circle" data-bs-toggle="tooltip" title="Number of instructors"></i></th>
         <th>Dates</th>
         <th>Location</th>
         <th>URL</th>

@@ -10,7 +10,7 @@
 {% load consents %}
 
 {% block title %}
-<div class="jumbotron container-fluid">
+<div class="p-5 mb-4 bg-body-tertiary rounded-3 container-fluid">
   {% if event.completed %}
   <div class="alert alert-success" role="alert">
     <strong>Well done!</strong> This event is completed, you don't have to work on it.
@@ -18,7 +18,7 @@
   {% endif %}
   <div class="row">
     <div class="col-lg-6">
-      <h1 class="d-inline-block">Event <span class="badge badge-light">{{ event.slug }}</span></h1>
+      <h1 class="d-inline-block">Event <span class="badge text-bg-light">{{ event.slug }}</span></h1>
       <p class="lead"><i class="far fa-calendar"></i> {% human_daterange event.start event.end %} </p>
       <p class="lead">
         {% for tag in event.tags.all %}{% include "includes/tag.html" with tag=tag %}{% endfor %}
@@ -74,11 +74,11 @@
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="validation_modal_label">Validation</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body"></div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
       </div>
     </div>
   </div>
@@ -93,12 +93,12 @@
 <table id="event-tasks" class="table table-striped table-bordered">
   <thead>
     <tr>
-      <th class="badges-column">Some badges <i class="fas fa-question-circle" data-toggle="tooltip"
+      <th class="badges-column">Some badges <i class="fas fa-question-circle" data-bs-toggle="tooltip"
           title="Only Instructor or Trainer badges shown."></i></th>
       <th>Person</th>
       <th>Role</th>
       <th>Member site seat / Account benefit</th>
-      <th>Open applicant <i class="fas fa-question-circle" data-toggle="tooltip" title="Applies only to TTT events with open applications"></i></th>
+      <th>Open applicant <i class="fas fa-question-circle" data-bs-toggle="tooltip" title="Applies only to TTT events with open applications"></i></th>
       <th class="additional-links"></th>
     </tr>
   </thead>
