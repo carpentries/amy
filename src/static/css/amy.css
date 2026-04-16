@@ -1,5 +1,18 @@
-body, .dropdown-menu, .btn, .form-control {
+body,
+.dropdown-menu,
+.btn,
+.form-control,
+.form-select,
+.select2-container,
+.select2-container--bootstrap-5 .select2-selection,
+.select2-container--bootstrap-5 .select2-dropdown .select2-search .select2-search__field,
+.select2-container--bootstrap-5 .select2-dropdown .select2-results__options .select2-results__option,
+.select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__rendered .select2-selection__choice
+{
     font-size: 0.875rem;
+}
+.lead {
+    font-size: 1rem;
 }
 .btn-sm, .btn-group-sm > .btn {
     font-size: 0.75rem;
