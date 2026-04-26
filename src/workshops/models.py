@@ -86,6 +86,7 @@ class OrganizationManager(models.Manager["Organization"]):
         "software-carpentry.org",
         "datacarpentry.org",
         "librarycarpentry.org",
+        "hpccarpentry.org",
         # Instructor Training organisation
         "carpentries.org",
         # Collaborative Lesson Development Training organisation

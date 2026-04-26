@@ -440,6 +440,7 @@ class Command(BaseCommand):
             ("Data Carpentry", "datacarpentry.org"),
             ("Library Carpentry", "librarycarpentry.org"),
             ("Instructor Training", "carpentries.org"),
+            ("HPC Carpentry", "hpccarpentry.org"),
         ]
         for name, domain in orgs:
             _, created = Organization.objects.get_or_create(
