@@ -131,6 +131,8 @@ class TestOrganization(TestBase):
             "carpentries.org",
             # Collaborative Lesson Development Training organisation
             "carpentries.org/community-lessons/",
+            # HPC Carpentry organization
+            "hpccarpentry.org",
         ]
 
         # Act
