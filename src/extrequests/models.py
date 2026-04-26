@@ -154,6 +154,9 @@ class WorkshopInquiryRequest(
     SWC_LESSONS_LINK = '<a href="https://software-carpentry.org/lessons/">Software Carpentry lessons page</a>'
     DC_LESSONS_LINK = '<a href="http://www.datacarpentry.org/lessons/">Data Carpentry lessons page</a>'
     LC_LESSONS_LINK = '<a href="https://librarycarpentry.org/lessons/">Library Carpentry lessons page</a>'
+    HPCC_LESSONS_LINK = (
+        '<a href="https://hpcccarpentry.org/lessons">High Performance Computing Carpentry lessons page</a>'
+    )
     requested_workshop_types = models.ManyToManyField(
         Curriculum,
         limit_choices_to={"active": True},
@@ -167,12 +170,16 @@ class WorkshopInquiryRequest(
         "match. If your learners are people working in library and "
         "information related roles interested in learning data and "
         "software skills, Library Carpentry is the best choice. "
-        "Please visit the "
+        "If your learners want to use high performance computing "
+        "(HPC) systems for research, High Performance Computing "
+        "Carpentry is likely the best match. Please visit the "
         + SWC_LESSONS_LINK
         + ", "
         + DC_LESSONS_LINK
-        + ", or the "
+        + ", "
         + LC_LESSONS_LINK
+        + ", or the "
+        + HPCC_LESSONS_LINK
         + " for more information about any of our lessons. If you're "
         "not sure and would like to discuss with us, please select "
         'the "Don\'t know yet" option below.<br class="mb-1">'

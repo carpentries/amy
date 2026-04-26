@@ -1127,9 +1127,9 @@ class Person(
 
 
 class TagQuerySet(QuerySet["Tag"]):
-    CARPENTRIES_TAG_NAMES = ["SWC", "DC", "LC"]
+    CARPENTRIES_TAG_NAMES = ["SWC", "DC", "LC", "HPCC"]
     NON_CARPENTRIES_TAG_NAMES = ["TTT", "Circuits", "CLDT"]
-    MAIN_TAG_NAMES = ["SWC", "DC", "LC", "TTT", "ITT", "WiSE"]
+    MAIN_TAG_NAMES = ["SWC", "DC", "LC", "HPCC", "TTT", "ITT", "WiSE"]
 
     def main_tags(self) -> Self:
         return self.filter(name__in=self.MAIN_TAG_NAMES)
@@ -1418,11 +1418,11 @@ class Event(AssignmentMixin, models.Model):
         null=True,
         blank=True,
         help_text=PUBLISHED_HELP_TEXT
-        + "<br />For Data, Library, or Software Carpentry workshops, always "
-        + "use the country of the host organisation. <br />For Instructor "
-        + "Training, use the country only for in-person events, and use "
-        + "<b>Online</b> for online events. <br />Be sure to use the "
-        + "<b>online tag</b> above for all online events.",
+        + "<br />For Data, Library, Software, or High Performance Computing "
+        + "Carpentry workshops, always use the country of the host organisation. "
+        + "<br />For Instructor Training, use the country only for in-person "
+        + "events, and use <b>Online</b> for online events. <br />Be sure to use "
+        + "the <b>online tag</b> above for all online events.",
     )
     venue = models.CharField(
         max_length=STR_LONGEST,
@@ -1977,6 +1977,8 @@ class CurriculumManager(models.Manager["Curriculum"]):
                 When(carpentry="DC", other=True, then=25),
                 When(carpentry="LC", other=False, then=30),
                 When(carpentry="LC", other=True, then=35),
+                When(carpentry="HPCC", other=False, then=40),
+                When(carpentry="HPCC", other=True, then=45),
                 When(unknown=True, then=1 if dont_know_yet_first else 200),
                 When(carpentry="", then=100),
                 default=1,
@@ -2006,6 +2008,7 @@ class Curriculum(ActiveMixin, models.Model):
         ("SWC", "Software Carpentry"),
         ("DC", "Data Carpentry"),
         ("LC", "Library Carpentry"),
+        ("HPCC", "High Performance Computing Carpentry"),
         ("", "unspecified / irrelevant"),
     )
     carpentry = models.CharField(
@@ -3103,6 +3106,9 @@ class WorkshopRequest(
     SWC_LESSONS_LINK = '<a href="https://software-carpentry.org/lessons/">Software Carpentry lessons page</a>'
     DC_LESSONS_LINK = '<a href="http://www.datacarpentry.org/lessons/">Data Carpentry lessons page</a>'
     LC_LESSONS_LINK = '<a href="https://librarycarpentry.org/lessons/">Library Carpentry lessons page</a>'
+    HPCC_LESSONS_LINK = (
+        '<a href="https://hpcccarpentry.org/lessons">High Performance Computing Carpentry lessons page</a>'
+    )
     INQUIRY_FORM = reverse_lazy("workshop_inquiry")
     requested_workshop_types = models.ManyToManyField(
         Curriculum,
@@ -3117,13 +3123,16 @@ class WorkshopRequest(
             "Carpentry is likely the best match. If your learners are people "
             "working in library and information related roles interested in "
             "learning data and software skills, Library Carpentry is the best "
-            "choice. Please visit the {}, {}, or the {} for more information "
-            "about any of our lessons.<br>If you are not sure which workshop "
-            "curriculum you would like to have taught, please complete the "
-            "<a href='{}'>Workshop Inquiry Form</a>.",
+            "choice. If your learners want to use high performance computing "
+            "(HPC) systems for research, High Performance Computing Carpentry "
+            "is likely the best match. Please visit the {}, {}, {}, or the {} "
+            "for more information about any of our lessons.<br>If you are not "
+            "sure which workshop curriculum you would like to have taught, "
+            "please complete the <a href='{}'>Workshop Inquiry Form</a>.",
             SWC_LESSONS_LINK,
             DC_LESSONS_LINK,
             LC_LESSONS_LINK,
+            HPCC_LESSONS_LINK,
             INQUIRY_FORM,
         ),
     )
