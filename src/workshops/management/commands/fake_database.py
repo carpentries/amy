@@ -134,6 +134,7 @@ class Command(BaseCommand):
             ("DC", 20, "Data Carpentry Workshop"),
             ("LC", 30, "Library Carpentry Workshop"),
             ("SWC", 40, "Software Carpentry Workshop"),
+            ("HPCC", 45, "High Performance Computing Carpentry Workshop"),
             ("Circuits", 50, "Events with only partial Carpentries curriculum"),
             ("online", 60, "Events taking place entirely online"),
             ("TTT", 70, "Train the Trainers"),

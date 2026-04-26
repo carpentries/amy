@@ -10,6 +10,7 @@ class TestTagManager(TestBase):
         # Arrange
         expected = [
             Tag.objects.get(name="DC"),
+            Tag.objects.get(name="HPCC"),
             Tag.objects.get(name="ITT"),
             Tag.objects.get(name="LC"),
             Tag.objects.get(name="SWC"),
@@ -25,6 +26,7 @@ class TestTagManager(TestBase):
         # Arrange
         expected = [
             Tag.objects.get(name="DC"),
+            Tag.objects.get(name="HPCC"),
             Tag.objects.get(name="LC"),
             Tag.objects.get(name="SWC"),
         ]
@@ -35,7 +37,7 @@ class TestTagManager(TestBase):
 
     def test_strings(self) -> None:
         # Arrange
-        expected = ["DC", "LC", "SWC"]
+        expected = ["DC", "HPCC", "LC", "SWC"]
         # Act
         tags = Tag.objects.carpentries().order_by("name").strings()
         # Assert
