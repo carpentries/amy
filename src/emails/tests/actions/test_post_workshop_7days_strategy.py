@@ -112,6 +112,18 @@ class TestPostWorkshop7DaysStrategy(TestCase):
         # Assert
         self.assertEqual(result, StrategyEnum.NOOP)
 
+    def test_strategy_hpcc_tag_eligible(self) -> None:
+        # Arrange
+        self.event.tags.set([Tag.objects.get(name="HPCC")])
+        Task.objects.create(event=self.event, person=self.instructor, role=self.instructor_role)
+        Task.objects.create(event=self.event, person=self.host, role=self.host_role)
+
+        # Act
+        result = post_workshop_7days_strategy(self.event)
+
+        # Assert
+        self.assertEqual(result, StrategyEnum.CREATE)
+
 
 class TestRunPostWorkshop7DaysStrategy(TestCase):
     @patch("src.emails.actions.post_workshop_7days.post_workshop_7days_signal")

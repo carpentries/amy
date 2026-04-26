@@ -18,7 +18,7 @@
   {% endif %}
   <div class="row">
     <div class="col-lg-6">
-      <h1 class="d-inline-block">Event <span class="badge text-bg-light">{{ event.slug }}</span></h1>
+      <h1 class="d-inline-block">Event <span class="px-2 py-1 bg-secondary-subtle rounded-2 fs-2">{{ event.slug }}</span></h1>
       <p class="lead"><i class="far fa-calendar"></i> {% human_daterange event.start event.end %} </p>
       <p class="lead">
         {% for tag in event.tags.all %}{% include "includes/tag.html" with tag=tag %}{% endfor %}

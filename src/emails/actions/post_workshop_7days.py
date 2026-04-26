@@ -43,7 +43,7 @@ def post_workshop_7days_strategy(event: Event) -> StrategyEnum:
     not_cldt = event.administrator and event.administrator.domain != "carpentries.org/community-lessons/"
     end_date_plus_7days_in_future = event.end and (event.end + WEEK_OFFSET) >= timezone.now().date()
     active = not event.tags.filter(name__in=["cancelled", "unresponsive", "stalled"])
-    carpentries_tag = event.tags.filter(name__in=["LC", "DC", "SWC", "Circuits"])
+    carpentries_tag = event.tags.filter(name__in=["LC", "DC", "SWC", "HPCC", "Circuits"])
     at_least_1_host = Task.objects.filter(role__name="host", event=event).count() >= 1
     at_least_1_instructor = Task.objects.filter(role__name="instructor", event=event).count() >= 1
 

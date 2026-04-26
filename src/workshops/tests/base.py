@@ -500,6 +500,10 @@ class TestBase(SuperuserMixin, TestCase):
                     domain="carpentries.org/community-lessons/",
                     fullname="Collaborative Lesson Development Training",
                 ),
+                Organization(
+                    domain="hpccarpentry.org",
+                    fullname="HPC Carpentry",
+                ),
             ],
             ignore_conflicts=True,
         )

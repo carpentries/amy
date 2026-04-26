@@ -134,6 +134,7 @@ class Command(BaseCommand):
             ("DC", 20, "Data Carpentry Workshop"),
             ("LC", 30, "Library Carpentry Workshop"),
             ("SWC", 40, "Software Carpentry Workshop"),
+            ("HPCC", 45, "High Performance Computing Carpentry Workshop"),
             ("Circuits", 50, "Events with only partial Carpentries curriculum"),
             ("online", 60, "Events taking place entirely online"),
             ("TTT", 70, "Train the Trainers"),
@@ -439,6 +440,7 @@ class Command(BaseCommand):
             ("Data Carpentry", "datacarpentry.org"),
             ("Library Carpentry", "librarycarpentry.org"),
             ("Instructor Training", "carpentries.org"),
+            ("HPC Carpentry", "hpccarpentry.org"),
         ]
         for name, domain in orgs:
             _, created = Organization.objects.get_or_create(
