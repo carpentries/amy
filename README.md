@@ -178,7 +178,7 @@ directory) with tags `amy:latest` and `amy:$LAST_COMMIT`.
 1. Enjoy your new version of AMY:
 
     ~~~
-    uv run make serve
+    uv run python manage.py runserver
     ~~~
 
 
