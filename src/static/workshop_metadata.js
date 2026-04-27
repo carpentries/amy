@@ -87,6 +87,13 @@ async function fetchRawWorkshopMetadata(url) {
         throw new Error("URL must be a GitHub repository or GitHub Pages URL.");
     }
 
+    // GitHub Pages 301-redirects bare repo URLs to the trailing-slash form, but
+    // the redirect response omits Access-Control-Allow-Origin, so the browser
+    // blocks the fetch before it can follow. Normalise the URL up front.
+    if (WEBSITE_REGEX.test(url) && !url.endsWith("/")) {
+        url = url + "/";
+    }
+
     const response = await fetch(url);
     if (!response.ok) {
         throw new Error(`Request for "${url}" returned status code ${response.status}.`);
