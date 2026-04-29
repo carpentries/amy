@@ -198,6 +198,11 @@ class WorkshopInquiryRequestCreate(
         context["title"] = self.page_title
         return context
 
+    def get_form_kwargs(self) -> dict[str, Any]:
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        return kwargs
+
     def get_email_kwargs(self) -> dict[str, Any]:
         return {
             "to": match_notification_email(self.object),
@@ -280,6 +285,11 @@ class SelfOrganisedSubmissionCreate(
         context = super().get_context_data(**kwargs)
         context["title"] = self.page_title
         return context
+
+    def get_form_kwargs(self) -> dict[str, Any]:
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        return kwargs
 
     def get_email_kwargs(self) -> dict[str, Any]:
         return {

@@ -47,7 +47,7 @@
 		<text transform="matrix(1 0 0 1 137.1107 326.2737)" class="st5 st6 st7">This certificate has been awarded for successfully completing The Carpentries Instructor Training</text>
 		<text transform="matrix(1 0 0 1 137.1107 351.8737)" class="st5 st6 st7">program. The recipient has demonstrated understanding of core evidence-based teaching practices </text>
 		<text transform="matrix(1 0 0 1 137.1107 377.4737)" class="st5 st6 st7">and pedagogical concepts, and is qualified to teach the core curriculum of Data Carpentry, Library </text>
-		<text transform="matrix(1 0 0 1 137.1107 403.0737)" class="st5 st6 st7">Carpentry, Software Carpentry, and High Performance Computing Carpentry.</text>
+		<text transform="matrix(1 0 0 1 137.1107 403.0737)" class="st5 st6 st7">{{carpentries}}</text>
 		<text transform="matrix(1 0 0 1 137.1107 444.2737)" class="st5 st6 st7" font-weight="bold">Recipient: {{name}}</text>
 		<text transform="matrix(1 0 0 1 137.1107 469.8737)" class="st5 st6 st7" font-weight="bold">Date of Award: {{date}}</text>
 		<text transform="matrix(1 0 0 1 137.1107 495.4737)" class="st5 st6 st7" font-weight="bold">Certified by: {{signature}}</text>
