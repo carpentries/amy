@@ -655,6 +655,13 @@ FLAGS = {
     "SERVICE_OFFERING": [
         {"condition": "boolean", "value": True},
     ],
+    # ------------
+    # Enable High Performance Computing Carpentry (HPCC).
+    "HPCC": [
+        {"condition": "anonymous", "value": False, "required": True},
+        {"condition": "parameter", "value": "hpcc=true"},
+        {"condition": "session", "value": "hpcc"},
+    ],
 }
 
 # Instructor Certificates

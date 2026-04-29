@@ -1,5 +1,5 @@
 import datetime
-from typing import Any
+from typing import Any, cast
 
 from crispy_forms.bootstrap import FormActions
 from crispy_forms.layout import HTML, Div, Layout, Submit
@@ -7,6 +7,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import Case, When
 from django.http import HttpRequest
+from flags.state import flag_enabled  # type: ignore[import-untyped]
 
 from src.extrequests.models import (
     DataVariant,
@@ -368,6 +369,11 @@ class WorkshopRequestBaseForm(forms.ModelForm[WorkshopRequest]):
         # request is required for ENFORCE_MEMBER_CODES flag
         self.request_http = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
+
+        if not flag_enabled("HPCC"):
+            workshop_types_field = cast(CurriculumModelMultipleChoiceField, self.fields["requested_workshop_types"])
+            assert workshop_types_field.queryset is not None
+            workshop_types_field.queryset = workshop_types_field.queryset.exclude(carpentry="HPCC")
 
         # the field isn't required, but we want user to fill it
         self.fields["preferred_dates"].widget.fake_required = True
@@ -747,6 +753,11 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm[WorkshopInquiryRequest]):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
+        if not flag_enabled("HPCC"):
+            workshop_types_field = cast(CurriculumModelMultipleChoiceField, self.fields["requested_workshop_types"])
+            assert workshop_types_field.queryset is not None
+            workshop_types_field.queryset = workshop_types_field.queryset.exclude(carpentry="HPCC")
+
         # change institution object labels (originally Organization displays
         # domain as well)
         self.fields["institution"].label_from_instance = self.institution_label_from_instance  # type: ignore
@@ -1089,6 +1100,11 @@ class SelfOrganisedSubmissionBaseForm(forms.ModelForm[SelfOrganisedSubmission]):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
+
+        if not flag_enabled("HPCC"):
+            workshop_types_field = cast(CurriculumModelMultipleChoiceField, self.fields["workshop_types"])
+            assert workshop_types_field.queryset is not None
+            workshop_types_field.queryset = workshop_types_field.queryset.exclude(carpentry="HPCC")
 
         # change institution object labels (originally Organization displays
         # domain as well)

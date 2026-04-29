@@ -1,4 +1,5 @@
 {% extends "forms/workshoprequest.html" %}
+{% load feature_flags %}
 {% block extrajs %}{% endblock %}
 {% block content %}
 
@@ -16,7 +17,8 @@
     <li><a href="http://www.datacarpentry.org/">Data Carpentry</a></li>
     <li><a href="https://software-carpentry.org/">Software Carpentry</a></li>
     <li><a href="https://librarycarpentry.org/">Library Carpentry</a></li>
-    <li><a href="https://hpcccarpentry.org/">High Performance Computing Carpentry</a></li>
+    {% flag_enabled 'HPCC' as HPCC_ENABLED %}
+    {% if HPCC_ENABLED %}<li><a href="https://hpcccarpentry.org/">High Performance Computing Carpentry</a></li>{% endif %}
     <li><a href="https://carpentries.org/">The Carpentries</a></li>
     <li>or contact <a href="mailto:workshops@carpentries.org">workshops@carpentries.org</a>.</li>
 </ul>

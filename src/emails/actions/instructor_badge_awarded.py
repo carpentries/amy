@@ -7,6 +7,7 @@ import cairosvg
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpRequest
+from flags.state import flag_enabled  # type: ignore[import-untyped]
 
 from src.emails.actions.base_action import BaseAction, BaseActionCancel, BaseActionUpdate
 from src.emails.actions.base_strategy import run_strategy
@@ -308,6 +309,11 @@ def generate_and_attach_certificate_pdf(sender: ScheduledEmail | None, *args: An
     award_date = date.strftime(sender.generic_relation.awarded, r"%d %B %Y")
     signature = settings.CERTIFICATE_SIGNATURE
     file_path = settings.APPS_DIR / "templates" / "certificates" / "carpentries-instructor.svg"
+    carpentries = (
+        "Carpentry, Software Carpentry, and High Performance Computing Carpentry."
+        if flag_enabled("HPCC")
+        else "Carpentry, and Software Carpentry."
+    )
 
     # Prepare SVG file in memory.
     svg_file = read_binary_file_and_replace_values(
@@ -316,6 +322,7 @@ def generate_and_attach_certificate_pdf(sender: ScheduledEmail | None, *args: An
             b"{{name}}": bytes(full_name, encoding="utf-8"),
             b"{{date}}": bytes(award_date, encoding="utf-8"),
             b"{{signature}}": bytes(signature, encoding="utf-8"),
+            b"{{carpentries}}": bytes(carpentries, encoding="utf-8"),
         },
     )
 
