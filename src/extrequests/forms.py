@@ -43,6 +43,12 @@ from src.workshops.models import (
 from src.workshops.utils.feature_flags import feature_flag_enabled
 
 
+def _hpcc_enabled(request: HttpRequest | None) -> bool:
+    if request is None:
+        return False
+    return bool(flag_enabled("HPCC", request=request))
+
+
 class BulkChangeTrainingRequestForm(forms.Form):
     """Form used to bulk discard training requests or bulk unmatch trainees
     from src.trainings."""
@@ -370,7 +376,7 @@ class WorkshopRequestBaseForm(forms.ModelForm[WorkshopRequest]):
         self.request_http = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
 
-        if not flag_enabled("HPCC"):
+        if not _hpcc_enabled(self.request_http):
             workshop_types_field = cast(CurriculumModelMultipleChoiceField, self.fields["requested_workshop_types"])
             assert workshop_types_field.queryset is not None
             workshop_types_field.queryset = workshop_types_field.queryset.exclude(carpentry="HPCC")
@@ -751,9 +757,10 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm[WorkshopInquiryRequest]):
         return f"{obj.fullname}"
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
+        self.request_http = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
 
-        if not flag_enabled("HPCC"):
+        if not _hpcc_enabled(self.request_http):
             workshop_types_field = cast(CurriculumModelMultipleChoiceField, self.fields["requested_workshop_types"])
             assert workshop_types_field.queryset is not None
             workshop_types_field.queryset = workshop_types_field.queryset.exclude(carpentry="HPCC")
@@ -1099,9 +1106,10 @@ class SelfOrganisedSubmissionBaseForm(forms.ModelForm[SelfOrganisedSubmission]):
         return f"{obj.fullname}"
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
+        self.request_http = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
 
-        if not flag_enabled("HPCC"):
+        if not _hpcc_enabled(self.request_http):
             workshop_types_field = cast(CurriculumModelMultipleChoiceField, self.fields["workshop_types"])
             assert workshop_types_field.queryset is not None
             workshop_types_field.queryset = workshop_types_field.queryset.exclude(carpentry="HPCC")
