@@ -28,7 +28,7 @@ from src.emails.utils import (
     one_month_before,
 )
 from src.fiscal.models import Partnership
-from src.offering.models import AccountOwner, Benefit
+from src.offering.models import AccountBenefit, AccountOwner, Benefit
 
 logger = logging.getLogger("amy")
 
@@ -98,7 +98,7 @@ def get_context(
     **kwargs: Unpack[NewPartnershipOnboardingKwargs],
 ) -> NewPartnershipOnboardingContext:
     partnership = kwargs["partnership"]
-    account_benefits = list(partnership.accountbenefit_set.all())
+    account_benefits = list(AccountBenefit.objects.filter(partnership=partnership).all())
     benefits = list(Benefit.objects.filter(accountbenefit__partnership=partnership).distinct())
 
     return {

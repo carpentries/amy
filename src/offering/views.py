@@ -360,6 +360,24 @@ class AccountBenefitCreate(
         default_url = super().get_success_url()
         return safe_next_or_default_url(self.request.GET.get("next"), default_url)
 
+    def form_valid(self, form: AccountBenefitForm) -> HttpResponse:
+        result = super().form_valid(form)
+
+        if partnership := form.cleaned_data.get("partnership"):
+            try:
+                run_new_partnership_onboarding_strategy(
+                    new_partnership_onboarding_strategy(partnership),
+                    request=self.request,
+                    partnership=partnership,
+                )
+            except EmailStrategyException as exc:
+                messages.error(
+                    self.request,
+                    f"Error when creating or updating scheduled email. {exc}",
+                )
+
+        return result
+
 
 class AccountBenefitUpdate(
     OnlyForAdminsMixin,
@@ -378,6 +396,24 @@ class AccountBenefitUpdate(
         context["title"] = str(self.object)
         return context
 
+    def form_valid(self, form: AccountBenefitForm) -> HttpResponse:
+        result = super().form_valid(form)
+
+        if partnership := form.cleaned_data.get("partnership"):
+            try:
+                run_new_partnership_onboarding_strategy(
+                    new_partnership_onboarding_strategy(partnership),
+                    request=self.request,
+                    partnership=partnership,
+                )
+            except EmailStrategyException as exc:
+                messages.error(
+                    self.request,
+                    f"Error when creating or updating scheduled email. {exc}",
+                )
+
+        return result
+
 
 class AccountBenefitDelete(
     OnlyForAdminsMixin,
@@ -390,6 +426,25 @@ class AccountBenefitDelete(
 
     def get_success_url(self) -> str:
         return reverse("account-benefit-list")
+
+    def before_delete(self, *args: Any, **kwargs: Any) -> None:
+        """Save for use in `after_delete` method."""
+        self._partnership = self.object.partnership
+
+    def after_delete(self, *args: Any, **kwargs: Any) -> None:
+        partnership = self._partnership
+        if partnership:
+            try:
+                run_new_partnership_onboarding_strategy(
+                    new_partnership_onboarding_strategy(partnership),
+                    request=self.request,
+                    partnership=partnership,
+                )
+            except EmailStrategyException as exc:
+                messages.error(
+                    self.request,
+                    f"Error when running new partnership onboarding strategy. {exc}",
+                )
 
 
 # -----------------------------------------------------------------
