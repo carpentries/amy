@@ -621,7 +621,9 @@ class PersonManager(BaseUserManager["Person"]):
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, username: str, personal: str, family: str, email: str, airport_iata: str, password: str) -> Person:
+    def create_superuser(
+        self, username: str, personal: str, family: str, email: str, airport_iata: str, password: str
+    ) -> Person:
         """
         Create and save a superuser.
         """
