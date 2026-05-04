@@ -1,6 +1,7 @@
 from datetime import UTC, date, datetime, time, timedelta
 from datetime import timezone as dt_timezone
 from unittest.mock import MagicMock, call, patch
+from uuid import UUID
 
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
@@ -37,6 +38,7 @@ from src.emails.utils import (
     shift_date_and_apply_set_time,
     two_months_after,
 )
+from src.offering.models import Benefit
 from src.workshops.models import Person
 
 
@@ -525,6 +527,17 @@ class TestMapSingleApiUriToSerializedModelOrValue(TestCase):
         # Assert
         mock_find_model_instance.assert_called_once_with(Person, 1)
 
+    @patch("src.emails.utils.find_model_instance")
+    def test_map_single_api_uri_to_serialized_model_or_value__model_uuid(
+        self, mock_find_model_instance: MagicMock
+    ) -> None:
+        # Arrange
+        uri = "api:benefit#a28aa5b3-a037-46e5-8924-c95bad9f5528"
+        # Act
+        map_single_api_uri_to_serialized_model_or_value(uri)
+        # Assert
+        mock_find_model_instance.assert_called_once_with(Benefit, UUID("a28aa5b3-a037-46e5-8924-c95bad9f5528"))
+
     def test_map_single_api_uri_to_serialized_model_or_value__unsupported_uri(
         self,
     ) -> None:
@@ -546,16 +559,19 @@ class TestMapSingleApiUriToSerializedModelOrValue(TestCase):
     ) -> None:
         # Arrange
         uris = [
-            "api://",
-            "api:",
-            "api:model#test",
+            ("api://", "", ""),
+            ("api:", "", ""),
+            ("api:model#test", "model", "test"),
         ]
         # Act & Assert
-        for uri in uris:
+        for uri, model, model_pk in uris:
             with self.subTest(uri=uri):
                 with self.assertRaises(ValueError) as cm:
                     map_single_api_uri_to_serialized_model_or_value(uri)
-                self.assertEqual(str(cm.exception), f"Failed to parse URI {uri!r}.")
+                self.assertEqual(
+                    str(cm.exception),
+                    f"Failed to parse pk {model_pk!r} for model {model!r}. Error: badly formed hexadecimal UUID string",
+                )
 
 
 class TestMapApiUriToSerializedModelOrValue(TestCase):
