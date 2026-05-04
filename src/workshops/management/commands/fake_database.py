@@ -902,7 +902,7 @@ class Command(BaseCommand):
     def fake_partnership_tiers(self) -> None:
         self.stdout.write("Generating 4 fake partnership tiers...")
 
-        for name, credits in [("bronze", 16), ("silver", 32), ("gold", 64), ("platinum", 128)]:
+        for name, credits in [("Launch", 16), ("Expand", 48), ("Scale", 80), ("Transform", 128)]:
             PartnershipTier.objects.create(name=name, credits=credits)
 
     def fake_consortiums(self) -> None:
