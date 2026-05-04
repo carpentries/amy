@@ -27,6 +27,7 @@ class Command(BaseCommand):
                 family="admin",
                 email="admin@example.org",
                 password="admin",
+                airport_iata="AAA",
             )
             logger.info("Created admin user")
 
