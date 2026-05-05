@@ -18,6 +18,7 @@ from jinja2 import Environment
 from rest_framework.serializers import ModelSerializer
 
 from src.api.v2.serializers import (
+    AccountBenefitSerializer,
     AwardSerializer,
     BenefitSerializer,
     ConsortiumSerializer,
@@ -36,7 +37,7 @@ from src.emails.models import ScheduledEmail
 from src.emails.signals import Signal
 from src.extrequests.models import SelfOrganisedSubmission
 from src.fiscal.models import Consortium, Partnership
-from src.offering.models import Benefit
+from src.offering.models import AccountBenefit, Benefit
 from src.recruitment.models import InstructorRecruitmentSignup
 from src.workshops.models import (
     Award,
@@ -273,6 +274,7 @@ def map_single_api_uri_to_serialized_model(uri: str) -> dict[str, Any]:
         TrainingRequirement: TrainingRequirementSerializer,
         SelfOrganisedSubmission: SelfOrganisedSubmissionSerializer,
         Benefit: BenefitSerializer,
+        AccountBenefit: AccountBenefitSerializer,
     }
 
     match urlparse(uri):
