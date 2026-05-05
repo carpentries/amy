@@ -113,7 +113,7 @@ def get_context_json(context: NewPartnershipOnboardingContext) -> ContextModel:
         {
             "partnership": api_model_url("partnership", context["partnership"].pk),
             "account_benefits": [
-                api_model_url("account_benefit", benefit.pk) for benefit in context["account_benefits"]
+                api_model_url("accountbenefit", benefit.pk) for benefit in context["account_benefits"]
             ],
             "benefits": [api_model_url("benefit", benefit.pk) for benefit in context["benefits"]],
         },
