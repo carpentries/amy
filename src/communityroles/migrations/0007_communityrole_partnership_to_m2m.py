@@ -48,11 +48,11 @@ class Migration(migrations.Migration):
         migrations.RenameField(
             model_name="communityrole",
             old_name="partnership_new",
-            new_name="partnership",
+            new_name="partnerships",
         ),
         migrations.AlterField(
             model_name="communityrole",
-            name="partnership",
+            name="partnerships",
             field=models.ManyToManyField(
                 blank=True,
                 to="fiscal.partnership",

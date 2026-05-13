@@ -90,7 +90,7 @@ class CommunityRole(CreatedUpdatedMixin, models.Model):
         blank=True,
         verbose_name="Associated Membership",
     )
-    partnership = models.ManyToManyField(
+    partnerships = models.ManyToManyField(
         Partnership,
         blank=True,
         verbose_name="Associated Partnership",
