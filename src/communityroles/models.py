@@ -90,10 +90,8 @@ class CommunityRole(CreatedUpdatedMixin, models.Model):
         blank=True,
         verbose_name="Associated Membership",
     )
-    partnership = models.ForeignKey(
+    partnership = models.ManyToManyField(
         Partnership,
-        on_delete=models.PROTECT,
-        null=True,
         blank=True,
         verbose_name="Associated Partnership",
     )
