@@ -249,6 +249,7 @@ class AccountBenefitSerializer(serializers.ModelSerializer[AccountBenefit]):
     benefit = serializers.PrimaryKeyRelatedField[Benefit](read_only=True)
     discount = serializers.SlugRelatedField[AccountBenefitDiscount](read_only=True, slug_field="name")
     curriculum = serializers.PrimaryKeyRelatedField[Curriculum](read_only=True)
+    human_daterange = serializers.CharField(read_only=True)
 
     class Meta:
         model = AccountBenefit
@@ -262,6 +263,7 @@ class AccountBenefitSerializer(serializers.ModelSerializer[AccountBenefit]):
             "registration_code",
             "start_date",
             "end_date",
+            "human_daterange",
             "allocation",
             "frozen",
             "created_at",
@@ -311,6 +313,7 @@ class PartnershipSerializer(serializers.ModelSerializer[Partnership]):
     rolled_to_partnership = serializers.SlugRelatedField[Partnership](read_only=True, slug_field="name")
     partner_consortium = serializers.PrimaryKeyRelatedField[Account](read_only=True)
     partner_organisation = serializers.PrimaryKeyRelatedField[Account](read_only=True)
+    human_daterange = serializers.CharField(read_only=True)
 
     class Meta:
         model = Partnership
@@ -332,6 +335,7 @@ class PartnershipSerializer(serializers.ModelSerializer[Partnership]):
             "partner_organisation",
             "created_at",
             "last_updated_at",
+            "human_daterange",
         )
 
 

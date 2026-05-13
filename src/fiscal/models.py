@@ -203,3 +203,7 @@ class Partnership(CreatedUpdatedMixin, models.Model):
 
     def get_absolute_url(self) -> str:
         return reverse("partnership-details", kwargs={"pk": self.pk})
+
+    @property
+    def human_daterange(self) -> str:
+        return human_daterange(self.agreement_start, self.agreement_end)
