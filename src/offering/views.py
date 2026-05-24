@@ -80,8 +80,8 @@ class AccountDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[Account
                 .filter(account=self.object)
                 .select_related("tier", "partner_consortium", "partner_organisation", "account")
             )
-            context["community_roles"] = CommunityRole.objects.filter(partnership__account=self.object).select_related(
-                "partnership", "person"
+            context["community_roles"] = CommunityRole.objects.filter(partnerships__account=self.object).select_related(
+                "person"
             )
         return context
 
