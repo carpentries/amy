@@ -985,7 +985,7 @@ class PartnershipDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[Par
                 Prefetch("task_set", queryset=Task.objects.select_related("event", "person", "role")),
             )
         )
-        context["community_roles"] = CommunityRole.objects.filter(partnership=self.object).select_related("person")
+        context["community_roles"] = CommunityRole.objects.filter(partnerships=self.object).select_related("person")
 
         if self.object.credits_used > self.object.credits:  # type: ignore[attr-defined]
             messages.warning(self.request, "Credits allocated exceed credits allowed.")

@@ -52,10 +52,12 @@
     </td>
   </tr>
   <tr>
-    <th>Partnership</th>
+    <th>Partnerships</th>
     <td>
-      {% if role.partnership %}
-      <a href="{{ role.partnership.get_absolute_url }}">{{ role.partnership }}</a>
+      {% if role.partnerships.all %}
+      {% for partnership in role.partnerships.all %}
+      <a href="{{ partnership.get_absolute_url }}">{{ partnership }}</a><br>
+      {% endfor %}
       {% else %}
       &mdash;
       {% endif %}

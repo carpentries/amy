@@ -235,7 +235,7 @@ class TestCommunityRoleForm(TestBase):
             "end": "2022-11-14",
             "inactivation": None,
             "membership": None,
-            "partnership": None,
+            "partnerships": [],
             "url": "https://example.org",
             "generic_relation_content_type": None,
             "generic_relation_pk": None,
@@ -246,10 +246,10 @@ class TestCommunityRoleForm(TestBase):
 
         # Assert
         self.assertFalse(form.is_valid())  # errors expected
-        self.assertEqual(form.errors.keys(), {"partnership"})
+        self.assertEqual(form.errors.keys(), {"partnerships"})
         self.assertEqual(
-            form.errors["partnership"],
-            ["Partnership is required with community role Test"],
+            form.errors["partnerships"],
+            ["At least one partnership is required with community role Test"],
         )
 
     def test_start_date_gt_end_date_is_invalid(self) -> None:
@@ -631,7 +631,7 @@ class TestCommunityRoleUpdateForm(TestBase):
                 "end",
                 "inactivation",
                 "membership",
-                "partnership",
+                "partnerships",
                 "url",
                 "generic_relation_content_type",
                 "generic_relation_pk",
