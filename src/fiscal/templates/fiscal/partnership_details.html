@@ -192,10 +192,11 @@
     <th>Inactive?</th>
     <th>URL</th>
     <th>Related object</th>
+    <th></th>
     <th class="additional-links-wider"></th>
   </tr>
   {% for role in community_roles.all %}
-  <tr>
+  <tr {% if not role.is_active %}class="table-warning"{% endif %}>
     <td><a href="{{role.person.get_absolute_url}}">{{ role.person.full_name }}</a></td>
     <td>{{ role.config }}</td>
     <td>
@@ -216,6 +217,9 @@
       {% else %}
       &mdash;
       {% endif %}
+    </td>
+    <td>
+      {% if not role.is_active %}This role is inactive.{% endif %}
     </td>
     <td>
       <a href="{% url 'communityrole_details' role.pk %}" title="View {{ role }}"><i class="fas fa-info-circle"></i></a>

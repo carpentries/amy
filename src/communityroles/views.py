@@ -1,6 +1,7 @@
 from typing import Any
 
 from django import forms
+from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 
 from src.workshops.base_forms import GenericDeleteForm
@@ -28,6 +29,11 @@ class CommunityRoleDetails(OnlyForAdminsMixin, AMYDetailView[CommunityRole]):
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["title"] = str(self.object)
+        if not self.object.is_active() and self.object.partnerships.exists():
+            messages.warning(
+                self.request,
+                "This role is inactive but has associated partnerships.",
+            )
         return context
 
 
