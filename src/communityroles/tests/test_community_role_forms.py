@@ -631,7 +631,7 @@ class TestCommunityRoleUpdateForm(TestBase):
                 "end",
                 "inactivation",
                 "membership",
-                "partnership",
+                "partnerships",
                 "url",
                 "generic_relation_content_type",
                 "generic_relation_pk",
