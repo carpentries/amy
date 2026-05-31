@@ -1,7 +1,7 @@
 {% load assignments %}
 {% if object.slug %}{% assign object.slug as pk %}{% else %}{% assign object.pk as pk %}{% endif %}
     <div>
-      <a href="#assignment_modal" id="change_assignment" data-toggle="modal" data-target="#assignment_modal"><i class="fas fa-user-cog"></i></a>
+      <a href="#assignment_modal" id="change_assignment" data-bs-toggle="modal" data-bs-target="#assignment_modal"><i class="fas fa-user-cog"></i></a>
       {% if object.assigned_to %}
       <form method="POST" action="{% url assign_url pk %}" style="display: inline">
         Assigned to:

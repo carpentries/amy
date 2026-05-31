@@ -167,7 +167,7 @@ class MembershipForm(forms.ModelForm[Membership]):
                     css_class="alert alert-warning offset-lg-2 col-lg-8 col-12",
                 ),
                 id="agreement_duration_warning",
-                css_class="form-group row d-none",
+                css_class="mb-3 row d-none",
             ),
         )
 

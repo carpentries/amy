@@ -22,7 +22,7 @@ def progress_state_class(state: str) -> str:
 
 @register.simple_tag
 def progress_label(progress: TrainingProgress) -> SafeString:
-    fmt = f"badge badge-{progress_state_class(progress.state)}"
+    fmt = f"badge text-bg-{progress_state_class(progress.state)}"
     return mark_safe(fmt)
 
 

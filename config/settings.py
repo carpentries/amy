@@ -148,7 +148,7 @@ DJANGO_APPS = [
 ]
 THIRD_PARTY_APPS = [
     "crispy_forms",
-    "crispy_bootstrap4",
+    "crispy_bootstrap5",
     "django_select2",
     "django_countries",
     "django_filters",
@@ -307,18 +307,16 @@ STATICFILES_DIRS = [
     str(ROOT_DIR / "node_modules" / "@github" / "time-elements" / "dist"),
     str(ROOT_DIR / "node_modules" / "bootstrap" / "dist" / "css"),
     str(ROOT_DIR / "node_modules" / "bootstrap" / "dist" / "js"),
-    str(ROOT_DIR / "node_modules" / "bootstrap-datepicker" / "dist" / "css"),
-    str(ROOT_DIR / "node_modules" / "bootstrap-datepicker" / "dist" / "js"),
-    str(ROOT_DIR / "node_modules" / "bootstrap-datepicker" / "dist" / "locales"),
-    str(ROOT_DIR / "node_modules" / "popper.js" / "dist" / "umd"),
+    str(ROOT_DIR / "node_modules" / "vanillajs-datepicker" / "dist" / "css"),
+    str(ROOT_DIR / "node_modules" / "vanillajs-datepicker" / "dist" / "js"),
     str(ROOT_DIR / "node_modules" / "datatables.net" / "js"),
-    str(ROOT_DIR / "node_modules" / "datatables.net-bs4" / "css"),
-    str(ROOT_DIR / "node_modules" / "datatables.net-bs4" / "js"),
+    str(ROOT_DIR / "node_modules" / "datatables.net-bs5" / "css"),
+    str(ROOT_DIR / "node_modules" / "datatables.net-bs5" / "js"),
     str(ROOT_DIR / "node_modules" / "select2" / "dist" / "css"),
     str(ROOT_DIR / "node_modules" / "select2" / "dist" / "js"),
-    str(ROOT_DIR / "node_modules" / "@ttskch" / "select2-bootstrap4-theme" / "dist"),
+    str(ROOT_DIR / "node_modules" / "select2-bootstrap-5-theme" / "dist"),
     str(ROOT_DIR / "node_modules" / "jquery" / "dist"),
-    str(ROOT_DIR / "node_modules" / "jquery-stickytabs"),
+    # jquery-stickytabs is served from src/static/ with Bootstrap 5 patch
     str(ROOT_DIR / "node_modules" / "js-cookie" / "dist"),
     str(ROOT_DIR / "node_modules" / "js-yaml" / "dist"),
     str(ROOT_DIR / "node_modules" / "urijs" / "src"),
@@ -401,8 +399,8 @@ TEMPLATES = [
     },
 ]
 # http://django-crispy-forms.readthedocs.io/en/latest/install.html#template-packs
-CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"
-CRISPY_TEMPLATE_PACK = "bootstrap4"
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 # EMAIL
 # -----------------------------------------------------------------------------
@@ -656,6 +654,13 @@ FLAGS = {
     # Enable the Service Offering module.
     "SERVICE_OFFERING": [
         {"condition": "boolean", "value": True},
+    ],
+    # ------------
+    # Enable High Performance Computing Carpentry (HPCC).
+    "HPCC": [
+        {"condition": "anonymous", "value": False, "required": True},
+        {"condition": "parameter", "value": "hpcc=true"},
+        {"condition": "session", "value": "hpcc"},
     ],
 }
 

@@ -7,13 +7,13 @@
 {% block content %}
 <nav class="col-12">
   <ul class="nav nav-tabs" role="tablist" id="tabs">
-    <li role="presentation" class="nav-item"><a class="nav-link active" href="#event" role="tab" data-toggle="tab" aria-controls="event" aria-selected="true" id="event-tab">Event</a></li>
-    <li role="presentation" class="nav-item"><a class="nav-link" href="#tasks" role="tab" data-toggle="tab" aria-controls="tasks" aria-selected="false" id="tasks-tab">Tasks</a></li>
+    <li role="presentation" class="nav-item"><a class="nav-link active" href="#event" role="tab" data-bs-toggle="tab" aria-controls="event" aria-selected="true" id="event-tab">Event</a></li>
+    <li role="presentation" class="nav-item"><a class="nav-link" href="#tasks" role="tab" data-bs-toggle="tab" aria-controls="tasks" aria-selected="false" id="tasks-tab">Tasks</a></li>
   </ul>
 </nav>
 <div class="col-12 tab-content">
   <div class="tab-pane show active" role="tabpanel" aria-labelledby="event-tab" id="event">
-    <a href="#update_url_modal" class="btn btn-secondary" id="update_url_button" data-toggle="modal" data-target="#update_url_modal">Update from URL</a>
+    <a href="#update_url_modal" class="btn btn-secondary" id="update_url_button" data-bs-toggle="modal" data-bs-target="#update_url_modal">Update from URL</a>
     {% crispy form %}
     {% include "includes/event_import_update_from_url.html" with update=True %}
   </div>
@@ -29,8 +29,8 @@
     <tr>
       <th>Person</th>
       <th>Role</th>
-      <th>Member site seat <i class="fas fa-question-circle" data-toggle="tooltip" title="Applies only to TTT events"></i></th>
-      <th>Open applicant <i class="fas fa-question-circle" data-toggle="tooltip" title="Applies only to TTT events with open applications"></i></th>
+      <th>Member site seat <i class="fas fa-question-circle" data-bs-toggle="tooltip" title="Applies only to TTT events"></i></th>
+      <th>Open applicant <i class="fas fa-question-circle" data-bs-toggle="tooltip" title="Applies only to TTT events with open applications"></i></th>
       <th class="additional-links-wider"></th>
     </tr>
     {% for t in tasks %}

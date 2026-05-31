@@ -1452,13 +1452,13 @@ class TestMatchingTrainingRequestAndDetailedView(TestBase):
 
 class TestTrainingRequestTemplateTags(TestBase):
     def test_pending_request(self) -> None:
-        self._test(state="p", expected="badge badge-warning")
+        self._test(state="p", expected="badge text-bg-warning")
 
     def test_accepted_request(self) -> None:
-        self._test(state="a", expected="badge badge-success")
+        self._test(state="a", expected="badge text-bg-success")
 
     def test_discarded_request(self) -> None:
-        self._test(state="d", expected="badge badge-danger")
+        self._test(state="d", expected="badge text-bg-danger")
 
     def _test(self, state: str, expected: str) -> None:
         template = Template("{% load state %}{% state_label req %}")

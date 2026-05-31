@@ -86,7 +86,7 @@ sudo apt-get install python3-dev libpq-dev
 1. Start a local Django development server by running:
 
     ~~~
-    uv run make serve
+    uv run python manage.py runserver
     ~~~
 
     **Note**:  this also installs front-end dependencies for AMY, including [jQuery][jquery] and [Bootstrap][bootstrap] ([full list here](https://github.com/carpentries/amy/blob/develop/package.json)).
@@ -178,7 +178,7 @@ directory) with tags `amy:latest` and `amy:$LAST_COMMIT`.
 1. Enjoy your new version of AMY:
 
     ~~~
-    uv run make serve
+    uv run python manage.py runserver
     ~~~
 
 

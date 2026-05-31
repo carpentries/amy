@@ -18,7 +18,9 @@ from jinja2 import Environment
 from rest_framework.serializers import ModelSerializer
 
 from src.api.v2.serializers import (
+    AccountBenefitSerializer,
     AwardSerializer,
+    BenefitSerializer,
     ConsortiumSerializer,
     EventSerializer,
     InstructorRecruitmentSignupSerializer,
@@ -35,6 +37,7 @@ from src.emails.models import ScheduledEmail
 from src.emails.signals import Signal
 from src.extrequests.models import SelfOrganisedSubmission
 from src.fiscal.models import Consortium, Partnership
+from src.offering.models import AccountBenefit, Benefit
 from src.recruitment.models import InstructorRecruitmentSignup
 from src.workshops.models import (
     Award,
@@ -270,17 +273,28 @@ def map_single_api_uri_to_serialized_model(uri: str) -> dict[str, Any]:
         TrainingProgress: TrainingProgressSerializer,
         TrainingRequirement: TrainingRequirementSerializer,
         SelfOrganisedSubmission: SelfOrganisedSubmissionSerializer,
+        Benefit: BenefitSerializer,
+        AccountBenefit: AccountBenefitSerializer,
     }
 
     match urlparse(uri):
         case ParseResult(scheme="api", netloc="", path=model_name, params="", query="", fragment=id_):
+            model_pk: int | UUID | None = None
+            try:
+                model_pk = int(id_)
+            except ValueError:
+                try:
+                    model_pk = UUID(id_)
+                except ValueError as exc:
+                    raise ValueError(f"Failed to parse pk {id_!r} for model {model_name!r}. Error: {exc}") from exc
+
             try:
                 model_class = find_model_class(model_name)
-                model_instance = find_model_instance(model_class, int(id_))
+                model_instance = find_model_instance(model_class, model_pk)
                 serializer = ModelToSerializerMapper[model_class]
                 return dict(serializer(model_instance).data)
             except ValueError as exc:
-                raise ValueError(f"Failed to parse URI {uri!r}.") from exc
+                raise ValueError(f"Failed to parse URI {uri!r}. Error: {exc}") from exc
 
         case _:
             raise ValueError(f"Unsupported URI {uri!r}.")

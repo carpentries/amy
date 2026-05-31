@@ -33,7 +33,7 @@ def navbar_template(
         screen_reader = mark_safe(' <span class="sr-only">(current)</span>')
 
     if deprecated:
-        badge = mark_safe('<span class="badge badge-secondary">deprecated</span> ')
+        badge = mark_safe('<span class="badge text-bg-secondary">deprecated</span> ')
 
     classes_str = " ".join(classes)
     template = '<li class="nav-item {classes}"><a class="nav-link" href="{url}">{badge}{title}{screen_reader}</a></li>'

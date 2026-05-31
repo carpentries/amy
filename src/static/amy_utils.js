@@ -72,7 +72,9 @@ $.fn.updateIdsInHref = function () {
 
 $(document).ready(function () {
   /* Enable Bootstrap Tooltips by default. */
-  $('[data-toggle="tooltip"]').tooltip();
+  document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
+    new bootstrap.Tooltip(el);
+  });
 
   /*
   Enable Bootstrap Popovers by default.
@@ -80,10 +82,12 @@ $(document).ready(function () {
   Example usage:
 
   <span class="btn btn-primary"
-        data-toggle="popover"
-        data-content="Content of a popup">Hover, focus or click me!</span>
+        data-bs-toggle="popover"
+        data-bs-content="Content of a popup">Hover, focus or click me!</span>
   */
-  $('[data-toggle="popover"]').popover({ placement: "auto" });
+  document.querySelectorAll('[data-bs-toggle="popover"]').forEach(function (el) {
+    new bootstrap.Popover(el, { placement: "auto" });
+  });
 
   /* Some pages may have checkboxes in tables selected by default; in those
   cases, we should update URL in a[amy-download-selected] when the page
@@ -159,7 +163,7 @@ $(document).ready(function () {
   $('select').on("select2:close", function () { $(this).focus(); });
 
   /* react on comment tab change: resize preview div */
-  $('.comment-form a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+  $('.comment-form a[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
     var target_pane = $(e.target).attr("href");
     var prev_target_pane = $(e.relatedTarget).attr("href");
 
@@ -193,38 +197,45 @@ $(document).ready(function () {
   var DEFAULT_WARNING_TIME = 1000 * 60 * 60 * 24 * 30 * 2;
 
   // check initial value for the preferred dates
-  if ($("#id_preferred_dates").val()) {
-    $("#id_preferred_dates").datepicker('update');
+  var preferredDatesEl = document.getElementById("id_preferred_dates");
+  if (preferredDatesEl && preferredDatesEl.value) {
+    var dp = Datepicker.getInstance(preferredDatesEl);
+    if (dp) {
+      // read current input value and today's date
+      var value = dp.getDate();
+      if (value) {
+        var today = new Date();
+        var time_diff = value.getTime() - today.getTime();
 
-    // read current input value and today's date
-    var value = $("#id_preferred_dates").datepicker('getDate');
-    var today = new Date();
-    var time_diff = value.getTime() - today.getTime();
-
-    // 2 months
-    if (time_diff < DEFAULT_WARNING_TIME) {
-      $("#preferred_dates_warning").removeClass("d-none");
-    } else {
-      $("#preferred_dates_warning").addClass("d-none");
+        // 2 months
+        if (time_diff < DEFAULT_WARNING_TIME) {
+          $("#preferred_dates_warning").removeClass("d-none");
+        } else {
+          $("#preferred_dates_warning").addClass("d-none");
+        }
+      }
     }
   }
 
-  $("#id_preferred_dates").on("changeDate input", function (e) {
-    // update datepicker with current input value
-    $(this).datepicker('update');
+  if (preferredDatesEl) {
+    $(preferredDatesEl).on("changeDate input", function (e) {
+      var dp = Datepicker.getInstance(preferredDatesEl);
+      if (!dp) return;
 
-    // read current input value and today's date
-    var value = $(this).datepicker('getDate');
-    var today = new Date();
-    var time_diff = value.getTime() - today.getTime();
+      // read current input value and today's date
+      var value = dp.getDate();
+      if (!value) return;
+      var today = new Date();
+      var time_diff = value.getTime() - today.getTime();
 
-    // 2 months
-    if (time_diff < DEFAULT_WARNING_TIME) {
-      $("#preferred_dates_warning").removeClass("d-none");
-    } else {
-      $("#preferred_dates_warning").addClass("d-none");
-    }
-  })
+      // 2 months
+      if (time_diff < DEFAULT_WARNING_TIME) {
+        $("#preferred_dates_warning").removeClass("d-none");
+      } else {
+        $("#preferred_dates_warning").addClass("d-none");
+      }
+    });
+  }
 
   // load template by the slug when someone opens up the modal for editing template
   // before its sent
@@ -279,11 +290,14 @@ $(document).ready(function () {
 
   // warning for membership agreement duration != 1 year
   const agreement_duration_warning = $("#agreement_duration_warning");
-  const agreement_start = $("#id_agreement_start");
-  const agreement_end = $("#id_agreement_end");
-  const duration_warning = function (start_element, end_element, warning_element) {
-    const next_year = start_element.datepicker("getDate");
-    const end_date = end_element.datepicker("getDate");
+  const agreement_start_el = document.getElementById("id_agreement_start");
+  const agreement_end_el = document.getElementById("id_agreement_end");
+  const duration_warning = function (start_el, end_el, warning_element) {
+    const start_dp = Datepicker.getInstance(start_el);
+    const end_dp = Datepicker.getInstance(end_el);
+    if (!start_dp || !end_dp) return;
+    const next_year = start_dp.getDate();
+    const end_date = end_dp.getDate();
 
     if (next_year && end_date) {
       next_year.setFullYear(next_year.getFullYear() + 1);
@@ -298,19 +312,19 @@ $(document).ready(function () {
       warning_element.addClass("d-none");
     }
   }
-  if (!!agreement_start.val() && !!agreement_end.val()) {
-    duration_warning(agreement_start, agreement_end, agreement_duration_warning);
+  if (agreement_start_el && agreement_end_el && agreement_start_el.value && agreement_end_el.value) {
+    duration_warning(agreement_start_el, agreement_end_el, agreement_duration_warning);
   }
-  agreement_start.on("changeDate input", function (e) {
-    // update datepicker with current input value
-    $(this).datepicker("update");
-    duration_warning(agreement_start, agreement_end, agreement_duration_warning);
-  });
-  agreement_end.on("changeDate input", function (e) {
-    // update datepicker with current input value
-    $(this).datepicker("update");
-    duration_warning(agreement_start, agreement_end, agreement_duration_warning);
-  });
+  if (agreement_start_el) {
+    $(agreement_start_el).on("changeDate input", function (e) {
+      duration_warning(agreement_start_el, agreement_end_el, agreement_duration_warning);
+    });
+  }
+  if (agreement_end_el) {
+    $(agreement_end_el).on("changeDate input", function (e) {
+      duration_warning(agreement_start_el, agreement_end_el, agreement_duration_warning);
+    });
+  }
 
   // assignment form autosubmit
   $("#id_assigned_to").on("change", function (e) {

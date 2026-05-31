@@ -567,7 +567,7 @@ class PartnershipLookupView(OnlyForAdminsNoRedirectMixin, ExtensibleAutoResponse
 
 class PartnershipTierLookupView(OnlyForAdminsNoRedirectMixin, ExtensibleAutoResponseView):
     def get_queryset(self) -> QuerySet[PartnershipTier]:
-        q = PartnershipTier.objects.order_by("name")
+        q = PartnershipTier.objects.order_by("credits", "name")
         if self.term:
             q = q.filter(name__icontains=self.term)
         return q

@@ -1,5 +1,5 @@
 import datetime
-from typing import Any
+from typing import Any, cast
 
 from crispy_forms.bootstrap import FormActions
 from crispy_forms.layout import HTML, Div, Layout, Submit
@@ -7,6 +7,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import Case, When
 from django.http import HttpRequest
+from flags.state import flag_enabled  # type: ignore[import-untyped]
 
 from src.extrequests.models import (
     DataVariant,
@@ -40,6 +41,12 @@ from src.workshops.models import (
     WorkshopRequest,
 )
 from src.workshops.utils.feature_flags import feature_flag_enabled
+
+
+def _hpcc_enabled(request: HttpRequest | None) -> bool:
+    if request is None:
+        return False
+    return bool(flag_enabled("HPCC", request=request))
 
 
 class BulkChangeTrainingRequestForm(forms.Form):
@@ -169,10 +176,10 @@ class BulkMatchTrainingRequestForm(forms.Form):
                 "match",
                 "Accept & match selected trainees to chosen training",
                 **{
-                    "data-toggle": "popover",
-                    "data-html": "true",
-                    "data-trigger": "hover",
-                    "data-content": "If you want to <strong>re</strong>match "
+                    "data-bs-toggle": "popover",
+                    "data-bs-html": "true",
+                    "data-bs-trigger": "hover",
+                    "data-bs-content": "If you want to <strong>re</strong>match "
                     "trainees to other training, first "
                     "<strong>unmatch</strong> them!",
                 },
@@ -369,6 +376,11 @@ class WorkshopRequestBaseForm(forms.ModelForm[WorkshopRequest]):
         self.request_http = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
 
+        if not _hpcc_enabled(self.request_http):
+            workshop_types_field = cast(CurriculumModelMultipleChoiceField, self.fields["requested_workshop_types"])
+            assert workshop_types_field.queryset is not None
+            workshop_types_field.queryset = workshop_types_field.queryset.exclude(carpentry="HPCC")
+
         # the field isn't required, but we want user to fill it
         self.fields["preferred_dates"].widget.fake_required = True
 
@@ -417,7 +429,7 @@ class WorkshopRequestBaseForm(forms.ModelForm[WorkshopRequest]):
                     css_class="alert alert-warning offset-lg-2 col-lg-8 col-12",
                 ),
                 id="preferred_dates_warning",
-                css_class="form-group row d-none",
+                css_class="mb-3 row d-none",
             ),
         )
 
@@ -745,7 +757,13 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm[WorkshopInquiryRequest]):
         return f"{obj.fullname}"
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
+        self.request_http = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
+
+        if not _hpcc_enabled(self.request_http):
+            workshop_types_field = cast(CurriculumModelMultipleChoiceField, self.fields["requested_workshop_types"])
+            assert workshop_types_field.queryset is not None
+            workshop_types_field.queryset = workshop_types_field.queryset.exclude(carpentry="HPCC")
 
         # change institution object labels (originally Organization displays
         # domain as well)
@@ -799,7 +817,7 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm[WorkshopInquiryRequest]):
                     css_class="alert alert-warning offset-lg-2 col-lg-8 col-12",
                 ),
                 id="computing_levels_warning",
-                css_class="form-group row d-none",
+                css_class="mb-3 row d-none",
             ),
         )
 
@@ -820,7 +838,7 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm[WorkshopInquiryRequest]):
                     css_class="alert alert-warning offset-lg-2 col-lg-8 col-12",
                 ),
                 id="preferred_dates_warning",
-                css_class="form-group row d-none",
+                css_class="mb-3 row d-none",
             ),
         )
 
@@ -1088,7 +1106,13 @@ class SelfOrganisedSubmissionBaseForm(forms.ModelForm[SelfOrganisedSubmission]):
         return f"{obj.fullname}"
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
+        self.request_http = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
+
+        if not _hpcc_enabled(self.request_http):
+            workshop_types_field = cast(CurriculumModelMultipleChoiceField, self.fields["workshop_types"])
+            assert workshop_types_field.queryset is not None
+            workshop_types_field.queryset = workshop_types_field.queryset.exclude(carpentry="HPCC")
 
         # change institution object labels (originally Organization displays
         # domain as well)
@@ -1155,7 +1179,7 @@ class SelfOrganisedSubmissionBaseForm(forms.ModelForm[SelfOrganisedSubmission]):
                     css_class="alert alert-warning offset-lg-2 col-lg-8 col-12",
                 ),
                 id="workshop_url_repo_warning",
-                css_class="form-group row d-none",
+                css_class="mb-3 row d-none",
             ),
         )
         self.helper.layout.insert(
@@ -1166,7 +1190,7 @@ class SelfOrganisedSubmissionBaseForm(forms.ModelForm[SelfOrganisedSubmission]):
                     css_class="alert alert-warning offset-lg-2 col-lg-8 col-12",
                 ),
                 id="workshop_url_warning",
-                css_class="form-group row d-none",
+                css_class="mb-3 row d-none",
             ),
         )
 

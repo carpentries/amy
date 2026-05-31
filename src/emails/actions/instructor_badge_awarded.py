@@ -7,6 +7,7 @@ import cairosvg
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpRequest
+from flags.state import flag_enabled  # type: ignore[import-untyped]
 
 from src.emails.actions.base_action import BaseAction, BaseActionCancel, BaseActionUpdate
 from src.emails.actions.base_strategy import run_strategy
@@ -189,8 +190,9 @@ class InstructorBadgeAwardedReceiver(BaseAction):
         return get_recipients_context_json(context, **kwargs)
 
     def __call__(self, sender: Any, *args: Any, **kwargs: Any) -> ScheduledEmail | None:
+        request = kwargs.get("request")
         scheduled_email = super().__call__(sender, *args, **kwargs)
-        instructor_badge_awarded_signal_sent.send(sender=scheduled_email)
+        instructor_badge_awarded_signal_sent.send(sender=scheduled_email, request=request)
         return scheduled_email
 
 
@@ -285,12 +287,12 @@ def generate_pdf(svg_file: bytes) -> bytes:
     return file_obj.read()
 
 
-def generate_and_attach_certificate_pdf(sender: ScheduledEmail | None, *args: Any, **kwargs: Any) -> None:
+def generate_and_attach_certificate_pdf(
+    sender: ScheduledEmail | None, request: HttpRequest | None = None, *args: Any, **kwargs: Any
+) -> None:
     logger.info(f"Generating certificate PDF strategy for {sender=}")
 
     # `sender` is None also in case when the feature flag `EMAIL_MODULE` is not enabled.
-    # Unfortunately, it's not possible to check for feature flags in this function, because `request`
-    # kwarg is missing.
 
     if sender is None:
         logger.error(f"Failed to generate and attach certificate: sender is not a ScheduledEmail (it's {sender})")
@@ -308,6 +310,12 @@ def generate_and_attach_certificate_pdf(sender: ScheduledEmail | None, *args: An
     award_date = date.strftime(sender.generic_relation.awarded, r"%d %B %Y")
     signature = settings.CERTIFICATE_SIGNATURE
     file_path = settings.APPS_DIR / "templates" / "certificates" / "carpentries-instructor.svg"
+    hpcc_enabled = request is not None and bool(flag_enabled("HPCC", request=request))
+    carpentries = (
+        "Carpentry, Software Carpentry, and High Performance Computing Carpentry."
+        if hpcc_enabled
+        else "Carpentry, and Software Carpentry."
+    )
 
     # Prepare SVG file in memory.
     svg_file = read_binary_file_and_replace_values(
@@ -316,6 +324,7 @@ def generate_and_attach_certificate_pdf(sender: ScheduledEmail | None, *args: An
             b"{{name}}": bytes(full_name, encoding="utf-8"),
             b"{{date}}": bytes(award_date, encoding="utf-8"),
             b"{{signature}}": bytes(signature, encoding="utf-8"),
+            b"{{carpentries}}": bytes(carpentries, encoding="utf-8"),
         },
     )
 

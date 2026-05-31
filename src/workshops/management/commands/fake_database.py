@@ -134,6 +134,7 @@ class Command(BaseCommand):
             ("DC", 20, "Data Carpentry Workshop"),
             ("LC", 30, "Library Carpentry Workshop"),
             ("SWC", 40, "Software Carpentry Workshop"),
+            ("HPCC", 45, "High Performance Computing Carpentry Workshop"),
             ("Circuits", 50, "Events with only partial Carpentries curriculum"),
             ("online", 60, "Events taking place entirely online"),
             ("TTT", 70, "Train the Trainers"),
@@ -439,6 +440,7 @@ class Command(BaseCommand):
             ("Data Carpentry", "datacarpentry.org"),
             ("Library Carpentry", "librarycarpentry.org"),
             ("Instructor Training", "carpentries.org"),
+            ("HPC Carpentry", "hpccarpentry.org"),
         ]
         for name, domain in orgs:
             _, created = Organization.objects.get_or_create(
@@ -900,7 +902,7 @@ class Command(BaseCommand):
     def fake_partnership_tiers(self) -> None:
         self.stdout.write("Generating 4 fake partnership tiers...")
 
-        for name, credits in [("bronze", 16), ("silver", 32), ("gold", 64), ("platinum", 128)]:
+        for name, credits in [("Launch", 16), ("Expand", 48), ("Scale", 80), ("Transform", 128)]:
             PartnershipTier.objects.create(name=name, credits=credits)
 
     def fake_consortiums(self) -> None:

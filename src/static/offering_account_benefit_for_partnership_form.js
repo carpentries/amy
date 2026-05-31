@@ -1,21 +1,21 @@
 jQuery(function () {
   function handleDateFields(record) {
-    const id_start_date = $("#id_start_date");
-    const id_end_date = $("#id_end_date");
+    const startEl = document.getElementById("id_start_date");
+    const endEl = document.getElementById("id_end_date");
 
-    if (record.agreement_start) {
-      id_start_date.datepicker("update", new Date(record.agreement_start));
-      id_start_date.attr("disabled", "disabled");
-    } else {
-      // id_start_date.datepicker("update", "");
-      id_start_date.removeAttr("disabled");
+    if (record.agreement_start && startEl) {
+      const dp = Datepicker.getInstance(startEl);
+      if (dp) dp.setDate(new Date(record.agreement_start));
+      startEl.setAttribute("disabled", "disabled");
+    } else if (startEl) {
+      startEl.removeAttribute("disabled");
     }
-    if (record.agreement_end) {
-      id_end_date.datepicker("update", new Date(record.agreement_end));
-      id_end_date.attr("disabled", "disabled");
-    } else {
-      // id_end_date.datepicker("update", "");
-      id_end_date.removeAttr("disabled");
+    if (record.agreement_end && endEl) {
+      const dp = Datepicker.getInstance(endEl);
+      if (dp) dp.setDate(new Date(record.agreement_end));
+      endEl.setAttribute("disabled", "disabled");
+    } else if (endEl) {
+      endEl.removeAttribute("disabled");
     }
   }
   function handleRegistrationCode(record) {
