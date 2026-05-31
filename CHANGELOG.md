@@ -13,6 +13,58 @@ Then paste output from that script here.
 
 -----------------------------------------------------------------
 
+## v4.10 - 2026-05-31
+
+### Features
+* Community roles for partnerships - [#2973](https://github.com/carpentries/amy/pull/2973) by @pbanaszkiewicz
+* chore(deps): Bump js-cookie from 3.0.1 to 3.0.7 - [#2972](https://github.com/carpentries/amy/pull/2972) by @dependabot[bot]
+* chore(deps): Bump idna from 3.11 to 3.15 - [#2971](https://github.com/carpentries/amy/pull/2971) by @dependabot[bot]
+* chore(deps): Bump pymdown-extensions from 10.21 to 10.21.3 - [#2970](https://github.com/carpentries/amy/pull/2970) by @dependabot[bot]
+* [Emails] Partnership, AccountBenefit human readable dates - [#2968](https://github.com/carpentries/amy/pull/2968) by @pbanaszkiewicz
+* chore(deps): Bump urllib3 from 2.6.3 to 2.7.0 - [#2966](https://github.com/carpentries/amy/pull/2966) by @dependabot[bot]
+* chore(deps): Bump django from 5.2.13 to 5.2.14 - [#2965](https://github.com/carpentries/amy/pull/2965) by @dependabot[bot]
+* fix(emails): Invalid context name for account benefits - [#2964](https://github.com/carpentries/amy/pull/2964) by @pbanaszkiewicz
+* fix(emails): Handle UUID model pk for Benefits - [#2963](https://github.com/carpentries/amy/pull/2963) by @pbanaszkiewicz
+* Sort tiers and use real tier names during testing - [#2961](https://github.com/carpentries/amy/pull/2961) by @maneesha
+* feat(#2956): Introduce HPCC feature flag - [#2960](https://github.com/carpentries/amy/pull/2960) by @pbanaszkiewicz
+* fix(#2958): Refresh partnership onboarding email when account benefits added/updated/deleted - [#2959](https://github.com/carpentries/amy/pull/2959) by @pbanaszkiewicz
+* fix(#2953): Add trailing slash when workshop URL doesn't have one - [#2954](https://github.com/carpentries/amy/pull/2954) by @pbanaszkiewicz
+* Introduce HPCC - [#2952](https://github.com/carpentries/amy/pull/2952) by @pbanaszkiewicz
+* chore(deps): Bump pillow from 12.1.1 to 12.2.0 - [#2950](https://github.com/carpentries/amy/pull/2950) by @dependabot[bot]
+* chore(deps): Bump cryptography from 46.0.6 to 46.0.7 - [#2949](https://github.com/carpentries/amy/pull/2949) by @dependabot[bot]
+* chore(deps): Bump django from 5.2.12 to 5.2.13 - [#2948](https://github.com/carpentries/amy/pull/2948) by @dependabot[bot]
+
+## v4.9 - 2026-04-05
+
+### Features
+* chore(deps): Bump pygments from 2.19.2 to 2.20.0 - [#2947](https://github.com/carpentries/amy/pull/2947) by @dependabot[bot]
+* [Offering] custom partnership tier - [#2946](https://github.com/carpentries/amy/pull/2946) by @pbanaszkiewicz
+* chore(deps): Bump cryptography from 46.0.5 to 46.0.6 - [#2944](https://github.com/carpentries/amy/pull/2944) by @dependabot[bot]
+* chore(deps): Bump requests from 2.32.5 to 2.33.0 - [#2943](https://github.com/carpentries/amy/pull/2943) by @dependabot[bot]
+* [Offering] Apply discounts to partnerships - [#2942](https://github.com/carpentries/amy/pull/2942) by @pbanaszkiewicz
+* [Offering] Show account benefit links in task table in event page - [#2941](https://github.com/carpentries/amy/pull/2941) by @pbanaszkiewicz
+* feat(#2930): Update instructor-dashboard -> user-dashboard - [#2940](https://github.com/carpentries/amy/pull/2940) by @pbanaszkiewicz
+* [Emails][Offering] Updates for the New Partnership Onboarding email - [#2936](https://github.com/carpentries/amy/pull/2936) by @pbanaszkiewicz
+* [Offering] Partnership: Account Benefit registration code - [#2935](https://github.com/carpentries/amy/pull/2935) by @pbanaszkiewicz
+* chore(deps): Bump pyjwt from 2.11.0 to 2.12.0 - [#2934](https://github.com/carpentries/amy/pull/2934) by @dependabot[bot]
+* chore(deps): Bump cairosvg from 2.8.2 to 2.9.0 - [#2933](https://github.com/carpentries/amy/pull/2933) by @dependabot[bot]
+* admin-dashboard -> dashboard - [#2931](https://github.com/carpentries/amy/pull/2931) by @mscroggs
+* [Offering] Update credits when Partnership tier changes - [#2929](https://github.com/carpentries/amy/pull/2929) by @pbanaszkiewicz
+* fix(#2921): Reorder fields in Instructor Training request form - [#2928](https://github.com/carpentries/amy/pull/2928) by @pbanaszkiewicz
+* feat(#2905): Update verbiage on registration codes, training form intro - [#2927](https://github.com/carpentries/amy/pull/2927) by @pbanaszkiewicz
+* [Offering] Update verbiage in some models - [#2923](https://github.com/carpentries/amy/pull/2923) by @pbanaszkiewicz
+* Event import and validation in browser - [#2918](https://github.com/carpentries/amy/pull/2918) by @pbanaszkiewicz
+* [Offering] Permanently enable service offering feature flag - [#2917](https://github.com/carpentries/amy/pull/2917) by @pbanaszkiewicz
+* feat(#2907): Improvements to Workshop Request and Account Benefit - [#2916](https://github.com/carpentries/amy/pull/2916) by @pbanaszkiewicz
+*  [Docs] Update member code docs, add some docs for the Offering project - [#2915](https://github.com/carpentries/amy/pull/2915) by @pbanaszkiewicz
+* [Offering] Registration code for account benefits - [#2914](https://github.com/carpentries/amy/pull/2914) by @pbanaszkiewicz
+* Person airport timezone denormalization - [#2913](https://github.com/carpentries/amy/pull/2913) by @pbanaszkiewicz
+* [Offering] Extend Workshop Request registration code to fully support partnerships - [#2912](https://github.com/carpentries/amy/pull/2912) by @pbanaszkiewicz
+* [Recruitment] Add option to move Instructor Recruitment Signup back to pending - [#2911](https://github.com/carpentries/amy/pull/2911) by @pbanaszkiewicz
+* fix(#2870): Improve social fields validation - [#2910](https://github.com/carpentries/amy/pull/2910) by @pbanaszkiewicz
+* Validate person fields - [#2909](https://github.com/carpentries/amy/pull/2909) by @pbanaszkiewicz
+* fixes for v4.8 - [#2908](https://github.com/carpentries/amy/pull/2908) by @pbanaszkiewicz
+
 ## v4.8 - 2026-02-28
 
 ### Bugfixes
