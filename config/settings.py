@@ -320,6 +320,7 @@ STATICFILES_DIRS = [
     str(ROOT_DIR / "node_modules" / "js-cookie" / "dist"),
     str(ROOT_DIR / "node_modules" / "js-yaml" / "dist"),
     str(ROOT_DIR / "node_modules" / "urijs" / "src"),
+    str(ROOT_DIR / "node_modules" / "htmx.org" / "dist"),
 ]
 # https://docs.djangoproject.com/en/dev/ref/contrib/staticfiles/#staticfiles-finders
 STATICFILES_FINDERS = [
