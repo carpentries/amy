@@ -170,7 +170,8 @@
         <li>
           {{ attachment.filename }}
           {% if attachment.expired_presigned_url %}
-            ({{ attachment.s3_path }}) <button class="btn btn-sm btn-secondary" onclick="generatePresignedUrl('{{attachment.pk}}')">Generate download URL</button>
+            ({{ attachment.s3_path }})
+            <button class="btn btn-sm btn-secondary" type="button" hx-post="/api/v2/attachment/{{attachment.pk}}/generate_presigned_url" hx-swap="none" hx-on::after-request="location.reload()">Generate download URL</button>
           {% else %}
             (<a href="{{ attachment.presigned_url }}">{{ attachment.s3_path }} <i class="fas fa-external-link-alt"></i></a>)
           {% endif %}
@@ -237,8 +238,4 @@
   </tbody>
 </table>
 
-{% endblock %}
-
-{% block extrajs %}
-<script type="text/javascript" src="{% static 'attachment_generate_presigned_url.js' %}"></script>
 {% endblock %}
