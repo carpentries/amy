@@ -27,6 +27,7 @@ from src.recruitment.views import (
     InstructorRecruitmentCreate,
     InstructorRecruitmentDetails,
     InstructorRecruitmentList,
+    InstructorRecruitmentNotes,
     InstructorRecruitmentSignupChangeState,
 )
 from src.workshops.models import (
@@ -1176,3 +1177,94 @@ class TestInstructorRecruitmentSignupUpdateView(TestBase):
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, success_url)
         self.assertEqual(signup.notes, "New admin notes")
+
+
+class TestInstructorRecruitmentNotesView(TestBase):
+    DISPLAY_TEMPLATE = "recruitment/instructorrecruitment_notes.html"
+    EDIT_TEMPLATE = "recruitment/instructorrecruitment_notes_edit.html"
+
+    def setUp(self) -> None:
+        super()._setUpUsersAndLogin()  # logs in self.admin (superuser)
+        organization = Organization.objects.all()[0]
+        event = Event.objects.create(
+            slug="test-event",
+            host=organization,
+            administrator=organization,
+            start=date(2022, 1, 22),
+        )
+        self.recruitment = InstructorRecruitment.objects.create(event=event, notes="Original notes")
+        self.url = reverse("instructorrecruitment_notes", args=[self.recruitment.pk])
+
+    def test_class_fields(self) -> None:
+        # Arrange
+        view = InstructorRecruitmentNotes()
+        # Assert
+        self.assertEqual(view.permission_required, "recruitment.change_instructorrecruitment")
+        self.assertEqual(view.DISPLAY_TEMPLATE, self.DISPLAY_TEMPLATE)
+        self.assertEqual(view.EDIT_TEMPLATE, self.EDIT_TEMPLATE)
+
+    def test_get_returns_display_fragment(self) -> None:
+        # Act
+        response = self.client.get(self.url)
+        # Assert
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, self.DISPLAY_TEMPLATE)
+        self.assertEqual(response.context["object"], self.recruitment)
+        self.assertContains(response, "Original notes")
+
+    def test_get_with_edit_returns_edit_fragment(self) -> None:
+        # Act
+        response = self.client.get(self.url, {"edit": ""})
+        # Assert
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, self.EDIT_TEMPLATE)
+        self.assertEqual(response.context["object"], self.recruitment)
+        self.assertContains(response, "<textarea")
+        self.assertContains(response, "Original notes")
+
+    def test_post_updates_notes_and_returns_display_fragment(self) -> None:
+        # Act
+        response = self.client.post(self.url, {"notes": "Updated notes"})
+        # Assert
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, self.DISPLAY_TEMPLATE)
+        self.recruitment.refresh_from_db()
+        self.assertEqual(self.recruitment.notes, "Updated notes")
+        self.assertContains(response, "Updated notes")
+
+    def test_post_without_notes_clears_field(self) -> None:
+        # Act
+        response = self.client.post(self.url, {})
+        # Assert
+        self.assertEqual(response.status_code, 200)
+        self.recruitment.refresh_from_db()
+        self.assertEqual(self.recruitment.notes, "")
+
+    def test_get_missing_object_returns_404(self) -> None:
+        # Arrange
+        url = reverse("instructorrecruitment_notes", args=[self.recruitment.pk + 1000])
+        # Act
+        response = self.client.get(url)
+        # Assert
+        self.assertEqual(response.status_code, 404)
+
+    def test_access_denied_for_non_admin(self) -> None:
+        # Arrange: a non-admin user is blocked from viewing or editing notes.
+        # Access is denied before the view runs (TermsMiddleware redirects, 302)
+        # or by OnlyForAdminsMixin/PermissionRequiredMixin (403) - either way the
+        # user must not reach a 200 response or modify the notes.
+        user = Person.objects.create(
+            personal="No",
+            family="Body",
+            email="nobody@example.org",
+            username="nobody",
+        )
+        self.client.force_login(user)
+        # Act
+        get_response = self.client.get(self.url)
+        post_response = self.client.post(self.url, {"notes": "Should not be saved"})
+        # Assert
+        self.assertIn(get_response.status_code, (302, 403))
+        self.assertIn(post_response.status_code, (302, 403))
+        self.recruitment.refresh_from_db()
+        self.assertEqual(self.recruitment.notes, "Original notes")
