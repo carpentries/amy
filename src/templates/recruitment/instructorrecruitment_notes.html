@@ -1,0 +1,11 @@
+  <div class="card recruitment-notes" id="recruitment-notes-{{ object.id }}">
+    <div class="card-body">
+      <div class="notes-content">{{ object.notes }}</div>
+      <button type="button" class="btn btn-outline-primary btn-sm"
+              hx-get="{% url 'instructorrecruitment_notes' object.id %}?edit"
+              hx-target="#recruitment-notes-{{ object.id }}"
+              hx-swap="outerHTML">
+        {% if object.notes %}Edit notes{% else %}Add notes{% endif %}
+      </button>
+    </div>
+  </div>

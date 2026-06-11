@@ -1,0 +1,14 @@
+  <div class="card recruitment-notes" id="recruitment-notes-{{ object.id }}">
+    <div class="card-body">
+      <form hx-post="{% url 'instructorrecruitment_notes' object.id %}"
+            hx-target="#recruitment-notes-{{ object.id }}"
+            hx-swap="outerHTML">
+        <textarea class="form-control mb-1" name="notes" rows="5">{{ object.notes }}</textarea>
+        <button type="submit" class="btn btn-primary btn-sm">Save</button>
+        <button type="button" class="btn btn-outline-secondary btn-sm"
+                hx-get="{% url 'instructorrecruitment_notes' object.id %}"
+                hx-target="#recruitment-notes-{{ object.id }}"
+                hx-swap="outerHTML">Cancel</button>
+      </form>
+    </div>
+  </div>

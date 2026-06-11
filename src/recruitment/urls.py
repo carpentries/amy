@@ -32,6 +32,11 @@ urlpatterns = [
                     views.InstructorRecruitmentChangeState.as_view(),
                     name="instructorrecruitment_changestate",
                 ),
+                path(
+                    "notes",
+                    views.InstructorRecruitmentNotes.as_view(),
+                    name="instructorrecruitment_notes",
+                ),
             ]
         ),
     ),
