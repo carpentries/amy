@@ -23,23 +23,21 @@
 Click on the button at the bottom of this page to update your profile information. <br>
 Your email address and GitHub id can not be updated here, as they are tied to your login id. Please contact us at <a href="mailto:team@carpentries.org">team@carpentries.org</a> if you would like to update this information.  <br>
 
-
-<div>
- <h2>TESTING Check out events on pretix here.</h2>
-<pretix-widget
-  event="https://pretix.carpentries.org/community-events/community-sessions/" 
+<pretix-widget 
+  event="https://test-pretix.terrier-vibe.ts.net/carp-inst-train/two-day-event/">
   data-email="{{ request.user.email }}"
   data-attendee-name="{{ request.user.personal }}" + "{{ request.user.family }}"
   data-fix="true"
+  skip-ssl-check
 </pretix-widget>
-
 <noscript>
    <div class="pretix-widget">
         <div class="pretix-widget-info-message">
-            JavaScript is disabled in your browser. To access our ticket shop without JavaScript, please <a target="_blank" rel="noopener" href="https://pretix.carpentries.org/community-events/community-sessions/">click here</a>.
+            JavaScript is disabled in your browser. To access our ticket shop without JavaScript, please <a target="_blank" rel="noopener" href="https://test-pretix.terrier-vibe.ts.net/carp-inst-train/two-day-event/">click here</a>.
         </div>
     </div>
 </noscript>
+
 </div>
 
   <table class="table table-striped">
