@@ -166,6 +166,8 @@ THIRD_PARTY_APPS = [
     "djangoformsetjs",
     "django_better_admin_arrayfield",
     "flags",
+    "corsheaders",
+    "sslserver",
 ]
 LOCAL_APPS = [
     "src.workshops.apps.WorkshopsConfig",
@@ -280,7 +282,9 @@ MIDDLEWARE = [
     "src.workshops.middleware.version_check.VersionCheckMiddleware",
     "debug_toolbar.middleware.DebugToolbarMiddleware",
     "reversion.middleware.RevisionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "django.middleware.common.CommonMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -671,3 +675,7 @@ CERTIFICATE_SIGNATURE = "SherAaron Hurt (Director of Workshops and Instruction)"
 
 # To silence the Django 6.0 warning about URLField assume_https default changing
 FORMS_URLFIELD_ASSUME_HTTPS = True
+
+SECURE_CROSS_ORIGIN_OPENER_POLICY = "unsafe-none"
+CORS_ALLOW_ALL_ORIGINS: True 
+
