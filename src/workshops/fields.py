@@ -215,6 +215,13 @@ class Select2Widget(FakeRequiredMixin, Select2BootstrapMixin, DS2_Select2Widget)
     pass
 
 
+class TomSelectWidget(forms.Select):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        default_attrs = {"class": "tom-select"}
+        kwargs.setdefault("attrs", {}).update(default_attrs)
+        super().__init__(*args, **kwargs)
+
+
 class Select2MultipleWidget(Select2BootstrapMixin, DS2_Select2MultipleWidget):  # type: ignore
     pass
 
