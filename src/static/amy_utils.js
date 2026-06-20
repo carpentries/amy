@@ -401,3 +401,13 @@ $(document).ready(function () {
 $(document).on('select2:open', () => {
   document.querySelector('.select2-container--open .select2-search__field').focus();
 });
+
+window.addEventListener("load", () => {
+  // Add tom-select to .tom-select widgets
+  document.querySelectorAll('select.tom-select').forEach(
+    el => new TomSelect(el, {
+      maxOptions: null,
+      plugins: ['clear_button'],
+    })
+  );
+});

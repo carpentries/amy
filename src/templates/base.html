@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="{% static 'select2-bootstrap-5-theme.min.css' %}" />
     <link rel="stylesheet" href="{% static 'css/amy.css' %}" />
     <link rel="stylesheet" href="{% static 'css/prism.css' %}" />
+    <link rel="stylesheet" href="{% static 'tom-select.bootstrap5.min.css' %}" />
     {% block extrastyle %}{% endblock extrastyle %}
 
     <script src="{% static 'jquery.min.js' %}"></script>
@@ -29,6 +30,8 @@
     <script src="{% static 'calendar_popup.js' %}"></script>
     <script src="{% static 'amy_utils.js' %}"></script>
     <script src="{% static 'htmx.min.js' %}"></script>
+    <script src="{% static 'tom-select.complete.min.js' %}"></script>
+    <script defer src="{% static 'cdn.min.js' %}"></script>{# AlpineJS dist #}
 
     <title>AMY{% if title %}: {{ title }}{% endif %}</title>
   </head>
