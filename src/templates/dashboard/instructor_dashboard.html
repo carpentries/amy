@@ -23,12 +23,12 @@
 Click on the button at the bottom of this page to update your profile information. <br>
 Your email address and GitHub id can not be updated here, as they are tied to your login id. Please contact us at <a href="mailto:team@carpentries.org">team@carpentries.org</a> if you would like to update this information.  <br>
 
-<pretix-widget 
-  event="https://test-pretix.terrier-vibe.ts.net/carp-inst-train/two-day-event/">
-  data-email="{{ request.user.email }}"
-  data-attendee-name="{{ request.user.personal }}" + "{{ request.user.family }}"
-  data-fix="true"
-  skip-ssl-check
+<pretix-widget event="https://test-pretix.terrier-vibe.ts.net/carp-inst-train/series-test/"
+
+   data-email = "{{ request.user.email }}"
+   data-attendee-name-given-name="{{ request.user.personal }}"
+   data-attendee-name-family-name="{{ request.user.family }}"
+  data-fix="true">
 </pretix-widget>
 <noscript>
    <div class="pretix-widget">
