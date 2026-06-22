@@ -166,8 +166,8 @@ THIRD_PARTY_APPS = [
     "djangoformsetjs",
     "django_better_admin_arrayfield",
     "flags",
-    "corsheaders",
-    "sslserver",
+    # "corsheaders",
+    # "sslserver",
 ]
 LOCAL_APPS = [
     "src.workshops.apps.WorkshopsConfig",
@@ -282,7 +282,7 @@ MIDDLEWARE = [
     "src.workshops.middleware.version_check.VersionCheckMiddleware",
     "debug_toolbar.middleware.DebugToolbarMiddleware",
     "reversion.middleware.RevisionMiddleware",
-    "corsheaders.middleware.CorsMiddleware",
+    # "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.middleware.common.CommonMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
