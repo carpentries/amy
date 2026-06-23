@@ -2141,6 +2141,16 @@ class TrainingRequest(
         "score_notes",
     )
 
+    benefit = models.ForeignKey(
+        "offering.Benefit",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        default=None,
+        verbose_name="What Carpentries offering are you signing up for?",
+        limit_choices_to=Q(active=True),
+    )
+
     person = models.ForeignKey(
         Person,
         null=True,
@@ -2200,10 +2210,9 @@ class TrainingRequest(
         null=False,
         blank=True,
         default="",
-        verbose_name="Eventbrite URL",
-        help_text="If you are registering or have registered for a training event "
-        "through Eventbrite, enter the URL of that event. You can find this on the "
-        "registration page or in the confirmation email. "
+        verbose_name="Event registration URL",
+        help_text="If you are registering or have registered for an event, enter the URL of that event. "
+        "You can find this on the registration page or in the confirmation email. "
         "If you have not yet registered for an event, leave this field blank.",
     )
 
@@ -2482,7 +2491,7 @@ class TrainingRequest(
     )
 
     reason = models.TextField(
-        verbose_name="Why do you want to attend this training course?",
+        verbose_name="Why do you want to attend this event?",
         null=False,
         blank=False,
     )

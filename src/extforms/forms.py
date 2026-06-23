@@ -51,6 +51,7 @@ class TrainingRequestForm(forms.ModelForm[TrainingRequest]):
     class Meta:
         model = TrainingRequest
         fields = (
+            "benefit",
             "personal",
             "family",
             "member_code",
@@ -95,13 +96,25 @@ class TrainingRequestForm(forms.ModelForm[TrainingRequest]):
             "domains": CheckboxSelectMultipleWithOthers("domains_other"),
             "underrepresented": forms.RadioSelect(),
             "previous_involvement": forms.CheckboxSelectMultiple(),
-            "previous_training": RadioSelectWithOther("previous_training_other"),
+            "previous_training": RadioSelectWithOther("previous_training_other", attrs={"x-ref": "previous_training"}),
+            "previous_training_other": forms.TextInput(attrs={"x-ref": "previous_training_other"}),
+            "previous_training_explanation": forms.Textarea(),
             "previous_experience": RadioSelectWithOther("previous_experience_other"),
+            "previous_experience_other": forms.TextInput(attrs={"x-ref": "previous_experience_other"}),
+            "previous_experience_explanation": forms.Textarea(),
             "programming_language_usage_frequency": forms.RadioSelect(),
             "checkout_intent": forms.RadioSelect(),
             "teaching_intent": forms.RadioSelect(),
-            "teaching_frequency_expectation": RadioSelectWithOther("teaching_frequency_expectation_other"),
-            "max_travelling_frequency": RadioSelectWithOther("max_travelling_frequency_other"),
+            "teaching_frequency_expectation": RadioSelectWithOther(
+                "teaching_frequency_expectation_other", attrs={"x-ref": "teaching_frequency_expectation"}
+            ),
+            "teaching_frequency_expectation_other": forms.TextInput(
+                attrs={"x-ref": "teaching_frequency_expectation_other"}
+            ),
+            "max_travelling_frequency": RadioSelectWithOther(
+                "max_travelling_frequency_other", attrs={"x-ref": "max_travelling_frequency"}
+            ),
+            "max_travelling_frequency_other": forms.TextInput(attrs={"x-ref": "max_travelling_frequency_other"}),
             "country": Select2Widget,
         }
 
