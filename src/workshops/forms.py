@@ -33,6 +33,7 @@ from src.workshops.fields import (
     Select2TagWidget,
     Select2Widget,
     TimezoneChoiceField,
+    TomSelectWidget,
 )
 from src.workshops.mixins import GenderMixin
 from src.workshops.models import (
@@ -403,7 +404,9 @@ class EventForm(forms.ModelForm[Event]):
     country = CountryField().formfield(
         required=False,
         help_text=Event._meta.get_field("country").help_text,
-        widget=Select2Widget,
+        widget=TomSelectWidget(
+            attrs={"x-model": "country"},
+        ),
     )  # type: ignore
 
     comment = MarkdownxFormField(
@@ -458,12 +461,14 @@ class EventForm(forms.ModelForm[Event]):
             "membership": ModelSelect2Widget(data_view="membership-lookup"),  # type: ignore[no-untyped-call]
             "allocated_benefit": ModelSelect2Widget(data_view="account-benefit-events-lookup"),  # type: ignore[no-untyped-call]
             "manual_attendance": TextInput,
-            "latitude": TextInput,
-            "longitude": TextInput,
             "tags": SelectMultiple(attrs={"size": Tag.ITEMS_VISIBLE_IN_SELECT_WIDGET}),
             "curricula": CheckboxSelectMultiple(),
             "lessons": CheckboxSelectMultiple(),
             "contact": Select2TagWidget,
+            "venue": TextInput(attrs={"x-ref": "venue", ":disabled": "country==='W3'"}),
+            "address": TextInput(attrs={"x-ref": "address", ":disabled": "country==='W3'"}),
+            "latitude": TextInput(attrs={"x-ref": "latitude", ":disabled": "country==='W3'"}),
+            "longitude": TextInput(attrs={"x-ref": "longitude", ":disabled": "country==='W3'"}),
         }
 
     class Media:
@@ -472,7 +477,6 @@ class EventForm(forms.ModelForm[Event]):
             "workshop_metadata.js",
             "date_yyyymmdd.js",
             "edit_from_url.js",
-            "online_country.js",
         )
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -532,6 +536,16 @@ class EventForm(forms.ModelForm[Event]):
             self.helper.layout.append("comment")
         else:
             del self.fields["comment"]
+
+        self.helper.attrs["x-data"] = "{country: '" + str(self.instance.country) + "'}"
+        self.helper.attrs["x-effect"] = """
+            if (country === 'W3') {
+                $refs.venue.value = 'Internet';
+                $refs.address.value = 'Internet';
+                $refs.latitude.value = '';
+                $refs.longitude.value = '';
+            }
+"""
 
     def clean_slug(self) -> str:
         # Ensure slug is in "YYYY-MM-DD-location" format
