@@ -44,7 +44,7 @@ class Migration(migrations.Migration):
             model_name="trainingrequest",
             name="eventbrite_url",
             field=models.URLField(
-                blank=False,
+                blank=True,
                 default="",
                 help_text="If you are registering or have registered for an event, enter the URL of that event. "
                 "You can find this on the registration page or in the confirmation email. "
