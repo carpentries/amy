@@ -477,7 +477,9 @@ class SelfOrganisedSubmissionAssign(OnlyForAdminsMixin, AssignView[SelfOrganised
 def all_trainingrequests(request: AuthenticatedHttpRequest) -> HttpResponse:
     filter_ = TrainingRequestFilter(
         request.GET,
-        queryset=TrainingRequest.objects.all().prefetch_related(
+        queryset=TrainingRequest.objects.all()
+        .select_related("benefit")
+        .prefetch_related(
             Prefetch(
                 "person__task_set",
                 to_attr="training_tasks",
