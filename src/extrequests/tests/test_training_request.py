@@ -43,8 +43,13 @@ from src.workshops.tests.base import TestBase
 def create_training_request(
     state: str, person: Person | None, open_review: bool = True, reg_code: str = ""
 ) -> TrainingRequest:
+    benefit, _ = Benefit.objects.get_or_create(
+        name="Instructor Training",
+        defaults={"description": "Instructor Training", "unit_type": "seat", "credits": 1},
+    )
     return TrainingRequest.objects.create(
         review_process="open" if open_review else "preapproved",
+        benefit=benefit,
         member_code=reg_code,
         personal="John",
         family="Smith",

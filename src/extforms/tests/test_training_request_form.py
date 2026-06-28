@@ -10,7 +10,7 @@ from django.urls import reverse
 from src.consents.models import Term, TermOptionChoices
 from src.extforms.views import TrainingRequestCreate
 from src.fiscal.models import Partnership, PartnershipTier
-from src.offering.models import Account
+from src.offering.models import Account, Benefit
 from src.workshops.models import Event, Membership, Organization, Role, Tag, Task, TrainingRequest
 from src.workshops.tests.base import TestBase
 
@@ -24,14 +24,21 @@ class TestTrainingRequestForm(TestBase):
     def setUp(self) -> None:
         self._setUpUsersAndLogin()
         self._setUpRoles()
+        self.benefit = Benefit.objects.create(
+            name="Instructor Training",
+            description="Instructor Training",
+            unit_type="seat",
+            credits=1,
+        )
         self.data = {
             "review_process": "preapproved",
+            "benefit": self.benefit.pk,
             "member_code": "coolprogrammers",
             "eventbrite_url": "https://www.eventbrite.com/e/711576483417",
             "personal": "John",
             "family": "Smith",
             "email": "john@smith.com",
-            "github": "",
+            "github": "johnsmith",
             "occupation": "",
             "occupation_other": "unemployed",
             "affiliation": "AGH University of Science and Technology",
@@ -60,7 +67,7 @@ class TestTrainingRequestForm(TestBase):
             "user_notes": "",
             "code_of_conduct_agreement": "on",
         }
-        self.data.update(self.add_terms_to_payload())  # type: ignore[arg-type]
+        self.data.update(self.add_terms_to_payload())
 
     def setUpMembership(self) -> None:
         self.membership = Membership.objects.create(
@@ -436,7 +443,7 @@ class TestTrainingRequestForm(TestBase):
         # Arrange
         self.setUpMembership()
         self.data["member_code"] = "valid123"
-        self.data["member_code_override"] = True  # type: ignore[assignment]
+        self.data["member_code_override"] = True
         self.passCaptcha(self.data)
         # before tests, check if the template invalid string exists
         self.assertTrue(settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"])  # type: ignore[index]
@@ -462,7 +469,7 @@ class TestTrainingRequestForm(TestBase):
         # Arrange
         self.setUpMembership()
         self.data["member_code"] = "invalid"
-        self.data["member_code_override"] = True  # type: ignore[assignment]
+        self.data["member_code_override"] = True
         self.passCaptcha(self.data)
         # before tests, check if the template invalid string exists
         self.assertTrue(settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"])  # type: ignore[index]

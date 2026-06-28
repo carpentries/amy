@@ -251,6 +251,7 @@ class TestTrainingRequestUpdateForm(TestBase):
         self.setUpMembership()
         data = self.request.__dict__
         data["person_id"] = self.spiderman.pk
+        data["benefit"] = self.request.benefit_id  # __dict__ holds "benefit_id", form expects "benefit"
         data["member_code"] = "valid123"
         data["member_code_override"] = True
         data.pop("score_manual")  # can't encode None in POST request, so omit
