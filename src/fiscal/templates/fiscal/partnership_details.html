@@ -2,6 +2,7 @@
 {% load links attrs %}
 {% load communityroles %}
 {% load revisions %}
+{% load emails %}
 
 {% block content %}
 {% last_modified object %}
@@ -139,6 +140,12 @@
   <tr>
     <th>Public status:</th>
     <td>{{ object.get_public_status_display }}</td>
+  </tr>
+  <tr>
+    <th>Related scheduled emails:</th>
+    <td>
+      {% include "includes/related_scheduled_emails.html" with object=object %}
+    </td>
   </tr>
 </table>
 
