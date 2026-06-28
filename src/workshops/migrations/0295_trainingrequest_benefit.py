@@ -32,7 +32,7 @@ class Migration(migrations.Migration):
             field=models.ForeignKey(
                 blank=False,
                 default=None,
-                limit_choices_to=models.Q(("active", True)),
+                limit_choices_to=models.Q(("active", True), ("unit_type", "seat")),
                 null=True,
                 on_delete=django.db.models.deletion.PROTECT,
                 to="offering.benefit",

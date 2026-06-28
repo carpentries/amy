@@ -2148,7 +2148,7 @@ class TrainingRequest(
         blank=False,
         default=None,
         verbose_name="What Carpentries offering are you signing up for?",
-        limit_choices_to=Q(active=True),
+        limit_choices_to=Q(active=True, unit_type="seat"),
     )
 
     person = models.ForeignKey(
