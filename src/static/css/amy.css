@@ -268,3 +268,9 @@ relative-time {
 .btn-group > form.btn-group:not(:first-child) {
     margin-left: 0px;
 }
+
+/* AlpineJS: keep [x-cloak] elements hidden until Alpine initialises, to avoid
+   a flash of fields that are conditionally shown via x-show on page load. */
+[x-cloak] {
+    display: none !important;
+}

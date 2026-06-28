@@ -1,9 +1,10 @@
+import json
 from collections.abc import Iterable
 from datetime import date
 from typing import Any, cast
 from urllib.parse import urlparse
 
-from crispy_forms.layout import HTML, Div, Field, Layout
+from crispy_forms.layout import HTML, Div, Layout
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models.fields import BLANK_CHOICE_DASH
@@ -18,15 +19,26 @@ from src.extrequests.forms import (
     WorkshopRequestBaseForm,
 )
 from src.extrequests.utils import any_member_code_valid_training
+from src.offering.models import Benefit
 from src.workshops.fields import (
     AirportSelect2Widget,
     CheckboxSelectMultipleWithOthers,
     RadioSelectWithOther,
     Select2Widget,
+    TomSelectWidget,
 )
 from src.workshops.forms import BootstrapHelper
 from src.workshops.models import TrainingRequest
 from src.workshops.utils.feature_flags import feature_flag_enabled
+
+# Applied to the crispy-form `Div` wrapping a field so that the whole row (label,
+# widget, subwidget and help text) is shown only when the selected benefit is "Instructor
+# Training". The <select> contains Benefit PKs as option values, so the
+# comparison is against the PK stored in the `instructorTrainingBenefit` Alpine variable.
+SHOW_FOR_INSTRUCTOR_TRAINING = {
+    "x-show": "benefit === instructorTrainingBenefit",  # set in TrainingRequestForm.__init__()
+    "x-cloak": True,  # keep the row hidden until AlpineJS has initialised
+}
 
 
 class TrainingRequestForm(forms.ModelForm[TrainingRequest]):
@@ -41,6 +53,12 @@ class TrainingRequestForm(forms.ModelForm[TrainingRequest]):
         widget=AirportSelect2Widget(),  # type: ignore[no-untyped-call]
     )
 
+    github = forms.CharField(
+        required=True,
+        label=TrainingRequest._meta.get_field("github").verbose_name,
+        help_text=TrainingRequest._meta.get_field("github").help_text,
+    )
+
     helper = BootstrapHelper(wider_labels=True, add_cancel_button=False)
 
     code_of_conduct_agreement = forms.BooleanField(
@@ -51,6 +69,7 @@ class TrainingRequestForm(forms.ModelForm[TrainingRequest]):
     class Meta:
         model = TrainingRequest
         fields = (
+            "benefit",
             "personal",
             "family",
             "member_code",
@@ -91,17 +110,24 @@ class TrainingRequestForm(forms.ModelForm[TrainingRequest]):
             "code_of_conduct_agreement",
         )
         widgets = {
+            "benefit": TomSelectWidget(attrs={"x-model": "benefit"}),
             "occupation": RadioSelectWithOther("occupation_other"),
             "domains": CheckboxSelectMultipleWithOthers("domains_other"),
             "underrepresented": forms.RadioSelect(),
             "previous_involvement": forms.CheckboxSelectMultiple(),
-            "previous_training": RadioSelectWithOther("previous_training_other"),
-            "previous_experience": RadioSelectWithOther("previous_experience_other"),
             "programming_language_usage_frequency": forms.RadioSelect(),
+            "previous_training": RadioSelectWithOther("previous_training_other"),
+            "previous_training_other": forms.TextInput(),
+            "previous_training_explanation": forms.Textarea(),
+            "previous_experience": RadioSelectWithOther("previous_experience_other"),
+            "previous_experience_other": forms.TextInput(),
+            "previous_experience_explanation": forms.Textarea(),
             "checkout_intent": forms.RadioSelect(),
             "teaching_intent": forms.RadioSelect(),
             "teaching_frequency_expectation": RadioSelectWithOther("teaching_frequency_expectation_other"),
+            "teaching_frequency_expectation_other": forms.TextInput(),
             "max_travelling_frequency": RadioSelectWithOther("max_travelling_frequency_other"),
+            "max_travelling_frequency_other": forms.TextInput(),
             "country": Select2Widget,
         }
 
@@ -109,6 +135,9 @@ class TrainingRequestForm(forms.ModelForm[TrainingRequest]):
         # request is required for ENFORCE_MEMBER_CODES flag
         self.request_http = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
+
+        # Display only benefit name, strip the unit type or credits required.
+        self.fields["benefit"].label_from_instance = lambda benefit: f"{benefit.name}"  # type: ignore[attr-defined]
 
         # Only active and required terms.
         self.terms = (
@@ -124,6 +153,27 @@ class TrainingRequestForm(forms.ModelForm[TrainingRequest]):
         self.set_fake_required_fields()
         self.set_display_member_code_override(visible=False)
         self.set_hr(self.helper.layout)
+        self.set_instructor_training_only_fields(self.helper.layout)
+
+        # Declare the Alpine component scope on the <form> so that the `x-model`
+        # on the benefit widget and the `x-show` on the wrapped fields have state
+        # to bind to. Without this, AlpineJS never initialises and the directives
+        # do nothing.
+        # `instructorTrainingBenefit` holds the PK (as a string, matching the
+        # <select> option values) of the "Instructor Training" benefit, used to
+        # toggle the instructor-training-only fields.
+        instructor_training_benefit = (
+            Benefit.objects.filter(name="Instructor Training").values_list("pk", flat=True).first()
+        )
+        # Seed `benefit` from the field's current value (the submitted value on a
+        # bound form, otherwise the initial) so that a failed submission retains
+        # the selection and keeps the dependent rows visible.
+        self.helper.attrs["x-data"] = json.dumps(
+            {
+                "benefit": str(self["benefit"].value() or ""),
+                "instructorTrainingBenefit": str(instructor_training_benefit or ""),
+            }
+        )
 
     def set_other_field(self, field_name: str, layout: Layout) -> None:
         """
@@ -146,40 +196,33 @@ class TrainingRequestForm(forms.ModelForm[TrainingRequest]):
         self.set_other_field("teaching_frequency_expectation", layout)
         self.set_other_field("max_travelling_frequency", layout)
 
+    # Fields shown only when the "Instructor Training" benefit is selected. The
+    # "*_other" counterparts are rendered inside their parent widget (see
+    # `set_other_fields()`), so they don't appear here.
+    INSTRUCTOR_TRAINING_ONLY_FIELDS = (
+        "previous_training",
+        "previous_training_explanation",
+        "previous_experience",
+        "previous_experience_explanation",
+        "checkout_intent",
+        "teaching_intent",
+        "teaching_frequency_expectation",
+        "max_travelling_frequency",
+    )
+
+    def set_instructor_training_only_fields(self, layout: Layout) -> None:
+        """
+        Wrap each instructor-training-only field in a <div> so the whole row
+        (label, widget and help text) is shown only when the Instructor Training
+        benefit is selected.
+        """
+        for field_name in self.INSTRUCTOR_TRAINING_ONLY_FIELDS:
+            index = layout.fields.index(field_name)
+            layout.fields[index] = Div(field_name, **SHOW_FOR_INSTRUCTOR_TRAINING)  # type: ignore[no-untyped-call]
+
     def set_fake_required_fields(self) -> None:
         # fake requiredness of the registration code / group name
         self["member_code"].field.widget.fake_required = True
-
-    def set_accordion(self, layout: Layout) -> None:
-        # Note: not used since 2024-03-19 (#2617).
-
-        # special accordion display for the review process
-        self["review_process"].field.widget.subfields = {
-            "preapproved": [
-                self["member_code"],
-                self["member_code_override"],
-                self["eventbrite_url"],
-            ],
-            "open": [],  # this option doesn't require any additional fields
-        }
-        self["review_process"].field.widget.notes = TrainingRequest.REVIEW_CHOICES_NOTES
-
-        # get current position of `review_process` field
-        pos_index = layout.fields.index("review_process")
-
-        layout.fields.remove("review_process")
-        layout.fields.remove("member_code")
-        layout.fields.remove("member_code_override")
-        layout.fields.remove("eventbrite_url")
-
-        # insert div+field at previously saved position
-        layout.insert(
-            pos_index,
-            Div(  # type: ignore[no-untyped-call]
-                Field("review_process", template="bootstrap5/layout/radio-accordion.html"),  # type: ignore
-                css_class="mb-3 row",
-            ),
-        )
 
     def set_display_member_code_override(self, *, visible: bool) -> None:
         widget = forms.CheckboxInput() if visible else forms.HiddenInput()

@@ -109,6 +109,7 @@ class TestTrainingRequestFilter(TestBase):
             set(self.filterset.filters.keys()),
             {
                 "search",
+                "benefit",
                 "member_code",
                 "state",
                 "matched",

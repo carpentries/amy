@@ -19,6 +19,7 @@
         <tr>
           <th><input type="checkbox" select-all-checkbox /></th>
           <th>Submitter</th>
+          <th>Benefit</th>
           <th>Reg. Code</th>
           <th>Affiliation
               <i class="fas fa-question-circle"
@@ -61,6 +62,7 @@
             {{ req.personal }} {{ req.middle }} {{ req.family }}<br />
             &lt;{{ req.email|urlize }}&gt;
           </td>
+          <td>{{ req.benefit.name }}</td>
           <td>{% if req.member_code %}<code>{{ req.member_code }}</code>{% else %}&mdash;{% endif %}</td>
           <td>
             {{ req.affiliation|default:"—" }}

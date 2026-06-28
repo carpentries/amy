@@ -16,6 +16,7 @@
             {% if object.person.email %}&lt;{{ object.person.email|urlize }}&gt;{% endif %}
           {% else %}&mdash;{% endif %}
         </td></tr>
+    <tr><th>Benefit:</th><td>{{ object.benefit }}</td></tr>
     <tr><th>Application score:</th>
         <td>Automatic: {{ object.score_auto }} pts. <br>
             Manual: {% if object.score_manual is not None %}{{ object.score_manual }} pts.{% else %}not scored{% endif %} <br>
