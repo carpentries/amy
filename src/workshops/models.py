@@ -2145,7 +2145,7 @@ class TrainingRequest(
         "offering.Benefit",
         on_delete=models.PROTECT,
         null=True,
-        blank=True,
+        blank=False,
         default=None,
         verbose_name="What Carpentries offering are you signing up for?",
         limit_choices_to=Q(active=True),
