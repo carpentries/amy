@@ -30,7 +30,11 @@ The "Affiliated Organization" field is not being used; always leave this blank.
 ![AMY add new organisation](images/amy_new_organisation.png)
 
 
-### Memberships
+### Memberships (Deprecated)
+
+!!! note
+
+    The Carpentries Membership program has been deprecated.  This section remains as reference until all current memberships have expired.
 
 AMY is also used to track all Carpentries memberships.  To create a new membership, the site must first be listed as an [organisation](#adding-a-new-organisation) in AMY.
 
