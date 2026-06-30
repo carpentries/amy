@@ -17,7 +17,7 @@ All menus and a search bar are displayed across the top. The main page has two c
 
 Current Data, Library, and Software Carpentry workshops will be listed on [The Carpentries website](https://carpentries.org/), the corresponding lesson program website, and [The Carpentries data feeds](https://feeds.carpentries.org/) if the box to publish the workshop is checked.  Instructor Training events are not publicly listed.
 
-From here you can also add new [events](#adding-a-new-event), [organisations](#adding-a-new-organisation),  [persons](#adding-a-new-person), or [airports](#adding-a-new-airport) to the database.
+From here you can also add new [events](#adding-a-new-event), [organisations](#adding-a-new-organisation), or [persons](#adding-a-new-person) to the database.
 
 ![AMY add new elements](images/amy_add_new.png)
 
@@ -115,14 +115,13 @@ A Person record can be created by [accepting an Instructor Training application]
 
 #### Adding an Individual Person Record
 
-Select "New person" and enter in as much information as possible.  At minimum a personal name is required.  If the airport is not listed, it will need to be [added in](#adding-a-new-airport).
-
+Select "New person" and enter in as much information as possible.  At minimum a personal name is required and airport are required.  
 
 ![AMY add new person](images/new_person.png)
 
 #### Adding Bulk Person Records
 
-`Person` records can also be added in bulk from a `.csv` file using the `Bulk add people` menu option in the  `New` menu at the top right or the `More` menu. Use the blank template to generate a well formed CSV noting each person's personal name, family name (optional), email address (optional), role, and associated event. Any additional information about the person must be entered manually.  **Note: To bulk add records, the persons must have a role specified (instructor, helper, learner, host) associated with a specific event**.  Because the *learner* role at an Instructor Training event requires a membership or open application affiliation, Instructor Training learner roles can not be bulk added.
+`Person` records can also be added in bulk from a `.csv` file using the `Bulk add people` menu option in the  `New` menu at the top right or the `More` menu. Use the blank template to generate a well formed CSV noting each person's personal name, airport code, family name (optional), email address (optional), role, and associated event. Any additional information about the person must be entered manually.  **Note: To bulk add records, the persons must have a role specified (instructor, helper, learner, host) associated with a specific event**.  Because the *learner* role at an Instructor Training event requires a membership or open application affiliation, Instructor Training learner roles can not be bulk added.
 
 ![AMY bulk add person menu](images/bulk_add_persons.png)
 
@@ -149,14 +148,6 @@ AMY asks all users for the following consents:
 By default, all consents have null values (i.e., neither yes nor no). After a Person's record has been created, the individual can log in to AMY and edit their own consents. Admin users may also make these edits on behalf of the user, but this should be used only in rare circumstances. Consents are edited in the "Consents" tab in the Person view. This tab also shows the full consent history for the Person.
 
 Some of the questions above are also asked during the [instructor training application](https://amy.carpentries.org/forms/request_training/). If a [Person record is created from a training request](#accepting-trainee-applications), the consents from that training request will be carried across to the Person.
-
-### Adding a New Airport
-
-Airports are used as approximate geographic identifiers for our instructors.  Instructors can self-select the airport closest to them or the airport they most frequently use. Instructors can select an airport only after it has been added to AMY by an admin.  Each airport is identified by its three character IATA code which can be looked up using [the link in AMY](https://www.world-airport-codes.com/).
-
-Enter in the airport's IATA code, full name, country, and latitude and longitude.
-
-![AMY add airport](images/new_airport.png)
 
 ### Adding a New Event
 
@@ -675,7 +666,7 @@ The quickest and easiest way to search is using the search box in the top menu b
 * `ola tes` will match `Nikola Tesla` and `Nolan Bates`
 * `stanford` will match any one with a `stanford` email address, with `stanford` in their name, any workshops with `stanford` in the slug, or the site `Stanford University`.
 
-If only one result is found across all fields, AMY will automatically redirect to that result.  Otherwise, AMY will redirect to a search results view.  The search results view will include a new search box, with results appearing in a tabbed view, separated by Organisations, Memberships, Events, Persons, Airports, Training Requests, and Comments.
+If only one result is found across all fields, AMY will automatically redirect to that result.  Otherwise, AMY will redirect to a search results view.  The search results view will include a new search box, with results appearing in a tabbed view, separated by Organisations, Memberships, Events, Persons, Training Requests, and Comments.
 
 [This search view can also be accessed directly from the More menu](https://amy.carpentries.org/dashboard/admin/search/).
 
