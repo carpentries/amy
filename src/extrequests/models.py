@@ -227,8 +227,8 @@ class WorkshopInquiryRequest(
         (
             "forprofit",
             "I am with a corporate or for-profit site. I understand the costs for "
-            "for-profit organisations are higher than the price for not-for-profit "
-            "organisations, as listed on The Carpentries website.",
+            "for-profit organisations are higher than what is listed on The "
+            "Carpentries website and will be discussed during the scheduling process.",
         ),
         (
             "member",
