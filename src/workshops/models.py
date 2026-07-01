@@ -3261,7 +3261,7 @@ class WorkshopRequest(
         verbose_name="Which of the following applies to your payment for the administrative fee?",
         help_text=(
             f"<b><a href='{FEE_DETAILS_URL}' target='_blank' rel='noreferrer nofollow'>"
-            "The Carpentries website workshop fee listing.</a></b>"
+            "Please visit our website to see our current pricing.</a></b>"
         ),
     )
     scholarship_circumstances = models.TextField(
