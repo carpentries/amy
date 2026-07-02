@@ -32,6 +32,7 @@ from src.workshops.models import (
     ComputingExperienceLevel,
     Curriculum,
     Event,
+    EventCategory,
     InfoSource,
     KnowledgeDomain,
     Language,
@@ -303,6 +304,7 @@ class Command(BaseCommand):
         req = TrainingRequest.objects.create(
             state=state,
             person=person_or_None,
+            benefit=choice(Benefit.objects.all()),
             review_process="preapproved" if registration_code else "open",
             member_code=registration_code,
             member_code_override=override_invalid_code,
@@ -513,11 +515,13 @@ class Command(BaseCommand):
         self.stdout.write(f"Generating {count} fake train-the-trainer events...")
         ttt_tag = Tag.objects.get(name="TTT")
         carpentries_org = Organization.objects.get(domain="carpentries.org")
+        training_category = EventCategory.objects.get(name="training")
         for _ in range(count):
             e = self.fake_event()
             e.slug += "-ttt"
             e.administrator = carpentries_org
             e.tags.set([ttt_tag])
+            e.event_category = training_category
             e.save()
 
     def fake_event(
@@ -1160,6 +1164,7 @@ class Command(BaseCommand):
             self.fake_self_organized_events()
             self.fake_ttt_events()
             self.fake_tasks()
+            self.fake_benefits()  # Needed for training requests
             self.fake_trainees()
             self.fake_unmatched_training_requests()
             self.fake_duplicated_people()
