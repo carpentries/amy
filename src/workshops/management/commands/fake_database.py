@@ -304,6 +304,7 @@ class Command(BaseCommand):
         req = TrainingRequest.objects.create(
             state=state,
             person=person_or_None,
+            benefit=choice(Benefit.objects.all()),
             review_process="preapproved" if registration_code else "open",
             member_code=registration_code,
             member_code_override=override_invalid_code,
@@ -1163,6 +1164,7 @@ class Command(BaseCommand):
             self.fake_self_organized_events()
             self.fake_ttt_events()
             self.fake_tasks()
+            self.fake_benefits()  # Needed for training requests
             self.fake_trainees()
             self.fake_unmatched_training_requests()
             self.fake_duplicated_people()
