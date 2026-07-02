@@ -121,6 +121,16 @@ class TTTEventLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
         return results
 
 
+class TrainingSkillupEventLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
+    def get_queryset(self) -> QuerySet[models.Event]:
+        results = models.Event.objects.filter(event_category__name__in=["training", "skillup"])
+
+        if self.term:
+            results = results.filter(slug__icontains=self.term)
+
+        return results
+
+
 class OrganizationEntry(TypedDict):
     fullname: str
     text: str
@@ -665,6 +675,7 @@ urlpatterns = [
         name="event-lookup-for-awards",
     ),
     path("ttt_events/", TTTEventLookupView.as_view(), name="ttt-event-lookup"),
+    path("events/trainings-skillups/", TrainingSkillupEventLookupView.as_view(), name="training-skillup-event-lookup"),
     path("organizations/", OrganizationLookupView.as_view(), name="organization-lookup"),
     path(
         "admin_orgs/",

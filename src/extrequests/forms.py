@@ -115,8 +115,8 @@ class BulkMatchTrainingRequestForm(forms.Form):
     event = forms.ModelChoiceField(
         label="Training",
         required=True,
-        queryset=Event.objects.filter(tags__name="TTT"),
-        widget=ModelSelect2Widget(data_view="ttt-event-lookup"),  # type: ignore[no-untyped-call]
+        queryset=Event.objects.filter(event_category__name__in=["training", "skillup"]),
+        widget=ModelSelect2Widget(data_view="training-skillup-event-lookup"),  # type: ignore[no-untyped-call]
     )
 
     seat_membership = forms.ModelChoiceField(
