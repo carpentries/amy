@@ -9,6 +9,7 @@ from src.extrequests.tests.test_training_request import create_training_request
 from src.offering.models import Account, AccountBenefit, Benefit
 from src.workshops.models import (
     Event,
+    EventCategory,
     Member,
     MemberRole,
     Membership,
@@ -276,7 +277,8 @@ class TestBulkMatchTrainingRequestForm(TestCase):
         person = Person.objects.create(username="test")
         training_request = create_training_request(state="p", person=person)
         organisation = Organization.objects.create(fullname="Test Org", domain="test.org")
-        event = Event.objects.create(slug="test-event", host=organisation)
+        training_event_category = EventCategory.objects.create(name="training")
+        event = Event.objects.create(slug="test-event", host=organisation, event_category=training_event_category)
         event.tags.create(name="TTT")
 
         data = {
@@ -296,7 +298,8 @@ class TestBulkMatchTrainingRequestForm(TestCase):
         person = Person.objects.create(username="test")
         training_request = create_training_request(state="p", person=person)
         organisation = Organization.objects.create(fullname="Test Org", domain="test.org")
-        event = Event.objects.create(slug="test-event", host=organisation)
+        training_event_category = EventCategory.objects.create(name="training")
+        event = Event.objects.create(slug="test-event", host=organisation, event_category=training_event_category)
         event.tags.create(name="TTT")
         membership = Membership.objects.create(
             name="alpha-name",
@@ -330,7 +333,8 @@ class TestBulkMatchTrainingRequestForm(TestCase):
         person = Person.objects.create(username="test")
         training_request = create_training_request(state="p", person=person, reg_code="test")
         organisation = Organization.objects.create(fullname="Test Org", domain="test.org")
-        event = Event.objects.create(slug="test-event", host=organisation)
+        training_event_category = EventCategory.objects.create(name="training")
+        event = Event.objects.create(slug="test-event", host=organisation, event_category=training_event_category)
         event.tags.create(name="TTT")
         membership = Membership.objects.create(
             name="alpha-name",
@@ -364,7 +368,8 @@ class TestBulkMatchTrainingRequestForm(TestCase):
         person = Person.objects.create(username="test")
         training_request = create_training_request(state="p", person=person)
         organisation = Organization.objects.create(fullname="Test Org", domain="test.org")
-        event = Event.objects.create(slug="test-event", host=organisation)
+        training_event_category = EventCategory.objects.create(name="training")
+        event = Event.objects.create(slug="test-event", host=organisation, event_category=training_event_category)
         event.tags.create(name="TTT")
         account = Account.objects.create(
             account_type=Account.AccountTypeChoices.ORGANISATION,
@@ -402,7 +407,8 @@ class TestBulkMatchTrainingRequestForm(TestCase):
         # Arrange
         training_request = create_training_request(state="p", person=None)
         organisation = Organization.objects.create(fullname="Test Org", domain="test.org")
-        event = Event.objects.create(slug="test-event", host=organisation)
+        training_event_category = EventCategory.objects.create(name="training")
+        event = Event.objects.create(slug="test-event", host=organisation, event_category=training_event_category)
         event.tags.create(name="TTT")
         data = {
             "requests": [training_request.pk],
@@ -426,7 +432,8 @@ class TestBulkMatchTrainingRequestForm(TestCase):
         person = Person.objects.create(username="test")
         training_request = create_training_request(state="p", person=person)
         organisation = Organization.objects.create(fullname="Test Org", domain="test.org")
-        event = Event.objects.create(slug="test-event", host=organisation)
+        training_event_category = EventCategory.objects.create(name="training")
+        event = Event.objects.create(slug="test-event", host=organisation, event_category=training_event_category)
         event.tags.create(name="TTT")
         membership = Membership.objects.create(
             name="alpha-name",

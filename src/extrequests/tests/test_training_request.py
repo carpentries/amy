@@ -26,6 +26,7 @@ from src.fiscal.models import Partnership, PartnershipTier
 from src.offering.models import Account, AccountBenefit, Benefit
 from src.workshops.models import (
     Event,
+    EventCategory,
     KnowledgeDomain,
     Member,
     MemberRole,
@@ -290,10 +291,15 @@ class TestTrainingRequestsListView(TestBase):
 
         self.benefit = Benefit.objects.get(name="Instructor Training")
 
-        self.first_training = Event.objects.create(slug="ttt-event", host=self.org)
+        training_event_category = EventCategory.objects.create(name="training")
+        self.first_training = Event.objects.create(
+            slug="ttt-event", host=self.org, event_category=training_event_category
+        )
         self.first_training.tags.add(self.ttt)
         Task.objects.create(person=self.spiderman, role=self.learner, event=self.first_training)
-        self.second_training = Event.objects.create(slug="second-ttt-event", host=self.org)
+        self.second_training = Event.objects.create(
+            slug="second-ttt-event", host=self.org, event_category=training_event_category
+        )
         self.second_training.tags.add(self.ttt)
 
     def test_view_loads(self) -> None:
