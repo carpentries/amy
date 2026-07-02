@@ -32,6 +32,7 @@ from src.workshops.models import (
     ComputingExperienceLevel,
     Curriculum,
     Event,
+    EventCategory,
     InfoSource,
     KnowledgeDomain,
     Language,
@@ -513,11 +514,13 @@ class Command(BaseCommand):
         self.stdout.write(f"Generating {count} fake train-the-trainer events...")
         ttt_tag = Tag.objects.get(name="TTT")
         carpentries_org = Organization.objects.get(domain="carpentries.org")
+        training_category = EventCategory.objects.get(name="training")
         for _ in range(count):
             e = self.fake_event()
             e.slug += "-ttt"
             e.administrator = carpentries_org
             e.tags.set([ttt_tag])
+            e.event_category = training_category
             e.save()
 
     def fake_event(
