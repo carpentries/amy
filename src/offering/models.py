@@ -106,6 +106,8 @@ class Benefit(ActiveMixin, CreatedUpdatedMixin, models.Model):
     def get_absolute_url(self) -> str:
         return reverse("benefit-details", kwargs={"pk": self.pk})
 
+    class Meta:
+        ordering = ["name"]
 
 @reversion.register
 class AccountBenefitDiscount(CreatedUpdatedMixin, models.Model):
