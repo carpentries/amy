@@ -2,7 +2,7 @@ import airportsdata
 from airportsdata import Airport
 from django_countries import countries
 
-FEE_DETAILS_URL = "https://carpentries.org/workshops/#workshop-cost"
+FEE_DETAILS_URL = "https://carpentries.org/support/pricing/"
 
 STR_SHORT = 10  # length of short strings
 STR_MED = 40  # length of medium strings
