@@ -5,7 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("workshops", "0295_trainingrequest_benefit"),
+        ("workshops", "0296_set_training_event_category"),
     ]
 
     operations = [
