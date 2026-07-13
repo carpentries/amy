@@ -23,22 +23,21 @@
 Click on the button at the bottom of this page to update your profile information. <br>
 Your email address and GitHub id can not be updated here, as they are tied to your login id. Please contact us at <a href="mailto:team@carpentries.org">team@carpentries.org</a> if you would like to update this information.  <br>
 
-<pretix-widget event="https://test-pretix.terrier-vibe.ts.net/carp-inst-train/series-test/"
+{% block extrastyle %}
+<link rel="stylesheet" type="text/css" href="https://test-pretix.terrier-vibe.ts.net/carp-inst-train/series-test/widget/v2.css" crossorigin>
+{% endblock extrastyle %}
+{% block extrajs %}
+<script type="text/javascript" src="https://test-pretix.terrier-vibe.ts.net/widget/v2.en.js" async crossorigin></script>
+{% endblock extrajs %}
 
-   data-email = "{{ request.user.email }}"
-   data-attendee-name-given-name="{{ request.user.personal }}"
-   data-attendee-name-family-name="{{ request.user.family }}"
-  data-fix="true">
+<pretix-widget
+  event="https://test-pretix.terrier-vibe.ts.net/carp-inst-train/series-test/"
+  data-email="{{ request.user.email }}"
+  data-attendee-name-given-name="{{ request.user.personal }}"
+  data-attendee-name-family-name="{{ request.user.family }}"
+  data-fix="true"
+>
 </pretix-widget>
-<noscript>
-   <div class="pretix-widget">
-        <div class="pretix-widget-info-message">
-            JavaScript is disabled in your browser. To access our ticket shop without JavaScript, please <a target="_blank" rel="noopener" href="https://test-pretix.terrier-vibe.ts.net/carp-inst-train/two-day-event/">click here</a>.
-        </div>
-    </div>
-</noscript>
-
-</div>
 
   <table class="table table-striped">
     <tr><th width="40%">Personal name:</th><td>{{ user.personal|default:"—" }}</td></tr>
