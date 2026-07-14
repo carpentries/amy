@@ -36,6 +36,8 @@ Your email address and GitHub id can not be updated here, as they are tied to yo
   data-attendee-name-given-name="{{ request.user.personal }}"
   data-attendee-name-family-name="{{ request.user.family }}"
   data-fix="true"
+  {# Only when running locally skip the SSL check - this way the modal opens up in localhost. #}
+  {% if LOCAL_ENVIRONMENT %}skip-ssl-check{% endif %}
 >
 </pretix-widget>
 
@@ -210,7 +212,5 @@ Your email address and GitHub id can not be updated here, as they are tied to yo
   </div>
 
 </div>
-
-
 
 {% endblock %}
