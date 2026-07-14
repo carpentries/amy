@@ -166,8 +166,6 @@ THIRD_PARTY_APPS = [
     "djangoformsetjs",
     "django_better_admin_arrayfield",
     "flags",
-    # "corsheaders",
-    # "sslserver",
 ]
 LOCAL_APPS = [
     "src.workshops.apps.WorkshopsConfig",
@@ -282,9 +280,7 @@ MIDDLEWARE = [
     "src.workshops.middleware.version_check.VersionCheckMiddleware",
     "debug_toolbar.middleware.DebugToolbarMiddleware",
     "reversion.middleware.RevisionMiddleware",
-    # "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
-    "django.middleware.common.CommonMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -379,6 +375,7 @@ TEMPLATES = [
                 # AMY version
                 "src.workshops.context_processors.version",
                 "src.workshops.context_processors.site_banner",
+                "src.workshops.context_processors.environments",
                 "src.workshops.context_processors.feature_flags_enabled",
                 # Consent enums
                 "src.consents.context_processors.terms",
@@ -618,6 +615,8 @@ if SITE_BANNER_STYLE not in ("local", "testing", "production"):
     raise ImproperlyConfigured("SITE_BANNER_STYLE accepts only one of 'local', 'testing', 'production'.")
 
 PROD_ENVIRONMENT = bool(SITE_BANNER_STYLE == "production")
+LOCAL_ENVIRONMENT = bool(SITE_BANNER_STYLE == "local")
+print(LOCAL_ENVIRONMENT)
 
 # Feature Flags
 # -----------------------------------------------------------------------------
@@ -675,7 +674,3 @@ CERTIFICATE_SIGNATURE = "SherAaron Hurt (Director of Workshops and Instruction)"
 
 # To silence the Django 6.0 warning about URLField assume_https default changing
 FORMS_URLFIELD_ASSUME_HTTPS = True
-
-SECURE_CROSS_ORIGIN_OPENER_POLICY = "unsafe-none"
-CORS_ALLOW_ALL_ORIGINS: True 
-
