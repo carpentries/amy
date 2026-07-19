@@ -10,19 +10,19 @@ urlpatterns = [
         "training_request/<int:pk>/",
         include(
             [
-                path("", views.trainingrequest_details, name="trainingrequest_details"),
+                path("", views.TrainingRequestDetails.as_view(), name="trainingrequest_details"),
                 path("edit/", views.TrainingRequestUpdate.as_view(), name="trainingrequest_edit"),
             ]
         ),
     ),
     path(
         "bulk_upload_training_request_scores/",
-        views.bulk_upload_training_request_scores,
+        views.BulkUploadTrainingRequestScores.as_view(),
         name="bulk_upload_training_request_scores",
     ),
     path(
         "bulk_upload_training_request_scores/confirm/",
-        views.bulk_upload_training_request_scores_confirmation,
+        views.BulkUploadTrainingRequestScoresConfirmation.as_view(),
         name="bulk_upload_training_request_scores_confirmation",
     ),
     # unified workshop requests

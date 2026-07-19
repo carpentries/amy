@@ -4,10 +4,10 @@ from src.workshops import views
 
 urlpatterns = [
     # utility views
-    path("log/", views.changes_log, name="changes_log"),
+    path("log/", views.ChangesLog.as_view(), name="changes_log"),
     path("version/<int:version_id>/", views.object_changes, name="object_changes"),
-    path("workshop_staff/", views.workshop_staff, name="workshop_staff"),
-    path("workshop_staff/csv/", views.workshop_staff_csv, name="workshop_staff_csv"),
+    path("workshop_staff/", views.WorkshopStaff.as_view(), name="workshop_staff"),
+    path("workshop_staff/csv/", views.WorkshopStaffCSV.as_view(), name="workshop_staff_csv"),
     # persons
     path(
         "persons/",
@@ -20,10 +20,10 @@ urlpatterns = [
                     "bulk_upload/",
                     include(
                         [
-                            path("", views.person_bulk_add, name="person_bulk_add"),
+                            path("", views.PersonBulkAdd.as_view(), name="person_bulk_add"),
                             path(
                                 "template/",
-                                views.person_bulk_add_template,
+                                views.PersonBulkAddTemplate.as_view(),
                                 name="person_bulk_add_template",
                             ),
                             path(
@@ -33,17 +33,17 @@ urlpatterns = [
                             ),
                             path(
                                 "<int:entry_id>/remove/",
-                                views.person_bulk_add_remove_entry,
+                                views.PersonBulkAddRemoveEntry.as_view(),
                                 name="person_bulk_add_remove_entry",
                             ),
                             path(
                                 "<int:entry_id>/match_person/<int:person_id>",
-                                views.person_bulk_add_match_person,
+                                views.PersonBulkAddMatchPerson.as_view(),
                                 name="person_bulk_add_match_person",
                             ),
                             path(
                                 "<int:entry_id>/match_person/",
-                                views.person_bulk_add_match_person,
+                                views.PersonBulkAddMatchPerson.as_view(),
                                 name="person_bulk_add_match_person",
                             ),
                         ]
@@ -65,10 +65,10 @@ urlpatterns = [
                     views.PersonPermissions.as_view(),
                     name="person_permissions",
                 ),
-                path("password/", views.person_password, name="person_password"),
+                path("password/", views.PersonPassword.as_view(), name="person_password"),
                 path(
                     "sync_usersocialauth/",
-                    views.sync_usersocialauth,
+                    views.SyncUserSocialAuth.as_view(),
                     name="sync_usersocialauth",
                 ),
             ]
@@ -89,7 +89,7 @@ urlpatterns = [
         "event/<slug:slug>/",
         include(
             [
-                path("", views.event_details, name="event_details"),
+                path("", views.EventDetails.as_view(), name="event_details"),
                 path("assign/", views.EventAssign.as_view(), name="event_assign"),
                 path("edit/", views.EventUpdate.as_view(), name="event_edit"),
                 path("delete/", views.EventDelete.as_view(), name="event_delete"),

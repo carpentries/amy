@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from functools import reduce
 from typing import Any, cast
 from urllib.parse import unquote
 
@@ -22,7 +23,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.html import format_html
 from django.views.decorators.http import require_GET
-from django.views.generic import TemplateView, View
+from django.views.generic import RedirectView, TemplateView, View
 from django.views.generic.detail import SingleObjectMixin
 from django_comments.models import Comment
 from flags.sources import get_flags  # type: ignore[import-untyped]
@@ -54,6 +55,7 @@ from src.workshops.base_forms import GenericDeleteForm
 from src.workshops.base_views import (
     AMYCreateView,
     AMYDeleteView,
+    AMYFormView,
     AMYListView,
     AMYUpdateView,
     AuthenticatedHttpRequest,
@@ -72,188 +74,221 @@ from src.workshops.models import (
     TrainingRequest,
     TrainingRequirement,
 )
-from src.workshops.utils.access import admin_required, login_required
+from src.workshops.utils.access import OnlyForAdminsMixin, admin_required
 from src.workshops.utils.urls import safe_next_or_default_url
 
 # Terms shown on the instructor dashboard and can be updated by the user.
 TERM_SLUGS = [TermEnum.MAY_CONTACT, TermEnum.PUBLIC_PROFILE, TermEnum.MAY_PUBLISH_NAME]
 
 
-@login_required
-def dispatch(request: AuthenticatedHttpRequest) -> HttpResponse:
+class DashboardDispatch(LoginRequiredMixin, RedirectView):
     """If user is admin, then show them admin dashboard; otherwise redirect
     them to instructor dashboard."""
-    if request.user.is_admin:
-        return redirect(reverse("admin-dashboard"))
-    else:
-        return redirect(reverse("user-dashboard"))
+
+    permanent = False
+
+    def get_redirect_url(self, *args: Any, **kwargs: Any) -> str:
+        if getattr(self.request.user, "is_admin", False):
+            return reverse("admin-dashboard")
+        return reverse("user-dashboard")
 
 
-@admin_required
-def admin_dashboard(request: AuthenticatedHttpRequest) -> HttpResponse:
+class AdminDashboard(OnlyForAdminsMixin, TemplateView):
     """Home page for admins."""
-    data = request.GET.copy()
-    if "assigned_to" not in data:
-        data["assigned_to"] = str(request.user.id)
-    assignment_form = AssignmentForm(data)
-    assigned_to: Person | None = None
-    if assignment_form.is_valid():
-        assigned_to = assignment_form.cleaned_data["assigned_to"]
 
-    current_events = Event.objects.current_events().prefetch_related("tags")
+    template_name = "dashboard/admin_dashboard.html"
 
-    # This annotation may produce wrong number of instructors when
-    # `unpublished_events` filters out events that contain a specific tag.
-    # The bug was fixed in #1130.
-    unpublished_events = (
-        Event.objects.active()
-        .unpublished_events()
-        .select_related("host")
-        .annotate(
-            num_instructors=Count(
-                Case(
-                    When(task__role__name="instructor", then=Value(1)),
-                    output_field=IntegerField(),
-                )
-            ),
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+
+        data = self.request.GET.copy()
+        if "assigned_to" not in data:
+            data["assigned_to"] = str(self.request.user.id)
+        assignment_form = AssignmentForm(data)
+        assigned_to: Person | None = None
+        if assignment_form.is_valid():
+            assigned_to = assignment_form.cleaned_data["assigned_to"]
+
+        current_events = Event.objects.current_events().prefetch_related("tags")
+
+        # This annotation may produce wrong number of instructors when
+        # `unpublished_events` filters out events that contain a specific tag.
+        # The bug was fixed in #1130.
+        unpublished_events = (
+            Event.objects.active()
+            .unpublished_events()
+            .select_related("host")
+            .annotate(
+                num_instructors=Count(
+                    Case(
+                        When(task__role__name="instructor", then=Value(1)),
+                        output_field=IntegerField(),
+                    )
+                ),
+            )
+            .order_by("-start")
         )
-        .order_by("-start")
-    )
 
-    # assigned events that have unaccepted changes
-    updated_metadata = Event.objects.active().filter(metadata_changed=True)
+        # assigned events that have unaccepted changes
+        updated_metadata = Event.objects.active().filter(metadata_changed=True)
 
-    current_events = current_events.filter(assigned_to=assigned_to)
-    unpublished_events = unpublished_events.filter(assigned_to=assigned_to)
-    updated_metadata = updated_metadata.filter(assigned_to=assigned_to)
+        current_events = current_events.filter(assigned_to=assigned_to)
+        unpublished_events = unpublished_events.filter(assigned_to=assigned_to)
+        updated_metadata = updated_metadata.filter(assigned_to=assigned_to)
 
-    context = {
-        "title": None,
-        "assignment_form": assignment_form,
-        "assigned_to": assigned_to,
-        "current_events": current_events,
-        "unpublished_events": unpublished_events,
-        "updated_metadata": updated_metadata.count(),
-        "main_tags": Tag.objects.main_tags(),
-    }
-    return render(request, "dashboard/admin_dashboard.html", context)
+        context.update(
+            {
+                "title": None,
+                "assignment_form": assignment_form,
+                "assigned_to": assigned_to,
+                "current_events": current_events,
+                "unpublished_events": unpublished_events,
+                "updated_metadata": updated_metadata.count(),
+                "main_tags": Tag.objects.main_tags(),
+            }
+        )
+        return context
 
 
 # ------------------------------------------------------------
 # Views for instructors and trainees
 
 
-@login_required
-def user_dashboard(request: AuthenticatedHttpRequest) -> HttpResponse:
-    qs = Person.objects.annotate_with_role_count().prefetch_related(
-        "badges",
-        "lessons",
-        "domains",
-        "languages",
-        Prefetch(
-            "task_set",
-            queryset=Task.objects.select_related("event", "role").order_by("event__start", "event__slug"),
-        ),
-        Prefetch(
-            "membershiptask_set",
-            queryset=MembershipTask.objects.select_related("membership", "role"),
-        ),
-    )
-    user = get_object_or_404(qs, id=request.user.id)
+class UserDashboard(LoginRequiredMixin, TemplateView):
+    template_name = "dashboard/instructor_dashboard.html"
 
-    consents = (
-        Consent.objects.active()
-        .filter(
-            term__slug__in=TERM_SLUGS,
-            person=user,
-        )
-        .select_related("term", "term_option")
-    )
-    consents_by_key = {consent.term.key: consent for consent in consents}
-    # get display content for all visible terms
-    consents_content = {term.key: term.content for term in Term.objects.filter(slug__in=TERM_SLUGS)}
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
 
-    context = {
-        "title": "Your profile",
-        "user": user,
-        "consents": consents_by_key,
-        "consents_content": consents_content,
-    }
-    return render(request, "dashboard/instructor_dashboard.html", context)
-
-
-@login_required
-def autoupdate_profile(request: AuthenticatedHttpRequest) -> HttpResponse:
-    person = request.user
-    consent_form_kwargs = {
-        "initial": {"person": person},
-        "widgets": {"person": HiddenInput()},
-        "form_tag": False,
-        "prefix": "consents",
-    }
-    form = AutoUpdateProfileForm(instance=person, form_tag=False, add_submit_button=False)
-    consent_form = TermBySlugsForm(term_slugs=TERM_SLUGS, **consent_form_kwargs)
-
-    if request.method == "POST":
-        form = AutoUpdateProfileForm(request.POST, instance=person)
-        consent_form = TermBySlugsForm(request.POST, term_slugs=TERM_SLUGS, **consent_form_kwargs)
-        if form.is_valid() and form.instance == person and consent_form.is_valid():
-            # save lessons
-            person.lessons.clear()
-            for lesson in form.cleaned_data["lessons"]:
-                q = Qualification(lesson=lesson, person=person)
-                q.save()
-
-            # don't save related lessons
-            del form.cleaned_data["lessons"]
-
-            person = form.save()
-
-            # save consents
-            consent_form.save()
-
-            messages.success(request, "Your profile was updated.")
-
-            return redirect(reverse("user-dashboard"))
-        else:
-            messages.error(request, "Fix errors below.")
-
-    context = {
-        "title": "Update Your Profile",
-        "form": form,
-        "consents_form": consent_form,
-    }
-    return render(request, "dashboard/autoupdate_profile.html", context)
-
-
-@login_required
-def training_progress(request: AuthenticatedHttpRequest) -> HttpResponse:
-    # Add information about instructor training progress to request.user.
-    request.user = (
-        Person.objects.annotate_with_instructor_eligibility()
-        .prefetch_related(
+        qs = Person.objects.annotate_with_role_count().prefetch_related(
+            "badges",
+            "lessons",
+            "domains",
+            "languages",
             Prefetch(
-                "badges",
-                to_attr="instructor_badges",
-                queryset=Badge.objects.instructor_badges(),
+                "task_set",
+                queryset=Task.objects.select_related("event", "role").order_by("event__start", "event__slug"),
+            ),
+            Prefetch(
+                "membershiptask_set",
+                queryset=MembershipTask.objects.select_related("membership", "role"),
             ),
         )
-        .get(pk=request.user.pk)
-    )
+        user = get_object_or_404(qs, id=self.request.user.id)
 
-    progress_training = get_passed_or_last_progress(request.user, "Training")
-    progress_get_involved = get_passed_or_last_progress(request.user, "Get Involved")
-    progress_welcome = get_passed_or_last_progress(request.user, "Welcome Session")
-    progress_demo = get_passed_or_last_progress(request.user, "Demo")
+        consents = (
+            Consent.objects.active()
+            .filter(
+                term__slug__in=TERM_SLUGS,
+                person=user,
+            )
+            .select_related("term", "term_option")
+        )
+        consents_by_key = {consent.term.key: consent for consent in consents}
+        # get display content for all visible terms
+        consents_content = {term.key: term.content for term in Term.objects.filter(slug__in=TERM_SLUGS)}
 
-    context = {
-        "title": "Your training progress",
-        "progress_training": progress_training,
-        "progress_get_involved": progress_get_involved,
-        "progress_welcome": progress_welcome,
-        "progress_demo": progress_demo,
-    }
-    return render(request, "dashboard/training_progress.html", context)
+        context.update(
+            {
+                "title": "Your profile",
+                "user": user,
+                "consents": consents_by_key,
+                "consents_content": consents_content,
+            }
+        )
+        return context
+
+
+class AutoUpdateProfile(LoginRequiredMixin, AMYFormView[AutoUpdateProfileForm]):
+    form_class = AutoUpdateProfileForm
+    template_name = "dashboard/autoupdate_profile.html"
+    title = "Update Your Profile"
+    success_url = reverse_lazy("user-dashboard")
+
+    def get_consent_form(self) -> TermBySlugsForm:
+        kwargs: dict[str, Any] = {
+            "initial": {"person": self.request.user},
+            "widgets": {"person": HiddenInput()},
+            "form_tag": False,
+            "prefix": "consents",
+        }
+        if self.request.method == "POST":
+            kwargs["data"] = self.request.POST
+        return TermBySlugsForm(term_slugs=TERM_SLUGS, **kwargs)
+
+    def get_form_kwargs(self) -> dict[str, Any]:
+        kwargs = super().get_form_kwargs()
+        kwargs["instance"] = self.request.user
+        if self.request.method not in ("POST", "PUT"):
+            kwargs["form_tag"] = False
+            kwargs["add_submit_button"] = False
+        return kwargs
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        if "consents_form" not in kwargs:
+            kwargs["consents_form"] = self.get_consent_form()
+        return super().get_context_data(**kwargs)
+
+    def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        form = self.get_form()
+        consent_form = self.get_consent_form()
+        if form.is_valid() and form.instance == request.user and consent_form.is_valid():
+            return self.forms_valid(form, consent_form)
+        messages.error(request, "Fix errors below.")
+        return self.render_to_response(self.get_context_data(form=form, consents_form=consent_form))
+
+    def forms_valid(self, form: AutoUpdateProfileForm, consent_form: TermBySlugsForm) -> HttpResponse:
+        person = cast(Person, self.request.user)
+
+        # save lessons
+        person.lessons.clear()
+        for lesson in form.cleaned_data["lessons"]:
+            q = Qualification(lesson=lesson, person=person)
+            q.save()
+
+        # don't save related lessons
+        del form.cleaned_data["lessons"]
+
+        form.save()
+
+        # save consents
+        consent_form.save()
+
+        messages.success(self.request, "Your profile was updated.")
+
+        return redirect(self.get_success_url())
+
+
+class TrainingProgressView(LoginRequiredMixin, TemplateView):
+    template_name = "dashboard/training_progress.html"
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+
+        # Add information about instructor training progress to request.user.
+        user = (
+            Person.objects.annotate_with_instructor_eligibility()
+            .prefetch_related(
+                Prefetch(
+                    "badges",
+                    to_attr="instructor_badges",
+                    queryset=Badge.objects.instructor_badges(),
+                ),
+            )
+            .get(pk=cast(Person, self.request.user).pk)
+        )
+        self.request.user = user
+
+        context.update(
+            {
+                "title": "Your training progress",
+                "progress_training": get_passed_or_last_progress(user, "Training"),
+                "progress_get_involved": get_passed_or_last_progress(user, "Get Involved"),
+                "progress_welcome": get_passed_or_last_progress(user, "Welcome Session"),
+                "progress_demo": get_passed_or_last_progress(user, "Demo"),
+            }
+        )
+        return context
 
 
 class GetInvolvedCreateView(LoginRequiredMixin, AMYCreateView[GetInvolvedForm, TrainingProgress]):
@@ -592,6 +627,165 @@ class ResignFromRecruitment(
 
 
 # ------------------------------------------------------------
+
+
+class SearchView(OnlyForAdminsMixin, TemplateView):
+    template_name = "dashboard/search.html"
+    title = "Search"
+    request: AuthenticatedHttpRequest
+
+    def search(self, term: str, service_offering_enabled: bool) -> dict[str, QuerySet[Model] | None]:
+        tokens = tokenize(term)
+        results_combined: list[Model] = []
+
+        organizations = Organization.objects.filter(multiple_Q_icontains(term, "domain", "fullname")).order_by(
+            "fullname"
+        )
+        results_combined += list(organizations)
+
+        memberships = Membership.objects.filter(multiple_Q_icontains(term, "name", "registration_code")).order_by(
+            "-agreement_start"
+        )
+        results_combined += list(memberships)
+
+        events = Event.objects.filter(
+            multiple_Q_icontains(term, "slug", "host__domain", "host__fullname", "url", "contact", "venue", "address")
+        ).order_by("-slug")
+        results_combined += list(events)
+
+        persons = Person.objects.filter(
+            multiple_Q_icontains(term, "personal", "middle", "family", "email", "secondary_email", "github")
+            | (cross_multiple_Q_icontains(tokens[0], tokens[1], "personal", "family") if len(tokens) == 2 else Q())
+        ).order_by("family")
+        results_combined += list(persons)
+
+        training_requests = TrainingRequest.objects.filter(
+            multiple_Q_icontains(
+                term,
+                "personal",
+                "middle",
+                "family",
+                "member_code",
+                "email",
+                "secondary_email",
+                "github",
+                "affiliation",
+                "location",
+                "user_notes",
+            )
+            | (cross_multiple_Q_icontains(tokens[0], tokens[1], "personal", "family") if len(tokens) == 2 else Q())
+        ).order_by("family")
+        results_combined += list(training_requests)
+
+        partnerships = None
+        consortiums = None
+
+        if service_offering_enabled:
+            partnerships = Partnership.objects.filter(
+                multiple_Q_icontains(
+                    term,
+                    "name",
+                    "agreement_link",
+                    "registration_code",
+                )
+            ).order_by("name")
+            results_combined += list(partnerships)
+
+            consortiums = Consortium.objects.filter(
+                multiple_Q_icontains(
+                    term,
+                    "name",
+                    "description",
+                )
+            ).order_by("name")
+            results_combined += list(consortiums)
+
+        comments = Comment.objects.filter(
+            multiple_Q_icontains(
+                term,
+                "comment",
+                "user_name",
+                "user_email",
+                "user__personal",
+                "user__family",
+                "user__email",
+                "user__github",
+            )
+        ).prefetch_related("content_object")
+        results_combined += list(comments)
+
+        return {
+            "organisations": organizations,
+            "memberships": memberships,
+            "events": events,
+            "persons": persons,
+            "training_requests": training_requests,
+            "partnerships": partnerships,
+            "consortiums": consortiums,
+            "comments": comments,
+        }
+
+    def should_redirect_to(self, result: dict[str, QuerySet[Model] | None], no_redirect: bool) -> Model | None:
+        results_combined: list[Model] = reduce(
+            lambda a, b: list(a) + list(b), (val for val in result.values() if val), []
+        )
+        if len(results_combined) == 1 and not no_redirect:
+            return results_combined[0]
+        return None
+
+    def get(
+        self,
+        request: AuthenticatedHttpRequest,  # type: ignore[override]
+        *args: Any,
+        **kwargs: Any,
+    ) -> HttpResponse:
+        term = ""
+        result: dict[str, QuerySet[Model] | None] = {
+            "organisations": None,
+            "memberships": None,
+            "events": None,
+            "persons": None,
+            "training_requests": None,
+            "partnerships": None,
+            "consortiums": None,
+            "comments": None,
+        }
+        service_offering_enabled = flag_enabled("SERVICE_OFFERING", request=request)
+
+        form = SearchForm()
+
+        if "term" in request.GET:
+            form = SearchForm(request.GET)
+            if form.is_valid():
+                term = form.cleaned_data.get("term", "").strip()
+                no_redirect = form.cleaned_data["no_redirect"]
+
+                result = self.search(term, service_offering_enabled)
+
+                # Move to the only result if there is only one and no_redirect is not set.
+                should_redirect_to = self.should_redirect_to(result, no_redirect)
+                if should_redirect_to is not None:
+                    msg = format_html(
+                        "You were moved to this page, because your search <code>{}</code> yields only this result.",
+                        term,
+                    )
+                    if isinstance(should_redirect_to, Comment):
+                        messages.success(self.request, msg)
+                        return redirect(
+                            should_redirect_to.content_object.get_absolute_url() + f"#c{should_redirect_to.id}"  # type: ignore[union-attr]
+                        )
+                    elif hasattr(should_redirect_to, "get_absolute_url"):
+                        messages.success(self.request, msg)
+                        return redirect(should_redirect_to.get_absolute_url())
+
+        context_kwargs = {
+            "title": "Search",
+            "form": form,
+            "term": term,
+        } | result
+        context = super().get_context_data(**context_kwargs)
+
+        return self.render_to_response(context)
 
 
 @require_GET

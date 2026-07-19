@@ -14,6 +14,7 @@ from django.db.models import Prefetch, ProtectedError, Q
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.views.generic import View
 from flags.state import flag_enabled  # type: ignore[import-untyped]
 
 from src.consents.models import Term, TermOption, TrainingRequestConsent
@@ -56,6 +57,7 @@ from src.fiscal.models import Partnership
 from src.offering.models import AccountBenefit, Benefit
 from src.workshops.base_views import (
     AMYDetailView,
+    AMYFormView,
     AMYListView,
     AMYUpdateView,
     AssignView,
@@ -811,24 +813,16 @@ def _match_training_request_to_person(
     return True
 
 
-@admin_required
-def trainingrequest_details(request: HttpRequest, pk: str) -> HttpResponse:
-    req = get_object_or_404(TrainingRequest, pk=int(pk))
+class TrainingRequestDetails(OnlyForAdminsMixin, AMYDetailView[TrainingRequest]):
+    context_object_name = "req"
+    template_name = "requests/trainingrequest.html"
+    queryset = TrainingRequest.objects.all()
 
-    if request.method == "POST":
-        form = MatchTrainingRequestForm(request.POST)
+    TERM_SLUGS = ["may-contact", "privacy-policy", "public-profile"]
 
-        if form.is_valid():
-            create = form.action == "create"
-            person = form.cleaned_data["person"]
-            ok = _match_training_request_to_person(request, training_request=req, person=person, create=create)
-            if ok:
-                next_url = request.GET.get("next", None)
-                default_url = reverse("trainingrequest_details", args=[req.pk])
-                return redirect(safe_next_or_default_url(next_url, default_url))
-
-    else:  # GET request
+    def _suggested_match_form(self, req: TrainingRequest) -> MatchTrainingRequestForm:
         # Provide initial value for form.person
+        person: Person | None
         if req.person is not None:
             person = req.person
         else:
@@ -848,22 +842,40 @@ def trainingrequest_details(request: HttpRequest, pk: str) -> HttpResponse:
                 family__iexact=req.family,
             )
             person = Person.objects.filter(primary_email | secondary_email | name).first()  # may return None
-        form = MatchTrainingRequestForm(initial={"person": person})
+        return MatchTrainingRequestForm(initial={"person": person})
 
-    TERM_SLUGS = ["may-contact", "privacy-policy", "public-profile"]
-    context = {
-        "title": f"Training request #{req.pk}",
-        "req": req,
-        "form": form,
-        "consents": {
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        req = self.object
+
+        if "form" not in context:
+            context["form"] = self._suggested_match_form(req)
+
+        context["title"] = f"Training request #{req.pk}"
+        context["consents"] = {
             consent.term.key: consent
             for consent in TrainingRequestConsent.objects.select_related("term", "term_option").filter(
                 training_request=req
             )
-        },
-        "consents_content": {term.key: term.content for term in Term.objects.filter(slug__in=TERM_SLUGS)},
-    }
-    return render(request, "requests/trainingrequest.html", context)
+        }
+        context["consents_content"] = {term.key: term.content for term in Term.objects.filter(slug__in=self.TERM_SLUGS)}
+        return context
+
+    def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        self.object = self.get_object()
+        req = self.object
+
+        form = MatchTrainingRequestForm(request.POST)
+        if form.is_valid():
+            create = form.action == "create"
+            person = form.cleaned_data["person"]
+            ok = _match_training_request_to_person(request, training_request=req, person=person, create=create)
+            if ok:
+                next_url = request.GET.get("next", None)
+                default_url = reverse("trainingrequest_details", args=[req.pk])
+                return redirect(safe_next_or_default_url(next_url, default_url))
+
+        return self.render_to_response(self.get_context_data(form=form))
 
 
 class TrainingRequestUpdate(
@@ -1013,56 +1025,66 @@ def trainingrequests_merge(request: AuthenticatedHttpRequest) -> HttpResponse:
     return render(request, "requests/trainingrequests_merge.html", context)
 
 
-@admin_required
-@permission_required(["workshops.change_trainingrequest"], raise_exception=True)
-def bulk_upload_training_request_scores(request: AuthenticatedHttpRequest) -> HttpResponse:
-    if request.method == "POST":
-        form = BulkUploadCSVForm(request.POST, request.FILES)
-        if form.is_valid():
-            request_file = cast(UploadedFile, request.FILES["file"])
-            charset = request_file.charset or settings.DEFAULT_CHARSET
-            assert request_file.file  # for mypy
-            stream = io.TextIOWrapper(request_file.file, charset)
-            try:
-                data = upload_trainingrequest_manual_score_csv(stream)
-            except csv.Error as e:
-                messages.error(request, f"Error processing uploaded .CSV file: {e}")
-            except UnicodeDecodeError:
-                messages.error(request, f"Please provide a file in {charset} encoding.")
-            else:
-                request.session["bulk-upload-training-request-scores"] = data
-                return redirect("bulk_upload_training_request_scores_confirmation")
+class BulkUploadTrainingRequestScores(OnlyForAdminsMixin, PermissionRequiredMixin, AMYFormView[BulkUploadCSVForm]):
+    permission_required = ["workshops.change_trainingrequest"]
+    form_class = BulkUploadCSVForm
+    template_name = "requests/trainingrequest_bulk_upload_manual_score_form.html"
+    title = "Bulk upload Training Requests manual score"
 
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context["charset"] = settings.DEFAULT_CHARSET
+        return context
+
+    def form_valid(self, form: BulkUploadCSVForm) -> HttpResponse:
+        request = self.request
+        request_file = cast(UploadedFile, request.FILES["file"])
+        charset = request_file.charset or settings.DEFAULT_CHARSET
+        assert request_file.file  # for mypy
+        stream = io.TextIOWrapper(request_file.file, charset)
+        try:
+            data = upload_trainingrequest_manual_score_csv(stream)
+        except csv.Error as e:
+            messages.error(request, f"Error processing uploaded .CSV file: {e}")
+        except UnicodeDecodeError:
+            messages.error(request, f"Please provide a file in {charset} encoding.")
         else:
-            messages.error(request, "Fix errors below.")
+            request.session["bulk-upload-training-request-scores"] = data
+            return redirect("bulk_upload_training_request_scores_confirmation")
 
-    else:
-        form = BulkUploadCSVForm()
+        return self.render_to_response(self.get_context_data(form=form))
 
-    context = {
-        "title": "Bulk upload Training Requests manual score",
-        "form": form,
-        "charset": settings.DEFAULT_CHARSET,
-    }
-    return render(
-        request,
-        "requests/trainingrequest_bulk_upload_manual_score_form.html",
-        context,
-    )
+    def form_invalid(self, form: BulkUploadCSVForm) -> HttpResponse:
+        messages.error(self.request, "Fix errors below.")
+        return super().form_invalid(form)
 
 
-@admin_required
-@permission_required(["workshops.change_trainingrequest"], raise_exception=True)
-def bulk_upload_training_request_scores_confirmation(request: AuthenticatedHttpRequest) -> HttpResponse:
+class BulkUploadTrainingRequestScoresConfirmation(OnlyForAdminsMixin, PermissionRequiredMixin, View):
     """This view allows for verifying and saving of uploaded training
     request scores."""
-    data = request.session.get("bulk-upload-training-request-scores")
 
-    if not data:
-        messages.warning(request, "Could not locate CSV data, please upload again.")
-        return redirect("bulk_upload_training_request_scores")
+    permission_required = ["workshops.change_trainingrequest"]
 
-    if request.method == "POST":
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        data = request.session.get("bulk-upload-training-request-scores")
+        if not data:
+            messages.warning(request, "Could not locate CSV data, please upload again.")
+            return redirect("bulk_upload_training_request_scores")
+
+        errors, cleaned_data = clean_upload_trainingrequest_manual_score(data)
+        if errors:
+            messages.warning(
+                request,
+                "Please fix errors in the provided CSV file and re-upload.",
+            )
+        return self._render(request, data, errors, cleaned_data)
+
+    def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        data = request.session.get("bulk-upload-training-request-scores")
+        if not data:
+            messages.warning(request, "Could not locate CSV data, please upload again.")
+            return redirect("bulk_upload_training_request_scores")
+
         if request.POST.get("confirm", None) and not request.POST.get("cancel", None):
             errors, cleaned_data = clean_upload_trainingrequest_manual_score(data)
 
@@ -1099,21 +1121,16 @@ def bulk_upload_training_request_scores_confirmation(request: AuthenticatedHttpR
             request.session["bulk-upload-training-request-scores"] = None
             return redirect("bulk_upload_training_request_scores")
 
-    else:
-        errors, cleaned_data = clean_upload_trainingrequest_manual_score(data)
-        if errors:
-            messages.warning(
-                request,
-                "Please fix errors in the provided CSV file and re-upload.",
-            )
+        return self._render(request, data, errors, cleaned_data)
 
-    context = {
-        "title": "Confirm uploaded Training Requests manual score data",
-        "any_errors": errors,
-        "zipped": zip(cleaned_data, data, strict=False),
-    }
-    return render(
-        request,
-        "requests/trainingrequest_bulk_upload_manual_score_confirmation.html",
-        context,
-    )
+    def _render(self, request: HttpRequest, data: Any, errors: Any, cleaned_data: Any) -> HttpResponse:
+        context = {
+            "title": "Confirm uploaded Training Requests manual score data",
+            "any_errors": errors,
+            "zipped": zip(cleaned_data, data, strict=False),
+        }
+        return render(
+            request,
+            "requests/trainingrequest_bulk_upload_manual_score_confirmation.html",
+            context,
+        )
