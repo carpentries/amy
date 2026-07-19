@@ -19,7 +19,6 @@ from src.workshops.utils.access import (
     OnlyForAdminsMixin,
     admin_required,
     login_not_required,
-    login_required,
 )
 
 
@@ -145,7 +144,7 @@ class TestViews(TestBase):
         Test that a view decorated with @admin_required is accessible only
         for Admins.
         """
-        view_name = "admin-dashboard"
+        view_name = "search"
         view = get_view_by_name(view_name)
         assert view._access_control_list == [admin_required]  # type: ignore[attr-defined]
         url = reverse(view_name)
@@ -158,14 +157,14 @@ class TestViews(TestBase):
         self.assert_inaccessible(url, user="trainee")
         self.assert_inaccessible(url, user=None)
 
-    def test_function_based_view_restricted_to_authorized_users(self) -> None:
+    def test_class_based_view_restricted_to_authorized_users(self) -> None:
         """
-        Test that a view decorated with @login_required is accessible
-        only for Admins and Trainees.
+        Test that a view with LoginRequiredMixin is accessible to all
+        authenticated users (Admins and Trainees), but not anonymous ones.
         """
         view_name = "user-dashboard"
         view = get_view_by_name(view_name)
-        assert view._access_control_list == [login_required]  # type: ignore[attr-defined]
+        assert LoginRequiredMixin in view.view_class.__mro__  # type: ignore[attr-defined]
         url = reverse(view_name)
 
         self.assert_accessible(url, user="superuser")

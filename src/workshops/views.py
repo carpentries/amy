@@ -40,11 +40,12 @@ from django.forms import HiddenInput
 from django.http import (
     HttpRequest,
     HttpResponse,
+    HttpResponseBase,
 )
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.views.decorators.http import require_POST
+from django.views.generic import View
 from django_stubs_ext import Annotations
 from flags.state import flag_enabled  # type: ignore[import-untyped]
 from github.GithubException import GithubException
@@ -107,6 +108,7 @@ from src.workshops.base_views import (
     AMYCreateView,
     AMYDeleteView,
     AMYDetailView,
+    AMYFormView,
     AMYListView,
     AMYUpdateView,
     AssignView,
@@ -154,7 +156,7 @@ from src.workshops.models import (
     TrainingRequirement,
 )
 from src.workshops.signals import create_comment_signal
-from src.workshops.utils.access import OnlyForAdminsMixin, admin_required, login_required
+from src.workshops.utils.access import OnlyForAdminsMixin, admin_required
 from src.workshops.utils.merge import merge_objects
 from src.workshops.utils.pagination import get_pagination_items
 from src.workshops.utils.person_upload import (
@@ -170,19 +172,17 @@ from src.workshops.utils.views import failed_to_delete
 logger = logging.getLogger("amy")
 
 
-@login_required
-@require_POST
-def logout_then_login_with_msg(request: AuthenticatedHttpRequest) -> HttpResponse:
-    messages.success(request, "You were successfully logged-out.")
-    return logout_then_login(request)
+class LogoutThenLoginWithMsg(LoginRequiredMixin, View):
+    def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        messages.success(request, "You were successfully logged-out.")
+        return logout_then_login(request)
 
 
-@admin_required
-def changes_log(request: AuthenticatedHttpRequest) -> HttpResponse:
-    log = Revision.objects.all().select_related("user").prefetch_related("version_set").order_by("-date_created")
-    log_paginated = get_pagination_items(request, log)
-    context = {"log": log_paginated}
-    return render(request, "workshops/changes_log.html", context)
+class ChangesLog(OnlyForAdminsMixin, AMYListView[Revision]):
+    context_object_name = "log"
+    template_name = "workshops/changes_log.html"
+    title = "Changes log"
+    queryset = Revision.objects.all().select_related("user").prefetch_related("version_set").order_by("-date_created")
 
 
 # ------------------------------------------------------------
@@ -267,54 +267,55 @@ class PersonDetails(OnlyForAdminsMixin, AMYDetailView[Person]):
         return context
 
 
-@admin_required
-def person_bulk_add_template(request: AuthenticatedHttpRequest) -> HttpResponse:
+class PersonBulkAddTemplate(OnlyForAdminsMixin, View):
     """Dynamically generate a CSV template that can be used to bulk-upload people."""
-    response = HttpResponse(content_type="text/csv")
-    response["Content-Disposition"] = "attachment; filename=BulkPersonAddTemplate.csv"
 
-    writer = csv.writer(response)
-    writer.writerow(Person.PERSON_TASK_UPLOAD_FIELDS)
-    return response
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = "attachment; filename=BulkPersonAddTemplate.csv"
+
+        writer = csv.writer(response)
+        writer.writerow(Person.PERSON_TASK_UPLOAD_FIELDS)
+        return response
 
 
-@admin_required
-@permission_required(["workshops.add_person", "workshops.change_person"], raise_exception=True)
-def person_bulk_add(request: AuthenticatedHttpRequest) -> HttpResponse:
-    if request.method == "POST":
-        form = BulkUploadCSVForm(request.POST, request.FILES)
-        if form.is_valid():
-            request_file = cast(UploadedFile, request.FILES["file"])
-            charset = request_file.charset or settings.DEFAULT_CHARSET
-            assert request_file.file  # for mypy
-            stream = io.TextIOWrapper(request_file.file, charset)
-            try:
-                persons_tasks, empty_fields = upload_person_task_csv(stream)
-            except csv.Error as e:
-                messages.error(request, f"Error processing uploaded .CSV file: {e}")
-            except UnicodeDecodeError:
-                messages.error(request, f"Please provide a file in {charset} encoding.")
+class PersonBulkAdd(OnlyForAdminsMixin, PermissionRequiredMixin, AMYFormView[BulkUploadCSVForm]):
+    permission_required = ["workshops.add_person", "workshops.change_person"]
+    form_class = BulkUploadCSVForm
+    template_name = "workshops/person_bulk_add_form.html"
+    title = "Bulk Add People"
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context["charset"] = settings.DEFAULT_CHARSET
+        context["roles"] = Role.objects.all()
+        return context
+
+    def form_valid(self, form: BulkUploadCSVForm) -> HttpResponse:
+        request = self.request
+        request_file = cast(UploadedFile, request.FILES["file"])
+        charset = request_file.charset or settings.DEFAULT_CHARSET
+        assert request_file.file  # for mypy
+        stream = io.TextIOWrapper(request_file.file, charset)
+        try:
+            persons_tasks, empty_fields = upload_person_task_csv(stream)
+        except csv.Error as e:
+            messages.error(request, f"Error processing uploaded .CSV file: {e}")
+        except UnicodeDecodeError:
+            messages.error(request, f"Please provide a file in {charset} encoding.")
+        else:
+            if empty_fields:
+                msg_template = "The following required fields were not found in the uploaded file: {}"
+                msg = msg_template.format(", ".join(empty_fields))
+                messages.error(request, msg)
             else:
-                if empty_fields:
-                    msg_template = "The following required fields were not found in the uploaded file: {}"
-                    msg = msg_template.format(", ".join(empty_fields))
-                    messages.error(request, msg)
-                else:
-                    # Put everything into session and then redirect to confirmation page which can save the data.
-                    request.session["bulk-add-people"] = persons_tasks
-                    request.session["bulk-add-people-match"] = True
-                    return redirect("person_bulk_add_confirmation")
+                # Put everything into session and then redirect to confirmation page which can save the data.
+                request.session["bulk-add-people"] = persons_tasks
+                request.session["bulk-add-people-match"] = True
+                return redirect("person_bulk_add_confirmation")
 
-    else:
-        form = BulkUploadCSVForm()
-
-    context = {
-        "title": "Bulk Add People",
-        "form": form,
-        "charset": settings.DEFAULT_CHARSET,
-        "roles": Role.objects.all(),
-    }
-    return render(request, "workshops/person_bulk_add_form.html", context)
+        # Any error path re-renders the form with the messages set above.
+        return self.render_to_response(self.get_context_data(form=form))
 
 
 @admin_required
@@ -415,81 +416,85 @@ def person_bulk_add_confirmation(request: AuthenticatedHttpRequest) -> HttpRespo
     return render(request, "workshops/person_bulk_add_results.html", context)
 
 
-@admin_required
-@permission_required(["workshops.add_person", "workshops.change_person"], raise_exception=True)
-def person_bulk_add_remove_entry(request: AuthenticatedHttpRequest, entry_id: int) -> HttpResponse:
+class PersonBulkAddRemoveEntry(OnlyForAdminsMixin, PermissionRequiredMixin, View):
     "Remove specific entry from the session-saved list of people to be added."
-    persons_tasks = request.session.get("bulk-add-people")
 
-    if persons_tasks:
-        entry_id = int(entry_id)
-        try:
-            del persons_tasks[entry_id]
-            request.session["bulk-add-people"] = persons_tasks
+    permission_required = ["workshops.add_person", "workshops.change_person"]
 
-        except IndexError:
-            messages.warning(request, f"Could not find specified entry #{entry_id}")
+    def get(self, request: HttpRequest, entry_id: int, *args: Any, **kwargs: Any) -> HttpResponse:
+        persons_tasks = request.session.get("bulk-add-people")
 
-        return redirect(person_bulk_add_confirmation)
+        if persons_tasks:
+            entry_id = int(entry_id)
+            try:
+                del persons_tasks[entry_id]
+                request.session["bulk-add-people"] = persons_tasks
 
-    else:
-        messages.warning(request, "Could not locate CSV data, please try the upload again.")
-        return redirect("person_bulk_add")
+            except IndexError:
+                messages.warning(request, f"Could not find specified entry #{entry_id}")
+
+            return redirect("person_bulk_add_confirmation")
+
+        else:
+            messages.warning(request, "Could not locate CSV data, please try the upload again.")
+            return redirect("person_bulk_add")
 
 
-@admin_required
-@permission_required(["workshops.add_person", "workshops.change_person"], raise_exception=True)
-def person_bulk_add_match_person(
-    request: AuthenticatedHttpRequest, entry_id: int, person_id: int | None = None
-) -> HttpResponse:
+class PersonBulkAddMatchPerson(OnlyForAdminsMixin, PermissionRequiredMixin, View):
     """Save information about matched person in the session-saved data."""
-    persons_tasks = request.session.get("bulk-add-people")
-    if not persons_tasks:
-        messages.warning(request, "Could not locate CSV data, please try the upload again.")
-        return redirect("person_bulk_add")
 
-    if person_id is None:
-        # unmatch
-        try:
-            entry_id = int(entry_id)
+    permission_required = ["workshops.add_person", "workshops.change_person"]
 
-            persons_tasks[entry_id]["existing_person_id"] = 0
-            request.session["bulk-add-people"] = persons_tasks
+    def get(
+        self, request: HttpRequest, entry_id: int, person_id: int | None = None, *args: Any, **kwargs: Any
+    ) -> HttpResponse:
+        persons_tasks = request.session.get("bulk-add-people")
+        if not persons_tasks:
+            messages.warning(request, "Could not locate CSV data, please try the upload again.")
+            return redirect("person_bulk_add")
 
-        except ValueError:
-            # catches invalid argument for int()
-            messages.warning(
-                request,
-                f"Invalid entry ID ({entry_id}) or person ID ({person_id}).",
-            )
+        if person_id is None:
+            # unmatch
+            try:
+                entry_id = int(entry_id)
 
-        except IndexError:
-            # catches index out of bound
-            messages.warning(request, f"Could not find specified entry #{entry_id}")
+                persons_tasks[entry_id]["existing_person_id"] = 0
+                request.session["bulk-add-people"] = persons_tasks
 
-        return redirect(person_bulk_add_confirmation)
+            except ValueError:
+                # catches invalid argument for int()
+                messages.warning(
+                    request,
+                    f"Invalid entry ID ({entry_id}) or person ID ({person_id}).",
+                )
 
-    else:
-        # match
-        try:
-            entry_id = int(entry_id)
-            person_id = int(person_id)
+            except IndexError:
+                # catches index out of bound
+                messages.warning(request, f"Could not find specified entry #{entry_id}")
 
-            persons_tasks[entry_id]["existing_person_id"] = person_id
-            request.session["bulk-add-people"] = persons_tasks
+            return redirect("person_bulk_add_confirmation")
 
-        except ValueError:
-            # catches invalid argument for int()
-            messages.warning(
-                request,
-                f"Invalid entry ID ({entry_id}) or person ID ({person_id}).",
-            )
+        else:
+            # match
+            try:
+                entry_id = int(entry_id)
+                person_id = int(person_id)
 
-        except IndexError:
-            # catches index out of bound
-            messages.warning(request, f"Could not find specified entry #{entry_id}")
+                persons_tasks[entry_id]["existing_person_id"] = person_id
+                request.session["bulk-add-people"] = persons_tasks
 
-        return redirect(person_bulk_add_confirmation)
+            except ValueError:
+                # catches invalid argument for int()
+                messages.warning(
+                    request,
+                    f"Invalid entry ID ({entry_id}) or person ID ({person_id}).",
+                )
+
+            except IndexError:
+                # catches index out of bound
+                messages.warning(request, f"Could not find specified entry #{entry_id}")
+
+            return redirect("person_bulk_add_confirmation")
 
 
 class PersonCreate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateView[PersonCreateForm, Person]):
@@ -693,44 +698,61 @@ class PersonPermissions(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateVi
     )
 
 
-@login_required
-def person_password(request: AuthenticatedHttpRequest, person_id: int) -> HttpResponse:
-    user = get_object_or_404(Person, pk=person_id)
+class PersonPassword(LoginRequiredMixin, AMYFormView[PasswordChangeForm]):
+    template_name = "generic_form.html"
+    title = "Change password"
+    target: Person
 
-    # Either the user requests change of their own password, or someone with
-    # permission for changing person does.
-    if not ((request.user == user) or (request.user.has_perm("workshops.change_person"))):
-        raise PermissionDenied
+    def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponseBase:
+        self.target = get_object_or_404(Person, pk=kwargs["person_id"])
 
-    Form: type[PasswordChangeForm] | type[SetPasswordForm[Person]] = PasswordChangeForm
-    if request.user.is_superuser:
-        Form = SetPasswordForm
-    elif request.user.pk != user.pk:
+        if not request.user.is_authenticated:
+            # LoginRequiredMixin.dispatch (via super) redirects to login.
+            return super().dispatch(request, *args, **kwargs)
+
+        # Either the user requests change of their own password, or someone with
+        # permission for changing person does.
+        if not ((request.user == self.target) or request.user.has_perm("workshops.change_person")):
+            raise PermissionDenied
         # non-superuser can only change their own password, not someone else's
-        raise PermissionDenied
+        if not request.user.is_superuser and request.user.pk != self.target.pk:
+            raise PermissionDenied
 
-    if request.method == "POST":
-        form = Form(user, request.POST)
-        if form.is_valid():
-            form.save()  # saves the password for the user
+        return super().dispatch(request, *args, **kwargs)
 
-            update_session_auth_hash(request, form.user)
+    def get_form_class(self) -> type[PasswordChangeForm] | type[SetPasswordForm[Person]]:  # type: ignore[override]
+        if self.request.user.is_superuser:
+            return SetPasswordForm
+        return PasswordChangeForm
 
-            messages.success(request, "Password was changed successfully.")
+    def get_form_kwargs(self) -> dict[str, Any]:
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.target
+        return kwargs
 
-            return redirect(reverse("person_details", args=[user.id]))
+    def get_form(self, form_class: type[PasswordChangeForm] | None = None) -> PasswordChangeForm:
+        form = super().get_form(form_class)
+        form.helper = BootstrapHelper(add_cancel_button=False)  # type: ignore[attr-defined]
+        return form
 
-        else:
-            messages.error(request, "Fix errors below.")
-    else:
-        form = Form(user)
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context["model"] = Person
+        context["object"] = self.target
+        return context
 
-    form.helper = BootstrapHelper(add_cancel_button=False)  # type: ignore
-    return render(
-        request,
-        "generic_form.html",
-        {"form": form, "model": Person, "object": user, "title": "Change password"},
-    )
+    def form_valid(self, form: PasswordChangeForm) -> HttpResponse:
+        form.save()  # saves the password for the user
+        update_session_auth_hash(self.request, form.user)
+        messages.success(self.request, "Password was changed successfully.")
+        return super().form_valid(form)
+
+    def form_invalid(self, form: PasswordChangeForm) -> HttpResponse:
+        messages.error(self.request, "Fix errors below.")
+        return super().form_invalid(form)
+
+    def get_success_url(self) -> str:
+        return reverse("person_details", args=[self.target.id])
 
 
 @admin_required
@@ -869,35 +891,35 @@ def persons_merge(request: HttpRequest) -> HttpResponse:
     return render(request, "workshops/persons_merge.html", context)
 
 
-@admin_required
-def sync_usersocialauth(request: AuthenticatedHttpRequest, person_id: str | int) -> HttpResponse:
-    person_id = int(person_id)
-    try:
-        person = Person.objects.get(pk=person_id)
-    except Person.DoesNotExist:
-        messages.error(
-            request,
-            f"Cannot sync UserSocialAuth table for person #{person_id} -- there is no Person with such id.",
-        )
-        return redirect(reverse("persons"))
-    else:
+class SyncUserSocialAuth(OnlyForAdminsMixin, View):
+    def get(self, request: HttpRequest, person_id: str | int, *args: Any, **kwargs: Any) -> HttpResponse:
+        person_id = int(person_id)
         try:
-            result = person.synchronize_usersocialauth()
-            if result:
-                messages.success(request, "Social account was successfully synchronized.")
-            else:
-                messages.error(
-                    request,
-                    "It was not possible to synchronize this person with their social account.",
-                )
-
-        except GithubException:
+            person = Person.objects.get(pk=person_id)
+        except Person.DoesNotExist:
             messages.error(
                 request,
-                f"Cannot sync UserSocialAuth table for person #{person_id} due to errors with GitHub API.",
+                f"Cannot sync UserSocialAuth table for person #{person_id} -- there is no Person with such id.",
             )
+            return redirect(reverse("persons"))
+        else:
+            try:
+                result = person.synchronize_usersocialauth()
+                if result:
+                    messages.success(request, "Social account was successfully synchronized.")
+                else:
+                    messages.error(
+                        request,
+                        "It was not possible to synchronize this person with their social account.",
+                    )
 
-        return redirect(reverse("person_details", args=(person_id,)))
+            except GithubException:
+                messages.error(
+                    request,
+                    f"Cannot sync UserSocialAuth table for person #{person_id} due to errors with GitHub API.",
+                )
+
+            return redirect(reverse("person_details", args=(person_id,)))
 
 
 # ------------------------------------------------------------
@@ -924,110 +946,117 @@ class AllEvents(OnlyForAdminsMixin, AMYListView[Event]):
     title = "All Events"
 
 
-@admin_required
-def event_details(request: AuthenticatedHttpRequest, slug: str) -> HttpResponse:
+class EventDetails(OnlyForAdminsMixin, AMYDetailView[Event]):
     """List details of a particular event."""
-    event = get_object_or_404(
-        Event.objects.attendance().select_related(
-            "assigned_to",
-            "host",
-            "administrator",
-            "sponsor",
-            "membership",
-            "instructorrecruitment",
-            "allocated_benefit",
-        ),
-        slug=slug,
+
+    context_object_name = "event"
+    template_name = "workshops/event.html"
+    slug_field = "slug"
+    slug_url_kwarg = "slug"
+    queryset = Event.objects.attendance().select_related(
+        "assigned_to",
+        "host",
+        "administrator",
+        "sponsor",
+        "membership",
+        "instructorrecruitment",
+        "allocated_benefit",
     )
 
-    try:
-        recruitment_stats = event.instructorrecruitment.signups.aggregate(
-            all_signups=Count("person"),
-            pending_signups=Count("person", filter=Q(state="p")),
-            discarded_signups=Count("person", filter=Q(state="d")),
-            accepted_signups=Count("person", filter=Q(state="a")),
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        event = self.object
+
+        try:
+            recruitment_stats = event.instructorrecruitment.signups.aggregate(
+                all_signups=Count("person"),
+                pending_signups=Count("person", filter=Q(state="p")),
+                discarded_signups=Count("person", filter=Q(state="d")),
+                accepted_signups=Count("person", filter=Q(state="a")),
+            )
+        except Event.instructorrecruitment.RelatedObjectDoesNotExist:
+            recruitment_stats = dict(
+                all_signups=None,
+                pending_signups=None,
+                discarded_signups=None,
+                accepted_signups=None,
+            )
+
+        person_important_badges = Prefetch(
+            "person__badges",
+            to_attr="important_badges",
+            queryset=Badge.objects.filter(name__in=Badge.IMPORTANT_BADGES),
         )
-    except Event.instructorrecruitment.RelatedObjectDoesNotExist:
-        recruitment_stats = dict(
-            all_signups=None,
-            pending_signups=None,
-            discarded_signups=None,
-            accepted_signups=None,
+
+        person_instructor_community_roles = Prefetch(
+            "person__communityrole_set",
+            to_attr="instructor_community_roles",
+            queryset=CommunityRole.objects.filter(config__name="instructor"),
         )
 
-    person_important_badges = Prefetch(
-        "person__badges",
-        to_attr="important_badges",
-        queryset=Badge.objects.filter(name__in=Badge.IMPORTANT_BADGES),
-    )
-
-    person_instructor_community_roles = Prefetch(
-        "person__communityrole_set",
-        to_attr="instructor_community_roles",
-        queryset=CommunityRole.objects.filter(config__name="instructor"),
-    )
-
-    tasks = (
-        Task.objects.filter(event__id=event.id)
-        .select_related(
-            "event",
-            "person",
-            "role",
-            "seat_membership",
-            "allocated_benefit",
-            "allocated_benefit__partnership",
-            "allocated_benefit__account",
+        tasks = (
+            Task.objects.filter(event__id=event.id)
+            .select_related(
+                "event",
+                "person",
+                "role",
+                "seat_membership",
+                "allocated_benefit",
+                "allocated_benefit__partnership",
+                "allocated_benefit__account",
+            )
+            .prefetch_related(
+                person_important_badges,
+                person_instructor_community_roles,
+                Prefetch(
+                    "person__consent_set",
+                    to_attr="active_consents",
+                    queryset=Consent.objects.active().select_related("term", "term_option"),
+                ),
+            )
+            .order_by("role__name")
         )
-        .prefetch_related(
-            person_important_badges,
-            person_instructor_community_roles,
-            Prefetch(
-                "person__consent_set",
-                to_attr="active_consents",
-                queryset=Consent.objects.active().select_related("term", "term_option"),
-            ),
+
+        admin_lookup_form = AdminLookupForm()
+        if event.assigned_to:
+            admin_lookup_form = AdminLookupForm(initial={"person": event.assigned_to})
+
+        admin_lookup_form.helper = BootstrapHelper(
+            form_action=reverse("event_assign", args=[event.slug]), add_cancel_button=False
         )
-        .order_by("role__name")
-    )
 
-    admin_lookup_form = AdminLookupForm()
-    if event.assigned_to:
-        admin_lookup_form = AdminLookupForm(initial={"person": event.assigned_to})
+        if hasattr(event, "instructorrecruitment"):
+            instructor_recruitment_signups = list(
+                InstructorRecruitmentSignup.objects.filter(recruitment=event.instructorrecruitment)
+            )
+        else:
+            instructor_recruitment_signups = []
 
-    admin_lookup_form.helper = BootstrapHelper(
-        form_action=reverse("event_assign", args=[slug]), add_cancel_button=False
-    )
-
-    if hasattr(event, "instructorrecruitment"):
-        instructor_recruitment_signups = list(
-            InstructorRecruitmentSignup.objects.filter(recruitment=event.instructorrecruitment)
+        context.update(
+            {
+                "title": f"Event {event}",
+                "event": event,
+                "tasks": tasks,
+                "all_emails": tasks.filter(
+                    person__consent__archived_at__isnull=True,
+                    person__consent__term_option__option_type=TermOptionChoices.AGREE,
+                    person__consent__term__slug=TermEnum.MAY_CONTACT,
+                )
+                .exclude(person__email=None)
+                .values_list("person__email", flat=True),
+                "today": datetime.date.today(),
+                "admin_lookup_form": admin_lookup_form,
+                "event_location": {
+                    "venue": event.venue,
+                    "humandate": event.human_readable_date(),
+                    "latitude": event.latitude,
+                    "longitude": event.longitude,
+                },
+                "recruitment_stats": recruitment_stats,
+                "related_instructor_recruitment_signups": instructor_recruitment_signups,
+            }
         )
-    else:
-        instructor_recruitment_signups = []
-
-    context = {
-        "title": f"Event {event}",
-        "event": event,
-        "tasks": tasks,
-        "all_emails": tasks.filter(
-            person__consent__archived_at__isnull=True,
-            person__consent__term_option__option_type=TermOptionChoices.AGREE,
-            person__consent__term__slug=TermEnum.MAY_CONTACT,
-        )
-        .exclude(person__email=None)
-        .values_list("person__email", flat=True),
-        "today": datetime.date.today(),
-        "admin_lookup_form": admin_lookup_form,
-        "event_location": {
-            "venue": event.venue,
-            "humandate": event.human_readable_date(),
-            "latitude": event.latitude,
-            "longitude": event.longitude,
-        },
-        "recruitment_stats": recruitment_stats,
-        "related_instructor_recruitment_signups": instructor_recruitment_signups,
-    }
-    return render(request, "workshops/event.html", context)
+        return context
 
 
 class EventCreate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateView[EventCreateForm, Event]):
@@ -2047,103 +2076,103 @@ def _workshop_staff_query(
     return people
 
 
-@admin_required
-def workshop_staff(request: AuthenticatedHttpRequest) -> HttpResponse:
+class WorkshopStaff(OnlyForAdminsMixin, View):
     """Search for workshop staff."""
 
-    # read data from form, if it was submitted correctly
-    lat, lng = None, None
-    lessons = list()
-    form = WorkshopStaffForm(request.GET)
-    if form.is_valid():
-        # to highlight (in template) what lessons people know
-        lessons = form.cleaned_data["lessons"]
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        # read data from form, if it was submitted correctly
+        lat, lng = None, None
+        lessons = list()
+        form = WorkshopStaffForm(request.GET)
+        if form.is_valid():
+            # to highlight (in template) what lessons people know
+            lessons = form.cleaned_data["lessons"]
 
-        if (airport_iata := form.cleaned_data["airport_iata"]) and airport_iata in IATA_AIRPORTS:
-            airport = IATA_AIRPORTS[airport_iata]
-            lat = airport["lat"]
-            lng = airport["lon"]
+            if (airport_iata := form.cleaned_data["airport_iata"]) and airport_iata in IATA_AIRPORTS:
+                airport = IATA_AIRPORTS[airport_iata]
+                lat = airport["lat"]
+                lng = airport["lon"]
 
-        elif form.cleaned_data["latitude"] and form.cleaned_data["longitude"]:
-            lat = form.cleaned_data["latitude"]
-            lng = form.cleaned_data["longitude"]
+            elif form.cleaned_data["latitude"] and form.cleaned_data["longitude"]:
+                lat = form.cleaned_data["latitude"]
+                lng = form.cleaned_data["longitude"]
 
-    # prepare the query
-    people_query = _workshop_staff_query(lat, lng)
+        # prepare the query
+        people_query = _workshop_staff_query(lat, lng)
 
-    # filter the query
-    f = WorkshopStaffFilter(request.GET, queryset=people_query)
-    people = get_pagination_items(request, f.qs)
+        # filter the query
+        f = WorkshopStaffFilter(request.GET, queryset=people_query)
+        people = get_pagination_items(request, f.qs)
 
-    context = {
-        "title": "Find Workshop Staff",
-        "filter_form": form,
-        "persons": people,
-        "lessons": lessons,
-    }
-    return render(request, "workshops/workshop_staff.html", context)
+        context = {
+            "title": "Find Workshop Staff",
+            "filter_form": form,
+            "persons": people,
+            "lessons": lessons,
+        }
+        return render(request, "workshops/workshop_staff.html", context)
 
 
-@admin_required
-def workshop_staff_csv(request: AuthenticatedHttpRequest) -> HttpResponse:
+class WorkshopStaffCSV(OnlyForAdminsMixin, View):
     """Generate CSV of workshop staff search results."""
 
-    # read data from form, if it was submitted correctly
-    lat, lng = None, None
-    form = WorkshopStaffForm(request.GET)
-    if form.is_valid():
-        if (airport_iata := form.cleaned_data["airport_iata"]) and airport_iata in IATA_AIRPORTS:
-            airport = IATA_AIRPORTS[airport_iata]
-            lat = airport["lat"]
-            lng = airport["lon"]
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        # read data from form, if it was submitted correctly
+        lat, lng = None, None
+        form = WorkshopStaffForm(request.GET)
+        if form.is_valid():
+            if (airport_iata := form.cleaned_data["airport_iata"]) and airport_iata in IATA_AIRPORTS:
+                airport = IATA_AIRPORTS[airport_iata]
+                lat = airport["lat"]
+                lng = airport["lon"]
 
-        elif form.cleaned_data["latitude"] and form.cleaned_data["longitude"]:
-            lat = form.cleaned_data["latitude"]
-            lng = form.cleaned_data["longitude"]
+            elif form.cleaned_data["latitude"] and form.cleaned_data["longitude"]:
+                lat = form.cleaned_data["latitude"]
+                lng = form.cleaned_data["longitude"]
 
-    # prepare the query
-    people_query = _workshop_staff_query(lat, lng)
+        # prepare the query
+        people_query = _workshop_staff_query(lat, lng)
 
-    # filter the query
-    f = WorkshopStaffFilter(request.GET, queryset=people_query)
-    people = f.qs
+        # filter the query
+        f = WorkshopStaffFilter(request.GET, queryset=people_query)
+        people = f.qs
 
-    # first row of the CSV output
-    header_row = (
-        "Name",
-        "Email",
-        "Is instructor",
-        "Is trainer",
-        "Taught times",
-        "Is trainee",
-        "Airport",
-        "Country",
-        "Lessons",
-        "Affiliation",
-    )
-
-    # CSV http header
-    response = HttpResponse(content_type="text/csv")
-    response["Content-Disposition"] = 'attachment; filename="WorkshopStaff.csv"'
-    # CSV output
-    writer = csv.writer(response)
-    writer.writerow(header_row)
-    for person in people:
-        writer.writerow(
-            [
-                person.full_name,
-                person.email,
-                "yes" if person.is_instructor else "no",
-                "yes" if person.is_trainer else "no",
-                person.num_instructor,
-                "yes" if person.is_trainee else "no",
-                person.airport_iata,
-                person.country.name if person.country else "",
-                " ".join([lesson.name for lesson in person.lessons.all()]),
-                person.affiliation or "",
-            ]
+        # first row of the CSV output
+        header_row = (
+            "Name",
+            "Email",
+            "Is instructor",
+            "Is trainer",
+            "Taught times",
+            "Is trainee",
+            "Airport",
+            "Country",
+            "Lessons",
+            "Affiliation",
         )
-    return response
+
+        # CSV http header
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="WorkshopStaff.csv"'
+        # CSV output
+        writer = csv.writer(response)
+        writer.writerow(header_row)
+        for person in people:
+            writer.writerow(
+                [
+                    person.full_name,
+                    person.email,
+                    "yes" if person.is_instructor else "no",
+                    "yes" if person.is_trainer else "no",
+                    person.num_instructor,
+                    "yes" if person.is_trainee else "no",
+                    person.airport_iata,
+                    person.country.name if person.country else "",
+                    " ".join([lesson.name for lesson in person.lessons.all()]),
+                    person.affiliation or "",
+                ]
+            )
+        return response
 
 
 # ------------------------------------------------------------

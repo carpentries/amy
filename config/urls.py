@@ -26,7 +26,7 @@ from markdownx.views import ImageUploadView, MarkdownifyView
 
 from src.dashboard.views import DashboardDispatch
 from src.workshops.utils.access import login_required
-from src.workshops.views import logout_then_login_with_msg
+from src.workshops.views import LogoutThenLoginWithMsg
 
 urlpatterns: list[URLPattern | URLResolver] = [
     path("", DashboardDispatch.as_view(), name="dispatch"),
@@ -56,7 +56,7 @@ urlpatterns: list[URLPattern | URLResolver] = [
         ),
         name="login",
     ),
-    path("account/logout/", logout_then_login_with_msg, name="logout"),
+    path("account/logout/", LogoutThenLoginWithMsg.as_view(), name="logout"),
     path(
         "account/password_reset/",
         auth_views.PasswordResetView.as_view(
