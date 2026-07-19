@@ -634,7 +634,7 @@ class SearchView(OnlyForAdminsMixin, TemplateView):
     title = "Search"
     request: AuthenticatedHttpRequest
 
-    def search(self, term: str, service_offering_enabled: bool) -> dict[str, QuerySet[Model]]:
+    def search(self, term: str, service_offering_enabled: bool) -> dict[str, QuerySet[Model] | None]:
         tokens = tokenize(term)
         results_combined: list[Model] = []
 
@@ -676,6 +676,9 @@ class SearchView(OnlyForAdminsMixin, TemplateView):
             | (cross_multiple_Q_icontains(tokens[0], tokens[1], "personal", "family") if len(tokens) == 2 else Q())
         ).order_by("family")
         results_combined += list(training_requests)
+
+        partnerships = None
+        consortiums = None
 
         if service_offering_enabled:
             partnerships = Partnership.objects.filter(
@@ -757,7 +760,7 @@ class SearchView(OnlyForAdminsMixin, TemplateView):
                 term = form.cleaned_data.get("term", "").strip()
                 no_redirect = form.cleaned_data["no_redirect"]
 
-                result = self.search(term, service_offering_enabled)  # type: ignore[assignment]
+                result = self.search(term, service_offering_enabled)
 
                 # Move to the only result if there is only one and no_redirect is not set.
                 should_redirect_to = self.should_redirect_to(result, no_redirect)

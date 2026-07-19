@@ -144,7 +144,7 @@ class TestViews(TestBase):
         Test that a view decorated with @admin_required is accessible only
         for Admins.
         """
-        view_name = "search"
+        view_name = "all_trainingrequests"
         view = get_view_by_name(view_name)
         assert view._access_control_list == [admin_required]  # type: ignore[attr-defined]
         url = reverse(view_name)
