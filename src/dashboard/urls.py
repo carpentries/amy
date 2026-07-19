@@ -9,8 +9,8 @@ urlpatterns = [
         "admin/",
         include(
             [
-                path("", views.admin_dashboard, name="admin-dashboard"),
-                path("search/", views.search, name="search"),
+                path("", views.AdminDashboard.as_view(), name="admin-dashboard"),
+                path("search/", views.SearchView.as_view(), name="search"),
                 path(
                     "feature_flags/",
                     views.AllFeatureFlags.as_view(),
@@ -24,19 +24,19 @@ urlpatterns = [
     # redirect from old trainee dashboard link to new user dashboard URL
     path("trainee/", RedirectView.as_view(pattern_name="user-dashboard")),
     # user (instructor) dashboard and user-available views
-    path("", views.user_dashboard, name="user-dashboard"),
+    path("", views.UserDashboard.as_view(), name="user-dashboard"),
     path(
         "",
         include(
             [
                 path(
                     "training_progress/",
-                    views.training_progress,
+                    views.TrainingProgressView.as_view(),
                     name="training-progress",
                 ),
                 path(
                     "autoupdate_profile/",
-                    views.autoupdate_profile,
+                    views.AutoUpdateProfile.as_view(),
                     name="autoupdate_profile",
                 ),
                 path(
