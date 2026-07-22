@@ -15,6 +15,6 @@ def message_allowed(message: Message, request: HttpRequest) -> bool:
     return (
         settings.ONLY_FOR_ADMINS_TAG in message.tags
         and request.user
-        and cast(Person, request.user).is_admin
+        and cast(Person, request.user).is_superuser
         or settings.ONLY_FOR_ADMINS_TAG not in message.tags
     )

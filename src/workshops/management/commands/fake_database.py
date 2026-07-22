@@ -118,15 +118,6 @@ class Command(BaseCommand):
         for name, verbose_name in roles:
             Role.objects.get_or_create(name=name, defaults=dict(verbose_name=verbose_name))
 
-    def fake_groups(self) -> None:
-        """Provide authentication groups."""
-        groups = ["administrators", "invoicing", "steering committee", "trainers"]
-
-        self.stdout.write(f"Generating {len(groups)} auth groups...")
-
-        for group in groups:
-            Group.objects.get_or_create(name=group)
-
     def fake_tags(self) -> None:
         """Provide fixed tags. All other tags are pre-created through data
         migrations."""
@@ -1149,7 +1140,6 @@ class Command(BaseCommand):
             Faker.seed(seed)
 
         try:
-            self.fake_groups()
             self.fake_roles()
             self.fake_tags()
             self.fake_instructors()

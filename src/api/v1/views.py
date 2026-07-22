@@ -56,11 +56,11 @@ from src.workshops.models import (
 )
 
 
-class IsAdmin(BasePermission):
+class IsSuperuser(BasePermission):
     """This permission allows only admin users to view the API content."""
 
     def has_permission(self, request: Request, view: APIView) -> bool:
-        return not isinstance(request.user, AnonymousUser) and request.user.is_admin
+        return not isinstance(request.user, AnonymousUser) and request.user.is_superuser
 
 
 class HasRestrictedPermission(BasePermission):
@@ -165,7 +165,7 @@ class ExportPersonDataView(RetrieveAPIView[Person]):
 
 
 class TrainingRequests(ListAPIView[TrainingRequest]):
-    permission_classes = (IsAuthenticated, IsAdmin)
+    permission_classes = (IsAuthenticated, IsSuperuser)
     paginator = None
     renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES + [  # type: ignore
         TrainingRequestCSVRenderer,
@@ -205,7 +205,7 @@ class TrainingRequests(ListAPIView[TrainingRequest]):
 class OrganizationViewSet(viewsets.ReadOnlyModelViewSet[Organization]):
     """List many hosts or retrieve only one."""
 
-    permission_classes = (IsAuthenticated, IsAdmin)
+    permission_classes = (IsAuthenticated, IsSuperuser)
     queryset = Organization.objects.all()
     serializer_class = OrganizationSerializer
     lookup_field = "domain"
@@ -216,7 +216,7 @@ class OrganizationViewSet(viewsets.ReadOnlyModelViewSet[Organization]):
 class EventViewSet(viewsets.ReadOnlyModelViewSet[Event]):
     """List many events or retrieve only one."""
 
-    permission_classes = (IsAuthenticated, IsAdmin)
+    permission_classes = (IsAuthenticated, IsSuperuser)
     queryset = Event.objects.attendance().select_related("host", "administrator").prefetch_related("tags")
     serializer_class = EventSerializer
     lookup_field = "slug"
@@ -227,7 +227,7 @@ class EventViewSet(viewsets.ReadOnlyModelViewSet[Event]):
 class TaskViewSet(viewsets.ReadOnlyModelViewSet[Task]):
     """List tasks belonging to specific event."""
 
-    permission_classes = (IsAuthenticated, IsAdmin)
+    permission_classes = (IsAuthenticated, IsSuperuser)
     serializer_class = TaskSerializer
     pagination_class = StandardResultsSetPagination
     filterset_class = TaskFilter
@@ -251,7 +251,7 @@ class TaskViewSet(viewsets.ReadOnlyModelViewSet[Task]):
 class TermViewSet(viewsets.ReadOnlyModelViewSet[Term]):
     """List many active terms or retrieve only one active term."""
 
-    permission_classes = (IsAuthenticated, IsAdmin)
+    permission_classes = (IsAuthenticated, IsSuperuser)
     queryset = Term.objects.active()
     serializer_class = TermSerializer
     pagination_class = StandardResultsSetPagination
@@ -260,7 +260,7 @@ class TermViewSet(viewsets.ReadOnlyModelViewSet[Term]):
 class PersonViewSet(viewsets.ReadOnlyModelViewSet[Person]):
     """List many people or retrieve only one person."""
 
-    permission_classes = (IsAuthenticated, IsAdmin)
+    permission_classes = (IsAuthenticated, IsSuperuser)
     queryset = Person.objects.all().prefetch_related("badges", "domains", "lessons", "languages").distinct()
     serializer_class = PersonSerializer
     pagination_class = StandardResultsSetPagination
@@ -270,7 +270,7 @@ class PersonViewSet(viewsets.ReadOnlyModelViewSet[Person]):
 class AwardViewSet(viewsets.ReadOnlyModelViewSet[Award]):
     """List awards belonging to specific person."""
 
-    permission_classes = (IsAuthenticated, IsAdmin)
+    permission_classes = (IsAuthenticated, IsSuperuser)
     serializer_class = AwardSerializer
     _person_pk = None
 
@@ -292,7 +292,7 @@ class AwardViewSet(viewsets.ReadOnlyModelViewSet[Award]):
 class PersonTaskViewSet(viewsets.ReadOnlyModelViewSet[Task]):
     """List tasks done by specific person."""
 
-    permission_classes = (IsAuthenticated, IsAdmin)
+    permission_classes = (IsAuthenticated, IsSuperuser)
     serializer_class = TaskSerializer
     _person_pk = None
 
@@ -314,7 +314,7 @@ class PersonTaskViewSet(viewsets.ReadOnlyModelViewSet[Task]):
 class PersonConsentViewSet(viewsets.ReadOnlyModelViewSet[Consent]):
     """List consents agreed to by a specific person."""
 
-    permission_classes = (IsAuthenticated, IsAdmin)
+    permission_classes = (IsAuthenticated, IsSuperuser)
     serializer_class = ConsentSerializer
     _person_pk = None
 
@@ -336,7 +336,7 @@ class PersonConsentViewSet(viewsets.ReadOnlyModelViewSet[Consent]):
 class TrainingProgressViewSet(viewsets.ReadOnlyModelViewSet[TrainingProgress]):
     """List training progresses belonging to specific person."""
 
-    permission_classes = (IsAuthenticated, IsAdmin)
+    permission_classes = (IsAuthenticated, IsSuperuser)
     serializer_class = TrainingProgressSerializer
     _person_pk = None
 

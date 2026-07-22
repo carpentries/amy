@@ -88,7 +88,7 @@ class DashboardDispatch(LoginRequiredMixin, RedirectView):
     permanent = False
 
     def get_redirect_url(self, *args: Any, **kwargs: Any) -> str:
-        if getattr(self.request.user, "is_admin", False):
+        if getattr(self.request.user, "is_superuser", False):
             return reverse("admin-dashboard")
         return reverse("user-dashboard")
 
@@ -429,7 +429,7 @@ class UpcomingTeachingOpportunitiesList(
         return super().get_queryset()  # type: ignore
 
     def get_view_enabled(self, request: AuthenticatedHttpRequest) -> bool:  # type: ignore
-        if request.user.is_admin:
+        if request.user.is_superuser:
             return True
 
         try:
@@ -484,7 +484,7 @@ class SignupForRecruitment(
     template_name = "dashboard/signup_for_recruitment.html"
 
     def get_view_enabled(self, request: AuthenticatedHttpRequest) -> bool:  # type: ignore[override]
-        if request.user.is_admin:
+        if request.user.is_superuser:
             return True
 
         try:
@@ -609,7 +609,7 @@ class ResignFromRecruitment(
         return redirect(redirect_url)
 
     def get_view_enabled(self, request: AuthenticatedHttpRequest) -> bool:  # type: ignore[override]
-        if request.user.is_admin:
+        if request.user.is_superuser:
             return True
 
         try:

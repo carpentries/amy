@@ -31,7 +31,7 @@ class AssignmentForm(forms.Form):
     assigned_to = forms.ModelChoiceField(
         label="Assigned to:",
         required=False,
-        queryset=Person.objects.filter(Q(is_superuser=True) | Q(groups__name="administrators")).distinct(),
+        queryset=Person.objects.filter(Q(is_superuser=True)).distinct(),
         widget=Select2Widget(),
     )
     helper = BootstrapHelper(
