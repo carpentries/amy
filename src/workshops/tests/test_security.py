@@ -5,6 +5,7 @@ from typing import Any
 from django.contrib.admin import ModelAdmin
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.models import Permission
 from django.urls import URLPattern, URLResolver, reverse
 from django.views.generic import RedirectView, View
 from markdownx.views import ImageUploadView, MarkdownifyView
@@ -296,3 +297,55 @@ class TestViews(TestBase):
                                 1,
                                 "You have more than one access control mixin defined in this view.",
                             )
+
+    def test_all_cbv_permissions_exist(self) -> None:
+        """
+        Test that every permission declared via `permission_required` on a
+        class-based view actually exists in the system.
+
+        This guards against typos (e.g. a wrong app label or a misspelled model
+        name), which would otherwise produce a permission that can never be
+        granted - silently locking the view down to admins/superusers only.
+
+        Ignores:
+
+        - function based views (they use the `@permission_required` decorator),
+
+        - REST API views (they use `permission_classes`, not `permission_required`).
+        """
+
+        # All permissions currently registered in the system, as
+        # "<app_label>.<codename>" strings.
+        existing_permissions = {
+            f"{app_label}.{codename}"
+            for app_label, codename in Permission.objects.values_list("content_type__app_label", "codename")
+        }
+
+        seen_classes: set[type] = set()
+        for url in get_resolved_urls(urls.urlpatterns):
+            class_ = getattr(url.callback, "view_class", None) or getattr(url.callback, "cls", None)
+
+            # skip function based views and REST API views
+            if class_ is None or issubclass(class_, APIView):
+                continue
+            if class_ in seen_classes:
+                continue
+            seen_classes.add(class_)
+
+            permissions = getattr(class_, "permission_required", None)
+            if not permissions:
+                continue
+            # `permission_required` may be a single string or an iterable of them
+            if isinstance(permissions, str):
+                permissions = [permissions]
+
+            for permission in permissions:
+                with self.subTest(view=class_.__name__, permission=permission):
+                    self.assertIn(
+                        permission,
+                        existing_permissions,
+                        f'The view "{class_.__name__}" declares permission "{permission}", which does '
+                        "not exist. Check the app label and codename: the codename is "
+                        "view/add/change/delete_<model_name>, and the app label is the app where the "
+                        "*model* is defined (not necessarily the app where the view lives).",
+                    )
