@@ -83,7 +83,8 @@ REQUIRED_FLAG_NAME = "SERVICE_OFFERING"
 # ------------------------------------------------------------
 
 
-class AllOrganizations(OnlyForAdminsMixin, AMYListView[Organization]):
+class AllOrganizations(OnlyForAdminsMixin, PermissionRequiredMixin, AMYListView[Organization]):
+    permission_required = ["workshops.view_organization"]
     context_object_name = "all_organizations"
     template_name = "fiscal/all_organizations.html"
     filter_class = OrganizationFilter
@@ -100,7 +101,8 @@ class AllOrganizations(OnlyForAdminsMixin, AMYListView[Organization]):
     title = "All Organizations"
 
 
-class OrganizationDetails(UnquoteSlugMixin, OnlyForAdminsMixin, AMYDetailView[Organization]):
+class OrganizationDetails(UnquoteSlugMixin, OnlyForAdminsMixin, PermissionRequiredMixin, AMYDetailView[Organization]):
+    permission_required = ["workshops.view_organization"]
     queryset = Organization.objects.prefetch_related("memberships")
     context_object_name = "organization"
     template_name = "fiscal/organization.html"
@@ -138,7 +140,7 @@ class OrganizationDetails(UnquoteSlugMixin, OnlyForAdminsMixin, AMYDetailView[Or
 class OrganizationCreate(
     OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateView[OrganizationCreateForm, Organization]
 ):
-    permission_required = "workshops.add_organization"
+    permission_required = ["workshops.add_organization"]
     model = Organization
     form_class = OrganizationCreateForm
 
@@ -170,7 +172,7 @@ class OrganizationCreate(
 class OrganizationUpdate(
     UnquoteSlugMixin, OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView[OrganizationForm, Organization]
 ):
-    permission_required = "workshops.change_organization"
+    permission_required = ["workshops.change_organization"]
     model = Organization
     form_class = OrganizationForm
     slug_field = "domain"
@@ -184,10 +186,10 @@ class OrganizationDelete(
     PermissionRequiredMixin,
     AMYDeleteView[Organization, GenericDeleteForm[Organization]],
 ):
+    permission_required = ["workshops.delete_organization"]
     model = Organization
     slug_field = "domain"
     slug_url_kwarg = "org_domain"
-    permission_required = "workshops.delete_organization"
     success_url = reverse_lazy("all_organizations")
 
 
@@ -196,7 +198,8 @@ class OrganizationDelete(
 # ------------------------------------------------------------
 
 
-class AllMemberships(OnlyForAdminsMixin, AMYListView[Membership]):
+class AllMemberships(OnlyForAdminsMixin, PermissionRequiredMixin, AMYListView[Membership]):
+    permission_required = ["workshops.view_membership"]
     context_object_name = "all_memberships"
     template_name = "fiscal/all_memberships.html"
     filter_class = MembershipFilter
@@ -204,7 +207,8 @@ class AllMemberships(OnlyForAdminsMixin, AMYListView[Membership]):
     title = "All Memberships"
 
 
-class MembershipDetails(OnlyForAdminsMixin, AMYDetailView[Membership]):
+class MembershipDetails(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDetailView[Membership]):
+    permission_required = ["workshops.view_membership"]
     prefetch_awards = Prefetch("person__award_set", queryset=Award.objects.select_related("badge"))
     queryset = Membership.objects.prefetch_related(
         Prefetch(
@@ -241,10 +245,7 @@ class MembershipCreate(
     PermissionRequiredMixin,
     AMYCreateView[MembershipCreateForm, Membership],
 ):
-    permission_required = [
-        "workshops.add_membership",
-        "workshops.change_organization",
-    ]
+    permission_required = ["workshops.add_membership", "workshops.add_member"]
     model = Membership
     object: Membership
     form_class = MembershipCreateForm
@@ -286,7 +287,7 @@ class MembershipCreate(
 class MembershipUpdate(
     OnlyForAdminsMixin, PermissionRequiredMixin, RedirectSupportMixin, AMYUpdateView[MembershipForm, Membership]
 ):
-    permission_required = "workshops.change_membership"
+    permission_required = ["workshops.change_membership"]
     model = Membership
     object: Membership
     form_class = MembershipForm
@@ -443,9 +444,9 @@ class MembershipUpdate(
 class MembershipDelete(
     OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView[Membership, GenericDeleteForm[Membership]]
 ):
+    permission_required = ["workshops.delete_membership"]
     model = Membership
     object: Membership
-    permission_required = "workshops.delete_membership"
     pk_url_kwarg = "membership_id"
 
     def before_delete(self, *args: Any, **kwargs: Any) -> None:
@@ -588,7 +589,12 @@ class MembershipMembers(OnlyForAdminsMixin, PermissionRequiredMixin, MembershipF
 class MembershipTasks(
     OnlyForAdminsMixin, PermissionRequiredMixin, MembershipFormsetView[MembershipTask, MembershipTaskForm]
 ):
-    permission_required = "workshops.change_membership"
+    permission_required = [
+        "workshops.change_membership",
+        "fiscal.add_membershiptask",
+        "fiscal.change_membershiptask",
+        "fiscal.delete_membershiptask",
+    ]
 
     def get_formset(self, *args: Any, **kwargs: Any) -> type[BaseModelFormSet[MembershipTask, MembershipTaskForm]]:
         return modelformset_factory(MembershipTask, MembershipTaskForm, *args, **kwargs)
@@ -721,7 +727,12 @@ class MembershipExtend(
 class MembershipCreateRollOver(
     OnlyForAdminsMixin, PermissionRequiredMixin, GetMembershipMixin, AMYCreateView[MembershipRollOverForm, Membership]
 ):
-    permission_required = ["workshops.add_membership", "workshops.change_membership"]
+    permission_required = [
+        "workshops.add_membership",
+        "workshops.change_membership",
+        "workshops.add_member",
+        "fiscal.add_membershiptask",
+    ]
     template_name = "generic_form.html"
     model = Membership
     object: Membership
@@ -890,7 +901,7 @@ class MembershipCreateRollOver(
 # -----------------------------------------------------------------
 
 
-class ConsortiumList(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView[Consortium]):  # type: ignore[misc]
+class ConsortiumList(OnlyForAdminsMixin, FlaggedViewMixin, PermissionRequiredMixin, AMYListView[Consortium]):  # type: ignore[misc]
     flag_name = REQUIRED_FLAG_NAME
     permission_required = ["fiscal.view_consortium"]
     template_name = "fiscal/consortium_list.html"
@@ -899,7 +910,7 @@ class ConsortiumList(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView[Consortiu
     filter_class = ConsortiumFilter
 
 
-class ConsortiumDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[Consortium]):  # type: ignore[misc]
+class ConsortiumDetails(OnlyForAdminsMixin, FlaggedViewMixin, PermissionRequiredMixin, AMYDetailView[Consortium]):  # type: ignore[misc]
     flag_name = REQUIRED_FLAG_NAME
     permission_required = ["fiscal.view_consortium"]
     template_name = "fiscal/consortium_details.html"
@@ -914,6 +925,7 @@ class ConsortiumDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[Cons
 class ConsortiumCreate(
     OnlyForAdminsMixin,
     FlaggedViewMixin,  # type: ignore[misc]
+    PermissionRequiredMixin,
     AMYCreateView[ConsortiumForm, Consortium],
 ):
     flag_name = REQUIRED_FLAG_NAME
@@ -928,10 +940,11 @@ class ConsortiumCreate(
 class ConsortiumUpdate(
     OnlyForAdminsMixin,
     FlaggedViewMixin,  # type: ignore[misc]
+    PermissionRequiredMixin,
     AMYUpdateView[ConsortiumForm, Consortium],
 ):
     flag_name = REQUIRED_FLAG_NAME
-    permission_required = ["fiscal.view_consortium", "fiscal.change_consortium"]
+    permission_required = ["fiscal.change_consortium"]
     template_name = "fiscal/consortium_edit.html"
     form_class = ConsortiumForm
     model = Consortium
@@ -946,6 +959,7 @@ class ConsortiumUpdate(
 class ConsortiumDelete(
     OnlyForAdminsMixin,
     FlaggedViewMixin,  # type: ignore[misc]
+    PermissionRequiredMixin,
     AMYDeleteView[Consortium, GenericDeleteForm[Consortium]],
 ):
     flag_name = REQUIRED_FLAG_NAME
@@ -959,7 +973,7 @@ class ConsortiumDelete(
 # -----------------------------------------------------------------
 
 
-class PartnershipList(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView[Partnership]):  # type: ignore[misc]
+class PartnershipList(OnlyForAdminsMixin, FlaggedViewMixin, PermissionRequiredMixin, AMYListView[Partnership]):  # type: ignore[misc]
     flag_name = REQUIRED_FLAG_NAME
     permission_required = ["fiscal.view_partnership"]
     template_name = "fiscal/partnership_list.html"
@@ -968,7 +982,7 @@ class PartnershipList(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView[Partners
     filter_class = PartnershipFilter
 
 
-class PartnershipDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[Partnership]):  # type: ignore[misc]
+class PartnershipDetails(OnlyForAdminsMixin, FlaggedViewMixin, PermissionRequiredMixin, AMYDetailView[Partnership]):  # type: ignore[misc]
     flag_name = REQUIRED_FLAG_NAME
     permission_required = ["fiscal.view_partnership"]
     template_name = "fiscal/partnership_details.html"
@@ -996,6 +1010,7 @@ class PartnershipDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[Par
 class PartnershipCreate(
     OnlyForAdminsMixin,
     FlaggedViewMixin,  # type: ignore[misc]
+    PermissionRequiredMixin,
     AMYCreateView[PartnershipForm, Partnership],
 ):
     flag_name = REQUIRED_FLAG_NAME
@@ -1039,10 +1054,11 @@ class PartnershipCreate(
 class PartnershipUpdate(
     OnlyForAdminsMixin,
     FlaggedViewMixin,  # type: ignore[misc]
+    PermissionRequiredMixin,
     AMYUpdateView[PartnershipForm, Partnership],
 ):
     flag_name = REQUIRED_FLAG_NAME
-    permission_required = ["fiscal.view_partnership", "fiscal.change_partnership"]
+    permission_required = ["fiscal.change_partnership"]
     template_name = "fiscal/partnership_edit.html"
     form_class = PartnershipForm
     model = Partnership
@@ -1089,6 +1105,7 @@ class PartnershipUpdate(
 class PartnershipDelete(
     OnlyForAdminsMixin,
     FlaggedViewMixin,  # type: ignore[misc]
+    PermissionRequiredMixin,
     AMYDeleteView[Partnership, GenericDeleteForm[Partnership]],
 ):
     flag_name = REQUIRED_FLAG_NAME
@@ -1117,13 +1134,14 @@ class PartnershipDelete(
 class PartnershipExtend(
     OnlyForAdminsMixin,
     FlaggedViewMixin,  # type: ignore[misc]
+    PermissionRequiredMixin,
     GetPartnershipMixin,
     FormView[PartnershipExtensionForm],
 ):
     flag_name = REQUIRED_FLAG_NAME
     form_class = PartnershipExtensionForm
     template_name = "generic_form.html"
-    permission_required = "fiscal.change_partnership"
+    permission_required = ["fiscal.change_partnership"]
     comment = "Partnership extended by {days} days on {date} (new end date: {new_date}).\n\n----\n\n{comment}"
     request: AuthenticatedHttpRequest
 
@@ -1171,13 +1189,14 @@ class PartnershipExtend(
 class PartnershipExtendCredits(
     OnlyForAdminsMixin,
     FlaggedViewMixin,  # type: ignore[misc]
+    PermissionRequiredMixin,
     GetPartnershipMixin,
     FormView[PartnershipCreditsExtensionForm],
 ):
     flag_name = REQUIRED_FLAG_NAME
     form_class = PartnershipCreditsExtensionForm
     template_name = "generic_form.html"
-    permission_required = "fiscal.change_partnership"
+    permission_required = ["fiscal.change_partnership"]
     comment = (
         "Partnership credits extended by {diff_credits} on {date} (new credits value: {new_credits})."
         "\n\n----\n\n{comment}"
@@ -1226,11 +1245,16 @@ class PartnershipExtendCredits(
 class PartnershipRollOver(
     OnlyForAdminsMixin,
     FlaggedViewMixin,  # type: ignore[misc]
+    PermissionRequiredMixin,
     GetPartnershipMixin,
     AMYCreateView[PartnershipRollOverForm, Partnership],
 ):
     flag_name = REQUIRED_FLAG_NAME
-    permission_required = ["fiscal.add_partnership", "fiscal.change_partnership"]
+    permission_required = [
+        "fiscal.add_partnership",
+        "fiscal.change_partnership",
+        "offering.change_accountbenefit",
+    ]
     template_name = "generic_form.html"
     model = Partnership
     object: Partnership

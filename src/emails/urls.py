@@ -9,7 +9,7 @@ urlpatterns = [
             [
                 path(
                     "",
-                    views.AllEmailTemplates.as_view(),
+                    views.EmailTemplateList.as_view(),
                     name="all_emailtemplates",
                 ),
                 path(
@@ -44,7 +44,7 @@ urlpatterns = [
     ),
     path(
         "scheduled_emails/",
-        views.AllScheduledEmails.as_view(),
+        views.ScheduledEmailList.as_view(),
         name="all_scheduledemails",
     ),
     path(
