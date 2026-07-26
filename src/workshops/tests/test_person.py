@@ -1371,10 +1371,6 @@ class TestPersonUpdateViewPermissions(TestBase):
     def tearDown(self) -> None:
         self.client.logout()
 
-    def test_correct_permissions(self) -> None:
-        self.assertTrue(self.trainer.is_admin)
-        self.assertFalse(self.trainee.is_admin)
-
     def test_trainer_can_edit_self_profile(self) -> None:
         self.client.force_login(self.trainer)
         profile_edit = self.client.get(reverse("person_edit", args=[self.trainer.pk]))

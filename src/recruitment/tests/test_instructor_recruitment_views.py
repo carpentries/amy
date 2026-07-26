@@ -48,7 +48,7 @@ class TestInstructorRecruitmentListView(TestBase):
         # Arrange
         view = InstructorRecruitmentList()
         # Assert
-        self.assertEqual(view.permission_required, "recruitment.view_instructorrecruitment")
+        self.assertEqual(view.permission_required, ["recruitment.view_instructorrecruitment"])
         self.assertEqual(view.title, "Recruitment processes")
         self.assertEqual(view.filter_class, InstructorRecruitmentFilter)
         self.assertEqual(view.template_name, "recruitment/instructorrecruitment_list.html")
@@ -333,7 +333,7 @@ class TestInstructorRecruitmentDetailsView(TestBase):
         # Arrange
         view = InstructorRecruitmentDetails()
         # Assert
-        self.assertEqual(view.permission_required, "recruitment.view_instructorrecruitment")
+        self.assertEqual(view.permission_required, ["recruitment.view_instructorrecruitment"])
         self.assertNotEqual(view.queryset, None)  # actual qs is quite lengthy
         self.assertEqual(view.template_name, "recruitment/instructorrecruitment_details.html")
 
@@ -395,7 +395,7 @@ class TestInstructorRecruitmentAddSignup(TestBase):
             view.permission_required,
             [
                 "recruitment.change_instructorrecruitment",
-                "recruitment.view_instructorrecruitmentsignup",
+                "recruitment.add_instructorrecruitmentsignup",
             ],
         )
         self.assertEqual(view.form_class, InstructorRecruitmentAddSignupForm)
@@ -572,7 +572,9 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
         # Arrange
         view = InstructorRecruitmentSignupChangeState()
         # Assert
-        self.assertEqual(view.permission_required, "recruitment.change_instructorrecruitmentsignup")
+        self.assertEqual(
+            view.permission_required, ["recruitment.change_instructorrecruitmentsignup", "workshops.add_task"]
+        )
         self.assertEqual(view.form_class, InstructorRecruitmentSignupChangeStateForm)
 
     def test_get_object(self) -> None:

@@ -178,7 +178,8 @@ class LogoutThenLoginWithMsg(LoginRequiredMixin, View):
         return logout_then_login(request)
 
 
-class ChangesLog(OnlyForAdminsMixin, AMYListView[Revision]):
+class ChangesLog(OnlyForAdminsMixin, PermissionRequiredMixin, AMYListView[Revision]):
+    permission_required = ["workshops.view_changelog"]
     context_object_name = "log"
     template_name = "workshops/changes_log.html"
     title = "Changes log"
@@ -190,7 +191,8 @@ class ChangesLog(OnlyForAdminsMixin, AMYListView[Revision]):
 PERSON_HAS_NO_AIRPORT_ALERT = "{person} has no airport information on record."
 
 
-class AllPersons(OnlyForAdminsMixin, AMYListView[Person]):
+class AllPersons(OnlyForAdminsMixin, PermissionRequiredMixin, AMYListView[Person]):
+    permission_required = ["workshops.view_person"]
     context_object_name = "all_persons"
     template_name = "workshops/all_persons.html"
     filter_class = PersonFilter
@@ -209,7 +211,8 @@ class AllPersons(OnlyForAdminsMixin, AMYListView[Person]):
     title = "All Persons"
 
 
-class PersonDetails(OnlyForAdminsMixin, AMYDetailView[Person]):
+class PersonDetails(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDetailView[Person]):
+    permission_required = ["workshops.view_person"]
     context_object_name = "person"
     template_name = "workshops/person.html"
     pk_url_kwarg = "person_id"
@@ -267,8 +270,10 @@ class PersonDetails(OnlyForAdminsMixin, AMYDetailView[Person]):
         return context
 
 
-class PersonBulkAddTemplate(OnlyForAdminsMixin, View):
+class PersonBulkAddTemplate(OnlyForAdminsMixin, PermissionRequiredMixin, View):
     """Dynamically generate a CSV template that can be used to bulk-upload people."""
+
+    permission_required = ["workshops.add_person"]
 
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         response = HttpResponse(content_type="text/csv")
@@ -319,7 +324,7 @@ class PersonBulkAdd(OnlyForAdminsMixin, PermissionRequiredMixin, AMYFormView[Bul
 
 
 @admin_required
-@permission_required(["workshops.add_person", "workshops.change_person"], raise_exception=True)
+@permission_required(["workshops.add_person", "workshops.change_person", "workshops.add_task"], raise_exception=True)
 def person_bulk_add_confirmation(request: AuthenticatedHttpRequest) -> HttpResponse:
     """
     This view allows for manipulating and saving session-stored upload data.
@@ -498,7 +503,7 @@ class PersonBulkAddMatchPerson(OnlyForAdminsMixin, PermissionRequiredMixin, View
 
 
 class PersonCreate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateView[PersonCreateForm, Person]):
-    permission_required = "workshops.add_person"
+    permission_required = ["workshops.add_person", "workshops.add_qualification"]
     model = Person
     form_class = PersonCreateForm
 
@@ -891,7 +896,9 @@ def persons_merge(request: HttpRequest) -> HttpResponse:
     return render(request, "workshops/persons_merge.html", context)
 
 
-class SyncUserSocialAuth(OnlyForAdminsMixin, View):
+class SyncUserSocialAuth(OnlyForAdminsMixin, PermissionRequiredMixin, View):
+    permission_required = ["workshops.change_person"]
+
     def get(self, request: HttpRequest, person_id: str | int, *args: Any, **kwargs: Any) -> HttpResponse:
         person_id = int(person_id)
         try:
@@ -925,7 +932,8 @@ class SyncUserSocialAuth(OnlyForAdminsMixin, View):
 # ------------------------------------------------------------
 
 
-class AllEvents(OnlyForAdminsMixin, AMYListView[Event]):
+class AllEvents(OnlyForAdminsMixin, PermissionRequiredMixin, AMYListView[Event]):
+    permission_required = ["workshops.view_event"]
     context_object_name = "all_events"
     template_name = "workshops/all_events.html"
     queryset = (
@@ -946,9 +954,10 @@ class AllEvents(OnlyForAdminsMixin, AMYListView[Event]):
     title = "All Events"
 
 
-class EventDetails(OnlyForAdminsMixin, AMYDetailView[Event]):
+class EventDetails(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDetailView[Event]):
     """List details of a particular event."""
 
+    permission_required = ["workshops.view_event"]
     context_object_name = "event"
     template_name = "workshops/event.html"
     slug_field = "slug"
@@ -1060,7 +1069,7 @@ class EventDetails(OnlyForAdminsMixin, AMYDetailView[Event]):
 
 
 class EventCreate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateView[EventCreateForm, Event]):
-    permission_required = "workshops.add_event"
+    permission_required = ["workshops.add_event"]
     model = Event
     form_class = EventCreateForm
     template_name = "workshops/event_create_form.html"
@@ -1138,10 +1147,7 @@ class EventCreate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateView[Eve
 
 
 class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView[EventForm, Event]):
-    permission_required = [
-        "workshops.change_event",
-        "workshops.add_task",
-    ]
+    permission_required = ["workshops.change_event", "workshops.add_task"]
     queryset = Event.objects.select_related(
         "assigned_to",
         "host",
@@ -1281,7 +1287,7 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView[Eve
 
 class EventDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView[Event, EventForm]):
     model = Event
-    permission_required = "workshops.delete_event"
+    permission_required = ["workshops.delete_event"]
     success_url = reverse_lazy("all_events")
     object: Event
 
@@ -1370,8 +1376,8 @@ class EventDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView[Eve
                 )
 
 
-class EventAssign(OnlyForAdminsMixin, AssignView[Event]):
-    permission_required = "workshops.change_event"
+class EventAssign(OnlyForAdminsMixin, PermissionRequiredMixin, AssignView[Event]):
+    permission_required = ["workshops.change_event"]
     model = Event
     pk_url_kwarg = "request_id"
     person_url_kwarg = "person_id"
@@ -1480,7 +1486,8 @@ def events_merge(request: AuthenticatedHttpRequest) -> HttpResponse:
 # ------------------------------------------------------------
 
 
-class AllTasks(OnlyForAdminsMixin, AMYListView[Task]):
+class AllTasks(OnlyForAdminsMixin, PermissionRequiredMixin, AMYListView[Task]):
+    permission_required = ["workshops.view_task"]
     context_object_name = "all_tasks"
     template_name = "workshops/all_tasks.html"
     filter_class = TaskFilter
@@ -1494,7 +1501,8 @@ class AllTasks(OnlyForAdminsMixin, AMYListView[Task]):
     title = "All Tasks"
 
 
-class TaskDetails(OnlyForAdminsMixin, AMYDetailView[Task]):
+class TaskDetails(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDetailView[Task]):
+    permission_required = ["workshops.view_task"]
     queryset = Task.objects.all()
     context_object_name = "task"
     pk_url_kwarg = "task_id"
@@ -1512,7 +1520,7 @@ class TaskCreate(
     RedirectSupportMixin,
     AMYCreateView[TaskForm, Task],
 ):
-    permission_required = "workshops.add_task"
+    permission_required = ["workshops.add_task"]
     model = Task
     form_class = TaskForm
 
@@ -1656,7 +1664,7 @@ class TaskUpdate(
     PermissionRequiredMixin,
     AMYUpdateView[TaskForm, Task],
 ):
-    permission_required = "workshops.change_task"
+    permission_required = ["workshops.change_task"]
     model = Task
     queryset = Task.objects.select_related("event", "role", "person", "seat_membership", "allocated_benefit")
     form_class = TaskForm
@@ -1761,7 +1769,7 @@ class TaskDelete(
     AMYDeleteView[Task, GenericDeleteForm[Task]],
 ):
     model = Task
-    permission_required = "workshops.delete_task"
+    permission_required = ["workshops.delete_task"]
     success_url = reverse_lazy("all_tasks")
     pk_url_kwarg = "task_id"
     object: Task
@@ -1821,7 +1829,7 @@ class MockAwardCreate(
     PrepopulationSupportMixin[AwardForm],
     AMYCreateView[AwardForm, Award],
 ):
-    permission_required = "workshops.add_award"
+    permission_required = ["workshops.add_award"]
     model = Award
     form_class = AwardForm
     populate_fields = ["badge", "person"]
@@ -1965,14 +1973,16 @@ class AwardDelete(RedirectSupportMixin, MockAwardDelete):
 # ------------------------------------------------------------
 
 
-class AllBadges(OnlyForAdminsMixin, AMYListView[Badge]):
+class AllBadges(OnlyForAdminsMixin, PermissionRequiredMixin, AMYListView[Badge]):
+    permission_required = ["workshops.view_badge"]
     context_object_name = "all_badges"
     queryset = Badge.objects.order_by("name").annotate(num_awarded=Count("award"))
     template_name = "workshops/all_badges.html"
     title = "All Badges"
 
 
-class BadgeDetails(OnlyForAdminsMixin, AMYDetailView[Badge]):
+class BadgeDetails(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDetailView[Badge]):
+    permission_required = ["workshops.view_badge"]
     queryset = Badge.objects.all()
     context_object_name = "badge"
     template_name = "workshops/badge.html"
@@ -2076,8 +2086,10 @@ def _workshop_staff_query(
     return people
 
 
-class WorkshopStaff(OnlyForAdminsMixin, View):
+class WorkshopStaff(OnlyForAdminsMixin, PermissionRequiredMixin, View):
     """Search for workshop staff."""
+
+    permission_required = ["workshops.view_person"]
 
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         # read data from form, if it was submitted correctly
@@ -2113,8 +2125,10 @@ class WorkshopStaff(OnlyForAdminsMixin, View):
         return render(request, "workshops/workshop_staff.html", context)
 
 
-class WorkshopStaffCSV(OnlyForAdminsMixin, View):
+class WorkshopStaffCSV(OnlyForAdminsMixin, PermissionRequiredMixin, View):
     """Generate CSV of workshop staff search results."""
+
+    permission_required = ["workshops.view_person"]
 
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         # read data from form, if it was submitted correctly
@@ -2179,6 +2193,7 @@ class WorkshopStaffCSV(OnlyForAdminsMixin, View):
 
 
 @admin_required
+@permission_required(["workshops.view_changelog"], raise_exception=True)
 def object_changes(request: AuthenticatedHttpRequest, version_id: int) -> HttpResponse:
     """This view is highly inspired by `HistoryCompareDetailView` from
     `django-reversion-compare`:

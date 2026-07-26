@@ -5,7 +5,7 @@ from typing import Any
 from django.contrib.admin import ModelAdmin
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Permission
 from django.urls import URLPattern, URLResolver, reverse
 from django.views.generic import RedirectView, View
 from markdownx.views import ImageUploadView, MarkdownifyView
@@ -47,66 +47,16 @@ class TestViews(TestBase):
     def setUp(self) -> None:
         super().setUp()
 
-        admins, _ = Group.objects.get_or_create(name="administrators")
-        steering_committee, _ = Group.objects.get_or_create(name="steering committee")
-        invoicing_group, _ = Group.objects.get_or_create(name="invoicing")
-        trainer_group, _ = Group.objects.get_or_create(name="trainers")
-
-        # superuser who doesn't belong to Admin group should have access to
-        # admin dashboard
-        self.admin = Person.objects.create_superuser(
+        # superuser who doesn't belong to Admin group should have access to admin dashboard
+        self.superuser = Person.objects.create_superuser(
             username="superuser",
             personal="Super",
             family="User",
             email="superuser@example.org",
             password="superuser",
         )
-        self.person_consent_required_terms(self.admin)
-        assert admins not in self.admin.groups.all()
-
-        # user belonging to Admin group should have access to admin dashboard
-        self.mentor = Person.objects.create_user(
-            username="admin",
-            personal="Bob",
-            family="Admin",
-            email="admin@example.org",
-            password="admin",
-        )
-        self.person_consent_required_terms(self.mentor)
-        self.mentor.groups.add(admins)
-
-        # steering committee members should have access to admin dashboard too
-        self.committee = Person.objects.create_user(
-            username="committee",
-            personal="Bob",
-            family="Committee",
-            email="committee@example.org",
-            password="committee",
-        )
-        self.person_consent_required_terms(self.committee)
-        self.committee.groups.add(steering_committee)
-
-        # members of invoicing group should have access to admin dashboard too
-        self.invoicing = Person.objects.create_user(
-            username="invoicing",
-            personal="Bob",
-            family="Invoicing",
-            email="invoicing@example.org",
-            password="invoicing",
-        )
-        self.person_consent_required_terms(self.invoicing)
-        self.invoicing.groups.add(invoicing_group)
-
-        # trainers should have access to admin dashboard too
-        self.trainer = Person.objects.create_user(
-            username="trainer",
-            personal="Bob",
-            family="Trainer",
-            email="trainer@example.org",
-            password="trainer",
-        )
-        self.person_consent_required_terms(self.trainer)
-        self.trainer.groups.add(trainer_group)
+        self.person_consent_required_terms(self.superuser)
+        assert self.superuser.is_superuser
 
         # user with access only to trainee dashboard
         self.trainee = Person.objects.create_user(
@@ -117,8 +67,7 @@ class TestViews(TestBase):
             password="trainee",
         )
         self.person_consent_required_terms(self.trainee)
-        assert admins not in self.trainee.groups.all()
-        assert steering_committee not in self.trainee.groups.all()
+        assert not self.trainee.is_superuser
 
     def assert_accessible(self, url: str, user: str | None = None) -> None:
         if user is not None:
@@ -150,10 +99,6 @@ class TestViews(TestBase):
         url = reverse(view_name)
 
         self.assert_accessible(url, user="superuser")
-        self.assert_accessible(url, user="admin")
-        self.assert_accessible(url, user="committee")
-        self.assert_accessible(url, user="invoicing")
-        self.assert_accessible(url, user="trainer")
         self.assert_inaccessible(url, user="trainee")
         self.assert_inaccessible(url, user=None)
 
@@ -168,14 +113,10 @@ class TestViews(TestBase):
         url = reverse(view_name)
 
         self.assert_accessible(url, user="superuser")
-        self.assert_accessible(url, user="admin")
-        self.assert_accessible(url, user="committee")
-        self.assert_accessible(url, user="invoicing")
-        self.assert_accessible(url, user="trainer")
         self.assert_accessible(url, user="trainee")
         self.assert_inaccessible(url, user=None)
 
-    @unittest.expectedFailure
+    @unittest.expectedFailure  # No view decorated with @login_not_required
     def test_function_based_view_accessible_to_unauthorized_users(self) -> None:
         """
         Test that a view decorated with @login_not_required is accessible to
@@ -187,10 +128,6 @@ class TestViews(TestBase):
         url = reverse(view_name)
 
         self.assert_accessible(url, user="superuser")
-        self.assert_accessible(url, user="admin")
-        self.assert_accessible(url, user="committee")
-        self.assert_accessible(url, user="invoicing")
-        self.assert_accessible(url, user="trainer")
         self.assert_accessible(url, user="trainee")
         self.assert_accessible(url, user=None)
 
@@ -204,10 +141,6 @@ class TestViews(TestBase):
         url = reverse(view_name)
 
         self.assert_accessible(url, user="superuser")
-        self.assert_accessible(url, user="admin")
-        self.assert_accessible(url, user="committee")
-        self.assert_accessible(url, user="invoicing")
-        self.assert_accessible(url, user="trainer")
         self.assert_inaccessible(url, user="trainee")
         self.assert_inaccessible(url, user=None)
 
@@ -221,10 +154,6 @@ class TestViews(TestBase):
         url = reverse(view_name)
 
         self.assert_accessible(url, user="superuser")
-        self.assert_accessible(url, user="admin")
-        self.assert_accessible(url, user="committee")
-        self.assert_accessible(url, user="invoicing")
-        self.assert_accessible(url, user="trainer")
         self.assert_accessible(url, user="trainee")
         self.assert_accessible(url, user=None)
 
@@ -368,3 +297,55 @@ class TestViews(TestBase):
                                 1,
                                 "You have more than one access control mixin defined in this view.",
                             )
+
+    def test_all_cbv_permissions_exist(self) -> None:
+        """
+        Test that every permission declared via `permission_required` on a
+        class-based view actually exists in the system.
+
+        This guards against typos (e.g. a wrong app label or a misspelled model
+        name), which would otherwise produce a permission that can never be
+        granted - silently locking the view down to admins/superusers only.
+
+        Ignores:
+
+        - function based views (they use the `@permission_required` decorator),
+
+        - REST API views (they use `permission_classes`, not `permission_required`).
+        """
+
+        # All permissions currently registered in the system, as
+        # "<app_label>.<codename>" strings.
+        existing_permissions = {
+            f"{app_label}.{codename}"
+            for app_label, codename in Permission.objects.values_list("content_type__app_label", "codename")
+        }
+
+        seen_classes: set[type] = set()
+        for url in get_resolved_urls(urls.urlpatterns):
+            class_ = getattr(url.callback, "view_class", None) or getattr(url.callback, "cls", None)
+
+            # skip function based views and REST API views
+            if class_ is None or issubclass(class_, APIView):
+                continue
+            if class_ in seen_classes:
+                continue
+            seen_classes.add(class_)
+
+            permissions = getattr(class_, "permission_required", None)
+            if not permissions:
+                continue
+            # `permission_required` may be a single string or an iterable of them
+            if isinstance(permissions, str):
+                permissions = [permissions]
+
+            for permission in permissions:
+                with self.subTest(view=class_.__name__, permission=permission):
+                    self.assertIn(
+                        permission,
+                        existing_permissions,
+                        f'The view "{class_.__name__}" declares permission "{permission}", which does '
+                        "not exist. Check the app label and codename: the codename is "
+                        "view/add/change/delete_<model_name>, and the app label is the app where the "
+                        "*model* is defined (not necessarily the app where the view lives).",
+                    )

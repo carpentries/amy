@@ -5,7 +5,8 @@ from urllib.parse import unquote
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import permission_required
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db.models import (
     Case,
     Count,
@@ -88,13 +89,15 @@ class DashboardDispatch(LoginRequiredMixin, RedirectView):
     permanent = False
 
     def get_redirect_url(self, *args: Any, **kwargs: Any) -> str:
-        if getattr(self.request.user, "is_admin", False):
+        if getattr(self.request.user, "is_superuser", False):
             return reverse("admin-dashboard")
         return reverse("user-dashboard")
 
 
-class AdminDashboard(OnlyForAdminsMixin, TemplateView):
+class AdminDashboard(OnlyForAdminsMixin, PermissionRequiredMixin, TemplateView):
     """Home page for admins."""
+
+    permission_required = ["workshops.access_admin_dashboard"]
 
     template_name = "dashboard/admin_dashboard.html"
 
@@ -393,7 +396,8 @@ class UpcomingTeachingOpportunitiesList(
     AMYListView[InstructorRecruitment],
 ):
     flag_name = "INSTRUCTOR_RECRUITMENT"
-    permission_required = "recruitment.view_instructorrecruitment"
+    # Doesn't apply - the view requires either an admin, or no permissions (regular user with instructor role):
+    # permission_required = "recruitment.view_instructorrecruitment"
     title = "Upcoming Teaching Opportunities"
     template_name = "dashboard/upcoming_teaching_opportunities.html"
     filter_class = UpcomingTeachingOpportunitiesFilter
@@ -429,7 +433,7 @@ class UpcomingTeachingOpportunitiesList(
         return super().get_queryset()  # type: ignore
 
     def get_view_enabled(self, request: AuthenticatedHttpRequest) -> bool:  # type: ignore
-        if request.user.is_admin:
+        if request.user.is_superuser:
             return True
 
         try:
@@ -468,10 +472,11 @@ class SignupForRecruitment(
     AMYCreateAndFetchObjectView[InstructorRecruitmentSignup, InstructorRecruitment, SignupForRecruitmentForm],
 ):
     flag_name = "INSTRUCTOR_RECRUITMENT"
-    permission_required = [
-        "recruitment.view_instructorrecruitment",
-        "recruitment.add_instructorrecruitmentsignup",
-    ]
+    # Doesn't apply - the view requires either an admin, or no permissions (regular user with instructor role):
+    # permission_required = [
+    #     "recruitment.view_instructorrecruitment",
+    #     "recruitment.add_instructorrecruitmentsignup",
+    # ]
     title = "Signup for workshop"
     model = InstructorRecruitmentSignup
     queryset_other = InstructorRecruitment.objects.filter(status="o").select_related("event")
@@ -484,7 +489,7 @@ class SignupForRecruitment(
     template_name = "dashboard/signup_for_recruitment.html"
 
     def get_view_enabled(self, request: AuthenticatedHttpRequest) -> bool:  # type: ignore[override]
-        if request.user.is_admin:
+        if request.user.is_superuser:
             return True
 
         try:
@@ -585,10 +590,11 @@ class ResignFromRecruitment(
     View,
 ):
     flag_name = "INSTRUCTOR_RECRUITMENT"
-    permission_required = [
-        "recruitment.view_instructorrecruitmentsignup",
-        "recruitment.delete_instructorrecruitmentsignup",
-    ]
+    # Doesn't apply - the view requires either an admin, or no permissions (regular user with instructor role):
+    # permission_required = [
+    #     "recruitment.view_instructorrecruitmentsignup",
+    #     "recruitment.delete_instructorrecruitmentsignup",
+    # ]
     default_redirect_url = reverse_lazy("upcoming-teaching-opportunities")
     pk_url_kwarg = "signup_pk"
     request: AuthenticatedHttpRequest
@@ -609,7 +615,7 @@ class ResignFromRecruitment(
         return redirect(redirect_url)
 
     def get_view_enabled(self, request: AuthenticatedHttpRequest) -> bool:  # type: ignore[override]
-        if request.user.is_admin:
+        if request.user.is_superuser:
             return True
 
         try:
@@ -629,7 +635,8 @@ class ResignFromRecruitment(
 # ------------------------------------------------------------
 
 
-class SearchView(OnlyForAdminsMixin, TemplateView):
+class SearchView(OnlyForAdminsMixin, PermissionRequiredMixin, TemplateView):
+    permission_required = ["workshops.use_search"]
     template_name = "dashboard/search.html"
     title = "Search"
     request: AuthenticatedHttpRequest
@@ -790,6 +797,7 @@ class SearchView(OnlyForAdminsMixin, TemplateView):
 
 @require_GET
 @admin_required
+@permission_required(["workshops.use_search"], raise_exception=True)
 def search(request: HttpRequest) -> HttpResponse:
     """Search the database by term."""
 

@@ -31,7 +31,7 @@ def access_control_decorator(
 @access_control_decorator
 def admin_required(view: ViewFunction) -> ViewFunction:
     def _test(u: AbstractBaseUser | AnonymousUser) -> bool:
-        return bool(u.is_authenticated and getattr(u, "is_admin", False))
+        return bool(u.is_authenticated and getattr(u, "is_superuser", False))
 
     return user_passes_test(_test)(view)
 
@@ -52,7 +52,7 @@ class OnlyForAdminsMixin(UserPassesTestMixin):
     request: HttpRequest
 
     def test_func(self) -> bool:
-        return self.request.user.is_authenticated and getattr(self.request.user, "is_admin", False)
+        return self.request.user.is_authenticated and getattr(self.request.user, "is_superuser", False)
 
 
 class OnlyForAdminsNoRedirectMixin(OnlyForAdminsMixin):

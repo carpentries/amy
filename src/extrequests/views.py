@@ -102,7 +102,8 @@ logger = logging.getLogger("amy")
 # ------------------------------------------------------------
 
 
-class AllWorkshopRequests(OnlyForAdminsMixin, StateFilterMixin, AMYListView[WorkshopRequest]):
+class AllWorkshopRequests(OnlyForAdminsMixin, PermissionRequiredMixin, StateFilterMixin, AMYListView[WorkshopRequest]):
+    permission_required = ["workshops.view_workshoprequest"]
     context_object_name = "requests"
     template_name = "requests/all_workshoprequests.html"
     filter_class = WorkshopRequestFilter
@@ -112,7 +113,8 @@ class AllWorkshopRequests(OnlyForAdminsMixin, StateFilterMixin, AMYListView[Work
     title = "Workshop requests"
 
 
-class WorkshopRequestDetails(OnlyForAdminsMixin, AMYDetailView[WorkshopRequest]):
+class WorkshopRequestDetails(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDetailView[WorkshopRequest]):
+    permission_required = ["workshops.view_workshoprequest"]
     queryset = WorkshopRequest.objects.all()
     context_object_name = "object"
     template_name = "requests/workshoprequest.html"
@@ -166,7 +168,7 @@ class WorkshopRequestAcceptEvent(
     WRFInitial[WorkshopRequest],
     AMYCreateAndFetchObjectView[Event, WorkshopRequest, EventCreateForm],
 ):
-    permission_required = ["workshops.change_workshoprequest", "workshops.add_event"]
+    permission_required = ["workshops.change_workshoprequest", "workshops.add_event", "workshops.add_task"]
     model = Event
     form_class = EventCreateForm
     template_name = "requests/workshoprequest_accept_event.html"
@@ -210,7 +212,7 @@ class WorkshopRequestAcceptEvent(
         return super().form_valid(form)
 
 
-class WorkshopRequestAssign(OnlyForAdminsMixin, AssignView[WorkshopRequest]):
+class WorkshopRequestAssign(OnlyForAdminsMixin, PermissionRequiredMixin, AssignView[WorkshopRequest]):
     permission_required = "workshops.change_workshoprequest"
     model = WorkshopRequest
     pk_url_kwarg = "request_id"
@@ -222,7 +224,10 @@ class WorkshopRequestAssign(OnlyForAdminsMixin, AssignView[WorkshopRequest]):
 # ------------------------------------------------------------
 
 
-class AllWorkshopInquiries(OnlyForAdminsMixin, StateFilterMixin, AMYListView[WorkshopInquiryRequest]):
+class AllWorkshopInquiries(
+    OnlyForAdminsMixin, PermissionRequiredMixin, StateFilterMixin, AMYListView[WorkshopInquiryRequest]
+):
+    permission_required = ["extrequests.view_workshopinquiryrequest"]
     context_object_name = "inquiries"
     template_name = "requests/all_workshopinquiries.html"
     filter_class = WorkshopInquiryFilter
@@ -232,7 +237,8 @@ class AllWorkshopInquiries(OnlyForAdminsMixin, StateFilterMixin, AMYListView[Wor
     title = "Workshop inquiries"
 
 
-class WorkshopInquiryDetails(OnlyForAdminsMixin, AMYDetailView[WorkshopInquiryRequest]):
+class WorkshopInquiryDetails(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDetailView[WorkshopInquiryRequest]):
+    permission_required = ["extrequests.view_workshopinquiryrequest"]
     queryset = WorkshopInquiryRequest.objects.all()
     context_object_name = "object"
     template_name = "requests/workshopinquiry.html"
@@ -283,6 +289,7 @@ class WorkshopInquiryAcceptEvent(
     permission_required = [
         "extrequests.change_workshopinquiryrequest",
         "workshops.add_event",
+        "workshops.add_task",
     ]
     model = Event
     form_class = EventCreateForm
@@ -321,7 +328,7 @@ class WorkshopInquiryAcceptEvent(
         return super().form_valid(form)
 
 
-class WorkshopInquiryAssign(OnlyForAdminsMixin, AssignView[WorkshopInquiryRequest]):
+class WorkshopInquiryAssign(OnlyForAdminsMixin, PermissionRequiredMixin, AssignView[WorkshopInquiryRequest]):
     permission_required = "extrequests.change_workshopinquiryrequest"
     model = WorkshopInquiryRequest
     pk_url_kwarg = "inquiry_id"
@@ -333,7 +340,10 @@ class WorkshopInquiryAssign(OnlyForAdminsMixin, AssignView[WorkshopInquiryReques
 # ------------------------------------------------------------
 
 
-class AllSelfOrganisedSubmissions(OnlyForAdminsMixin, StateFilterMixin, AMYListView[SelfOrganisedSubmission]):
+class AllSelfOrganisedSubmissions(
+    OnlyForAdminsMixin, PermissionRequiredMixin, StateFilterMixin, AMYListView[SelfOrganisedSubmission]
+):
+    permission_required = ["extrequests.view_selforganisedsubmission"]
     context_object_name = "submissions"
     template_name = "requests/all_selforganisedsubmissions.html"
     filter_class = SelfOrganisedSubmissionFilter
@@ -343,7 +353,10 @@ class AllSelfOrganisedSubmissions(OnlyForAdminsMixin, StateFilterMixin, AMYListV
     title = "Self-Organised submissions"
 
 
-class SelfOrganisedSubmissionDetails(OnlyForAdminsMixin, AMYDetailView[SelfOrganisedSubmission]):
+class SelfOrganisedSubmissionDetails(
+    OnlyForAdminsMixin, PermissionRequiredMixin, AMYDetailView[SelfOrganisedSubmission]
+):
+    permission_required = ["extrequests.view_selforganisedsubmission"]
     queryset = SelfOrganisedSubmission.objects.all()
     context_object_name = "object"
     template_name = "requests/selforganisedsubmission.html"
@@ -396,6 +409,7 @@ class SelfOrganisedSubmissionAcceptEvent(
     permission_required = [
         "extrequests.change_selforganisedsubmission",
         "workshops.add_event",
+        "workshops.add_task",
     ]
     model = Event
     form_class = EventCreateForm
@@ -463,7 +477,7 @@ class SelfOrganisedSubmissionAcceptEvent(
         return super().form_valid(form)
 
 
-class SelfOrganisedSubmissionAssign(OnlyForAdminsMixin, AssignView[SelfOrganisedSubmission]):
+class SelfOrganisedSubmissionAssign(OnlyForAdminsMixin, PermissionRequiredMixin, AssignView[SelfOrganisedSubmission]):
     permission_required = "extrequests.change_selforganisedsubmission"
     model = SelfOrganisedSubmission
     pk_url_kwarg = "submission_id"
@@ -476,6 +490,7 @@ class SelfOrganisedSubmissionAssign(OnlyForAdminsMixin, AssignView[SelfOrganised
 
 
 @admin_required
+@permission_required(["workshops.view_trainingrequest"], raise_exception=True)
 def all_trainingrequests(request: AuthenticatedHttpRequest) -> HttpResponse:
     filter_ = TrainingRequestFilter(
         request.GET,
@@ -813,7 +828,8 @@ def _match_training_request_to_person(
     return True
 
 
-class TrainingRequestDetails(OnlyForAdminsMixin, AMYDetailView[TrainingRequest]):
+class TrainingRequestDetails(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDetailView[TrainingRequest]):
+    permission_required = ["workshops.view_trainingrequest"]
     context_object_name = "req"
     template_name = "requests/trainingrequest.html"
     queryset = TrainingRequest.objects.all()
@@ -879,8 +895,12 @@ class TrainingRequestDetails(OnlyForAdminsMixin, AMYDetailView[TrainingRequest])
 
 
 class TrainingRequestUpdate(
-    RedirectSupportMixin, OnlyForAdminsMixin, AMYUpdateView[TrainingRequestUpdateForm, TrainingRequest]
+    RedirectSupportMixin,
+    OnlyForAdminsMixin,
+    PermissionRequiredMixin,
+    AMYUpdateView[TrainingRequestUpdateForm, TrainingRequest],
 ):
+    permission_required = ["workshops.change_trainingrequest"]
     model = TrainingRequest
     form_class = TrainingRequestUpdateForm
     template_name = "generic_form_with_comments.html"

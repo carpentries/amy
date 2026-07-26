@@ -63,10 +63,11 @@ logger = logging.getLogger("amy")
 class InstructorRecruitmentList(
     OnlyForAdminsMixin,
     FlaggedViewMixin,  # type: ignore[misc]
+    PermissionRequiredMixin,
     AMYListView[InstructorRecruitment],
 ):
     flag_name = "INSTRUCTOR_RECRUITMENT"
-    permission_required = "recruitment.view_instructorrecruitment"
+    permission_required = ["recruitment.view_instructorrecruitment"]
     title = "Recruitment processes"
     filter_class = InstructorRecruitmentFilter
     request: AuthenticatedHttpRequest
@@ -231,10 +232,11 @@ class InstructorRecruitmentCreate(
 class InstructorRecruitmentDetails(
     OnlyForAdminsMixin,
     FlaggedViewMixin,  # type: ignore[misc]
+    PermissionRequiredMixin,
     AMYDetailView[InstructorRecruitment],
 ):
     flag_name = "INSTRUCTOR_RECRUITMENT"
-    permission_required = "recruitment.view_instructorrecruitment"
+    permission_required = ["recruitment.view_instructorrecruitment"]
     queryset = (
         InstructorRecruitment.objects.annotate_with_priority()
         .prefetch_related(
@@ -299,7 +301,7 @@ class InstructorRecruitmentAddSignup(
     flag_name = "INSTRUCTOR_RECRUITMENT"
     permission_required = [
         "recruitment.change_instructorrecruitment",
-        "recruitment.view_instructorrecruitmentsignup",
+        "recruitment.add_instructorrecruitmentsignup",
     ]
     form_class = InstructorRecruitmentAddSignupForm
     template_name = "recruitment/instructorrecruitment_add_signup.html"
@@ -374,7 +376,7 @@ class InstructorRecruitmentSignupChangeState(
     """POST requests for editing (confirming or declining) the instructor signup."""
 
     flag_name = "INSTRUCTOR_RECRUITMENT"
-    permission_required = "recruitment.change_instructorrecruitmentsignup"
+    permission_required = ["recruitment.change_instructorrecruitmentsignup", "workshops.add_task"]
     form_class = InstructorRecruitmentSignupChangeStateForm
 
     def get_object(self) -> InstructorRecruitmentSignup:

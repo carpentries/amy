@@ -7,7 +7,11 @@ from functools import partial, reduce
 from typing import Any, TypedDict
 
 from airportsdata import Airport
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.mixins import (
+    LoginRequiredMixin,
+    PermissionRequiredMixin,
+    UserPassesTestMixin,
+)
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Count, Model, Q
@@ -50,7 +54,9 @@ class ExtensibleAutoResponseView(AutoResponseView):
         return [{"text": self.widget.label_from_instance(obj), "id": obj.pk} for obj in object_list]
 
 
-class TagLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
+class TagLookupView(OnlyForAdminsNoRedirectMixin, PermissionRequiredMixin, AutoResponseView):
+    permission_required = ["workshops.view_tag"]
+
     def get_queryset(self) -> QuerySet[models.Tag]:
         q = models.Tag.objects.all()
         if self.term:
@@ -58,7 +64,9 @@ class TagLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
         return q
 
 
-class BadgeLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
+class BadgeLookupView(OnlyForAdminsNoRedirectMixin, PermissionRequiredMixin, AutoResponseView):
+    permission_required = ["workshops.view_badge"]
+
     def get_queryset(self) -> QuerySet[models.Badge]:
         q = models.Badge.objects.all()
         if self.term:
@@ -66,7 +74,9 @@ class BadgeLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
         return q
 
 
-class LessonLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
+class LessonLookupView(OnlyForAdminsNoRedirectMixin, PermissionRequiredMixin, AutoResponseView):
+    permission_required = ["workshops.view_lesson"]
+
     def get_queryset(self) -> QuerySet[models.Lesson]:
         q = models.Lesson.objects.all()
         if self.term:
@@ -74,7 +84,9 @@ class LessonLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
         return q
 
 
-class EventLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
+class EventLookupView(OnlyForAdminsNoRedirectMixin, PermissionRequiredMixin, AutoResponseView):
+    permission_required = ["workshops.view_event"]
+
     def get_queryset(self) -> QuerySet[models.Event]:
         results = models.Event.objects.all()
 
@@ -84,7 +96,9 @@ class EventLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
         return results
 
 
-class EventLookupForAwardsView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
+class EventLookupForAwardsView(OnlyForAdminsNoRedirectMixin, PermissionRequiredMixin, AutoResponseView):
+    permission_required = ["workshops.view_event"]
+
     def get_queryset(self) -> QuerySet[models.Event]:
         results = models.Event.objects.all()
 
@@ -105,7 +119,9 @@ class EventLookupForAwardsView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
         return results
 
 
-class TTTEventLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
+class TTTEventLookupView(OnlyForAdminsNoRedirectMixin, PermissionRequiredMixin, AutoResponseView):
+    permission_required = ["workshops.view_event"]
+
     def get_queryset(self) -> QuerySet[models.Event]:
         results = models.Event.objects.ttt()
 
@@ -121,7 +137,9 @@ class TTTEventLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
         return results
 
 
-class TrainingSkillupEventLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
+class TrainingSkillupEventLookupView(OnlyForAdminsNoRedirectMixin, PermissionRequiredMixin, AutoResponseView):
+    permission_required = ["workshops.view_event"]
+
     def get_queryset(self) -> QuerySet[models.Event]:
         results = models.Event.objects.filter(event_category__name__in=["training", "skillup"])
 
@@ -137,7 +155,9 @@ class OrganizationEntry(TypedDict):
     id: int
 
 
-class OrganizationLookupView(OnlyForAdminsNoRedirectMixin, ExtensibleAutoResponseView):
+class OrganizationLookupView(OnlyForAdminsNoRedirectMixin, PermissionRequiredMixin, ExtensibleAutoResponseView):
+    permission_required = ["workshops.view_organization"]
+
     def get_queryset(self) -> QuerySet[models.Organization]:
         results = models.Organization.objects.order_by("fullname")
 
@@ -157,7 +177,9 @@ class OrganizationLookupView(OnlyForAdminsNoRedirectMixin, ExtensibleAutoRespons
         ]
 
 
-class AdministratorOrganizationLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
+class AdministratorOrganizationLookupView(OnlyForAdminsNoRedirectMixin, PermissionRequiredMixin, AutoResponseView):
+    permission_required = ["workshops.view_organization"]
+
     def get_queryset(self) -> QuerySet[models.Organization]:
         results = models.Organization.objects.administrators()
 
@@ -167,7 +189,9 @@ class AdministratorOrganizationLookupView(OnlyForAdminsNoRedirectMixin, AutoResp
         return results
 
 
-class MembershipLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
+class MembershipLookupView(OnlyForAdminsNoRedirectMixin, PermissionRequiredMixin, AutoResponseView):
+    permission_required = ["workshops.view_membership"]
+
     def get_queryset(self) -> QuerySet[models.Membership]:
         results = models.Membership.objects.all()
 
@@ -222,7 +246,9 @@ class MembershipLookupForTasksView(MembershipLookupView):
         return results
 
 
-class MemberRoleLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
+class MemberRoleLookupView(OnlyForAdminsNoRedirectMixin, PermissionRequiredMixin, AutoResponseView):
+    permission_required = ["workshops.view_memberrole"]
+
     def get_queryset(self) -> QuerySet[models.MemberRole]:
         q = models.MemberRole.objects.all()
         if self.term:
@@ -230,7 +256,9 @@ class MemberRoleLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
         return q
 
 
-class MembershipPersonRoleLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
+class MembershipPersonRoleLookupView(OnlyForAdminsNoRedirectMixin, PermissionRequiredMixin, AutoResponseView):
+    permission_required = ["fiscal.view_membershippersonrole"]
+
     def get_queryset(self) -> QuerySet[MembershipPersonRole]:
         q = MembershipPersonRole.objects.all()
         if self.term:
@@ -238,7 +266,9 @@ class MembershipPersonRoleLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseV
         return q
 
 
-class PersonLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
+class PersonLookupView(OnlyForAdminsNoRedirectMixin, PermissionRequiredMixin, AutoResponseView):
+    permission_required = ["workshops.view_person"]
+
     def get_queryset(self) -> QuerySet[models.Person]:
         results = models.Person.objects.all()
 
@@ -266,8 +296,10 @@ class PersonLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
         return results
 
 
-class CommunityRoleLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
+class CommunityRoleLookupView(OnlyForAdminsNoRedirectMixin, PermissionRequiredMixin, AutoResponseView):
     """Lookup view for community roles."""
+
+    permission_required = ["communityroles.view_communityroleconfig"]
 
     def get_queryset(self) -> QuerySet[CommunityRoleConfig]:
         results = CommunityRoleConfig.objects.all()
@@ -277,8 +309,10 @@ class CommunityRoleLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
         return results
 
 
-class InstructorLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
+class InstructorLookupView(OnlyForAdminsNoRedirectMixin, PermissionRequiredMixin, AutoResponseView):
     """Lookup view for instructors using Community Roles approach (Instructor Role)."""
+
+    permission_required = ["workshops.view_person"]
 
     def get_queryset(self) -> QuerySet[models.Person]:
         results = models.Person.objects.filter(communityrole__config__name="instructor").distinct()
@@ -306,11 +340,13 @@ class InstructorLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
         return results
 
 
-class AdminLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
+class AdminLookupView(OnlyForAdminsNoRedirectMixin, PermissionRequiredMixin, AutoResponseView):
     """The same as PersonLookup, but allows only to select administrators.
 
     Administrator is anyone with superuser power or in "administrators" group.
     """
+
+    permission_required = ["workshops.view_person"]
 
     def get_queryset(self) -> QuerySet[models.Person]:
         admin_group = Group.objects.get(name="administrators")
@@ -347,7 +383,9 @@ class LanguageLookupView(LoginNotRequiredMixin, AutoResponseView):
         return results
 
 
-class KnowledgeDomainLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
+class KnowledgeDomainLookupView(OnlyForAdminsNoRedirectMixin, PermissionRequiredMixin, AutoResponseView):
+    permission_required = ["workshops.view_knowledgedomain"]
+
     def get_queryset(self) -> QuerySet[models.KnowledgeDomain]:
         results = models.KnowledgeDomain.objects.all()
 
@@ -359,11 +397,13 @@ class KnowledgeDomainLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
         return results
 
 
-class TrainingRequestLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
+class TrainingRequestLookupView(OnlyForAdminsNoRedirectMixin, PermissionRequiredMixin, AutoResponseView):
     """The same as PersonLookup, but allows only to select administrators.
 
     Administrator is anyone with superuser power or in "administrators" group.
     """
+
+    permission_required = ["workshops.view_trainingrequest"]
 
     def get_queryset(self) -> QuerySet[models.TrainingRequest]:
         results = models.TrainingRequest.objects.all()
@@ -390,7 +430,9 @@ class TrainingRequestLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
         return results
 
 
-class AwardLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
+class AwardLookupView(OnlyForAdminsNoRedirectMixin, PermissionRequiredMixin, AutoResponseView):
+    permission_required = ["workshops.view_award"]
+
     def get_queryset(self) -> QuerySet[models.Award]:
         results = models.Award.objects.all()
 
@@ -550,7 +592,9 @@ class AirportsLookupView(LoginNotRequiredMixin, AutoResponseView):
         )
 
 
-class PartnershipLookupView(OnlyForAdminsNoRedirectMixin, ExtensibleAutoResponseView):
+class PartnershipLookupView(OnlyForAdminsNoRedirectMixin, PermissionRequiredMixin, ExtensibleAutoResponseView):
+    permission_required = ["fiscal.view_partnership"]
+
     def get_queryset(self) -> QuerySet[Partnership]:
         results = Partnership.objects.order_by("name", "agreement_start")
 
@@ -575,7 +619,9 @@ class PartnershipLookupView(OnlyForAdminsNoRedirectMixin, ExtensibleAutoResponse
         ]
 
 
-class PartnershipTierLookupView(OnlyForAdminsNoRedirectMixin, ExtensibleAutoResponseView):
+class PartnershipTierLookupView(OnlyForAdminsNoRedirectMixin, PermissionRequiredMixin, ExtensibleAutoResponseView):
+    permission_required = ["fiscal.view_partnershiptier"]
+
     def get_queryset(self) -> QuerySet[PartnershipTier]:
         q = PartnershipTier.objects.order_by("credits", "name")
         if self.term:
@@ -594,7 +640,8 @@ class PartnershipTierLookupView(OnlyForAdminsNoRedirectMixin, ExtensibleAutoResp
         ]
 
 
-class AccountBenefitsLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
+class AccountBenefitsLookupView(OnlyForAdminsNoRedirectMixin, PermissionRequiredMixin, AutoResponseView):
+    permission_required = ["offering.view_accountbenefit"]
     unit_type: str
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -633,7 +680,8 @@ class AccountBenefitEventsLookupView(AccountBenefitsLookupView):
         self.unit_type = "event"
 
 
-class BenefitsLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
+class BenefitsLookupView(OnlyForAdminsNoRedirectMixin, PermissionRequiredMixin, AutoResponseView):
+    permission_required = ["offering.view_benefit"]
     unit_type: str
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
