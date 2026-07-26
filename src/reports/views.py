@@ -1,6 +1,7 @@
 from typing import Any
 
 from django.contrib import messages
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db.models import Case, Count, F, IntegerField, Prefetch, Q, Value, When
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect
@@ -25,8 +26,10 @@ from src.workshops.models import (
 from src.workshops.utils.access import OnlyForAdminsMixin
 
 
-class MembershipTrainingsStats(OnlyForAdminsMixin, AMYListView[Membership]):
+class MembershipTrainingsStats(OnlyForAdminsMixin, PermissionRequiredMixin, AMYListView[Membership]):
     """Display basic statistics for memberships and instructor trainings."""
+
+    permission_required = ["workshops.view_reports"]
 
     template_name = "reports/membership_trainings_stats.html"
     filter_class = MembershipTrainingsFilter
@@ -35,8 +38,10 @@ class MembershipTrainingsStats(OnlyForAdminsMixin, AMYListView[Membership]):
     queryset = Membership.objects.annotate_with_seat_usage().prefetch_related("organizations", "task_set")
 
 
-class WorkshopIssues(OnlyForAdminsMixin, TemplateView):
+class WorkshopIssues(OnlyForAdminsMixin, PermissionRequiredMixin, TemplateView):
     """Display workshops in the database whose records need attention."""
+
+    permission_required = ["workshops.view_reports"]
 
     template_name = "reports/workshop_issues.html"
 
@@ -129,8 +134,10 @@ class WorkshopIssues(OnlyForAdminsMixin, TemplateView):
         return context
 
 
-class InstructorIssues(OnlyForAdminsMixin, TemplateView):
+class InstructorIssues(OnlyForAdminsMixin, PermissionRequiredMixin, TemplateView):
     """Display instructors in the database who need attention."""
+
+    permission_required = ["workshops.view_reports"]
 
     template_name = "reports/instructor_issues.html"
 
@@ -173,12 +180,14 @@ class InstructorIssues(OnlyForAdminsMixin, TemplateView):
         return context
 
 
-class DuplicatePersons(OnlyForAdminsMixin, TemplateView):
+class DuplicatePersons(OnlyForAdminsMixin, PermissionRequiredMixin, TemplateView):
     """Find possible duplicates amongst persons.
 
     Criteria for persons:
     * switched personal/family names
     * same name on different people."""
+
+    permission_required = ["workshops.view_reports"]
 
     template_name = "reports/duplicate_persons.html"
 
@@ -226,7 +235,9 @@ class DuplicatePersons(OnlyForAdminsMixin, TemplateView):
         return context
 
 
-class ReviewDuplicatePersons(OnlyForAdminsMixin, View):
+class ReviewDuplicatePersons(OnlyForAdminsMixin, PermissionRequiredMixin, View):
+    permission_required = ["workshops.view_reports", "workshops.change_person"]
+
     def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         if "person_id" in request.POST:
             ids = request.POST.getlist("person_id")
@@ -240,13 +251,15 @@ class ReviewDuplicatePersons(OnlyForAdminsMixin, View):
         return redirect(reverse("duplicate_persons"))
 
 
-class DuplicateTrainingRequests(OnlyForAdminsMixin, TemplateView):
+class DuplicateTrainingRequests(OnlyForAdminsMixin, PermissionRequiredMixin, TemplateView):
     """Find possible duplicates amongst training requests.
 
     Criteria:
     * the same name
     * the same email.
     """
+
+    permission_required = ["workshops.view_reports"]
 
     template_name = "reports/duplicate_training_requests.html"
 

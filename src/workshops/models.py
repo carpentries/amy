@@ -898,6 +898,10 @@ class Person(
                 "can_access_restricted_API",
                 "Can this user access the restricted API endpoints?",
             ),
+            ("access_admin_dashboard", "Can access the admin dashboard"),
+            ("use_search", "Can use the global search and workshop-staff finder"),
+            ("view_changelog", "Can view the object changes log"),
+            ("view_reports", "Can view reports"),
         ]
 
     @cached_property
@@ -968,21 +972,6 @@ class Person(
     def is_staff(self) -> bool:
         """Required for logging into admin panel."""
         return self.is_superuser
-
-    @property
-    def is_admin(self) -> bool:
-        return self._is_admin()
-
-    ADMIN_GROUPS = ("administrators", "steering committee", "invoicing", "trainers")
-
-    def _is_admin(self) -> bool:
-        try:
-            if self.is_anonymous:
-                return False
-            else:
-                return self.is_superuser or self.groups.filter(name__in=self.ADMIN_GROUPS).exists()
-        except AttributeError:
-            return False
 
     def get_missing_instructor_requirements(self) -> list[str]:
         """Returns set of requirements' names (list of strings) that are not
