@@ -8,7 +8,15 @@
 
 {% block content %}
   {% if requests %}
-    <form role="form" class="form-horizontal" method="post" action="{% url 'all_trainingrequests' %}?{{ request.GET.urlencode }}">
+    <div x-data="matchConfirmation">
+    <form
+      role="form"
+      class="form-horizontal"
+      method="post"
+      action="{% url 'all_trainingrequests' %}?{{ request.GET.urlencode }}"
+      x-ref="form"
+      @submit="onSubmit($event)"
+    >
     {% if form.errors.requests or match_form.errors.requests %}
       <div class="alert alert-danger" role="alert">You didn't select any requests.</div>
     {% elif form.errors or match_form.errors %}
@@ -56,7 +64,9 @@
           <td>
             <input type="checkbox" name="requests" value="{{ req.pk }}"
                    respond-to-select-all-checkbox
-                   email="{% if req.person %}{{ req.person.email }}{% elif req.email %}{{ req.email }}{% endif %}" />
+                   email="{% if req.person %}{{ req.person.email }}{% elif req.email %}{{ req.email }}{% endif %}"
+                   {% if req.benefit %}data-benefit-id="{{ req.benefit.pk }}" data-benefit-name="{{ req.benefit.name }}"{% endif %}
+                   data-trainee="{{ req.personal }}{% if req.middle %} {{ req.middle }}{% endif %} {{ req.family }} <{{ req.email }}>" />
           </td>
           <td>
             {{ req.personal }} {{ req.middle }} {{ req.family }}<br />
@@ -140,6 +150,46 @@
 
     {% crispy match_form %}
     </form>
+
+    {# Kept in a <template> so that neither the modal nor its backdrop show up before Alpine boots. #}
+    <template x-if="open">
+      <div @keydown.escape.window="cancel()">
+        <div class="modal d-block" tabindex="-1" role="dialog" aria-modal="true"
+             aria-labelledby="benefit_mismatch_modal_label">
+          <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="benefit_mismatch_modal_label">Different offering requested</h5>
+                <button type="button" class="btn-close" @click="cancel()" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                <p>
+                  You're about to match the selected trainees to
+                  <strong x-text="benefitName"></strong>, but
+                  <span x-text="mismatched.length"></span>
+                  of them signed up for a different offering:
+                </p>
+                <ul>
+                  <template x-for="request in mismatched" :key="request.id">
+                    <li>
+                      <span x-text="request.trainee"></span> &mdash;
+                      <strong x-text="request.benefitName"></strong>
+                    </li>
+                  </template>
+                </ul>
+                <p class="mb-0">Do you want to match them anyway?</p>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" x-init="$el.focus()" @click="cancel()">Cancel</button>
+                <button type="button" class="btn btn-primary" @click="proceed()">Accept &amp; match anyway</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-backdrop show"></div>
+      </div>
+    </template>
+    </div>
 {% else %}
     <p>No training requests.</p>
 {% endif %}
@@ -148,6 +198,7 @@
 
 {% block extrajs %}
 <script type="text/javascript" src="{% static 'checkboxes_sessionstorage.js' %}"></script>
+<script type="text/javascript" src="{% static 'training_requests_match_confirmation.js' %}"></script>
 <script type="text/javascript">
   $(function () {
     // datatables enabled for event tasks table

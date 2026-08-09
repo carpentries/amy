@@ -640,7 +640,7 @@ class PartnershipTierLookupView(OnlyForAdminsNoRedirectMixin, PermissionRequired
         ]
 
 
-class AccountBenefitsLookupView(OnlyForAdminsNoRedirectMixin, PermissionRequiredMixin, AutoResponseView):
+class AccountBenefitsLookupView(OnlyForAdminsNoRedirectMixin, PermissionRequiredMixin, ExtensibleAutoResponseView):
     permission_required = ["offering.view_accountbenefit"]
     unit_type: str
 
@@ -649,7 +649,9 @@ class AccountBenefitsLookupView(OnlyForAdminsNoRedirectMixin, PermissionRequired
         self.unit_type = ""
 
     def get_queryset(self) -> QuerySet[AccountBenefit]:
-        results = AccountBenefit.objects.all()
+        results = AccountBenefit.objects.select_related("benefit", "partnership").order_by(
+            "partnership__name", "benefit__name"
+        )
 
         if self.unit_type in ("seat", "event"):
             results = results.filter(benefit__unit_type=self.unit_type)
@@ -667,6 +669,17 @@ class AccountBenefitsLookupView(OnlyForAdminsNoRedirectMixin, PermissionRequired
 
         return results
 
+    def parse_results(self, object_list: Sequence[AccountBenefit]) -> list[Any]:  # type: ignore[override]
+        return [
+            {
+                "id": str(obj.pk),
+                "text": str(obj),
+                "benefit_id": str(obj.benefit_id),
+                "benefit_name": obj.benefit.name,
+            }
+            for obj in object_list
+        ]
+
 
 class AccountBenefitSeatsLookupView(AccountBenefitsLookupView):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -680,7 +693,7 @@ class AccountBenefitEventsLookupView(AccountBenefitsLookupView):
         self.unit_type = "event"
 
 
-class BenefitsLookupView(OnlyForAdminsNoRedirectMixin, PermissionRequiredMixin, AutoResponseView):
+class BenefitsLookupView(OnlyForAdminsNoRedirectMixin, PermissionRequiredMixin, ExtensibleAutoResponseView):
     permission_required = ["offering.view_benefit"]
     unit_type: str
 
@@ -698,6 +711,19 @@ class BenefitsLookupView(OnlyForAdminsNoRedirectMixin, PermissionRequiredMixin, 
             results = results.filter(Q(name__icontains=self.term) | Q(description__icontains=self.term))
 
         return results
+
+    def parse_results(self, object_list: Sequence[Benefit]) -> list[Any]:  # type: ignore[override]
+        # `benefit_id` / `benefit_name` are named the same as in `AccountBenefitsLookupView`,
+        # so that the client can read the underlying benefit from either lookup.
+        return [
+            {
+                "id": str(obj.pk),
+                "text": str(obj),
+                "benefit_id": str(obj.pk),
+                "benefit_name": obj.name,
+            }
+            for obj in object_list
+        ]
 
 
 class BenefitSeatsLookupView(BenefitsLookupView):

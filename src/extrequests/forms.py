@@ -15,6 +15,7 @@ from src.extrequests.models import (
     WorkshopInquiryRequest,
 )
 from src.extrequests.utils import any_member_code_valid, any_member_code_valid_training
+from src.extrequests.widgets import AccountBenefitSelect2Widget, BenefitSelect2Widget
 from src.offering.models import AccountBenefit, Benefit
 from src.workshops.fields import (
     AirportSelect2Widget,
@@ -132,7 +133,7 @@ class BulkMatchTrainingRequestForm(forms.Form):
         required=False,
         help_text="Use this for partnerships instead of memberships.",
         queryset=AccountBenefit.objects.filter(benefit__unit_type="seat"),
-        widget=ModelSelect2Widget(data_view="account-benefit-seats-lookup"),  # type: ignore[no-untyped-call]
+        widget=AccountBenefitSelect2Widget(data_view="account-benefit-seats-lookup"),  # type: ignore[no-untyped-call]
     )
 
     auto_assign = forms.BooleanField(
@@ -146,7 +147,7 @@ class BulkMatchTrainingRequestForm(forms.Form):
         label="Benefit for auto-match",
         required=False,
         queryset=Benefit.objects.filter(unit_type="seat"),
-        widget=ModelSelect2Widget(data_view="benefit-seats-lookup"),  # type: ignore[no-untyped-call]
+        widget=BenefitSelect2Widget(data_view="benefit-seats-lookup"),  # type: ignore[no-untyped-call]
     )
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -163,6 +164,13 @@ class BulkMatchTrainingRequestForm(forms.Form):
             if self._show_allocated_benefit
             else "Assigned users will take instructor seats based on the registration code they entered."
         )
+        # `benefit_override` is only read when auto-matching, so it's greyed out until
+        # `auto_assign` is checked. Both directives need the `matchConfirmation` Alpine
+        # component from `requests/all_trainingrequests.html`, the form's only template.
+        # `.fill` seeds `autoAssign` from the checkbox, so a redisplayed form keeps its state.
+        self.fields["auto_assign"].widget.attrs["x-model.fill"] = "autoAssign"
+        self.fields["benefit_override"].widget.attrs[":disabled"] = "!autoAssign"
+
         self.helper = BootstrapHelper(add_submit_button=False, form_tag=False, add_cancel_button=False)
         self.helper.layout = Layout(
             "event",
@@ -211,7 +219,10 @@ class BulkMatchTrainingRequestForm(forms.Form):
                 "based on registration code at the same time."
             )
 
-        if self._show_allocated_benefit and not benefit_override:
+        # `benefit_override` only takes part in auto-matching, and the template disables it
+        # unless auto-matching is on - a disabled field isn't submitted, so it can only be
+        # required together with `auto_assign`.
+        if self._show_allocated_benefit and auto_assign and not benefit_override:
             errors["benefit_override"] = ValidationError("Must not be empty.")
 
         if errors:
