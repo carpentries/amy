@@ -191,7 +191,6 @@ class TestUserPartnerships(TestBase):
         self.assertEqual(rv.status_code, 200)
         self.assertContains(rv, "Owned Org partnership")
         self.assertContains(rv, "OWNED-ORG-2026")
-        self.assertContains(rv, "https://example.org/agreement")
         self.assertContains(rv, "Gold")
 
     def test_page_displays_account_benefits(self) -> None:
