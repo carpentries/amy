@@ -47,6 +47,11 @@ class TestTrainingRequestFilter(TestBase):
 
         # add some training requests
         # spiderman: open application, accepted and fully matched
+        self.task_spiderman = Task.objects.create(
+            event=self.ttt_event,
+            person=self.spiderman,
+            role=Role.objects.get(name="learner"),
+        )
         self.request_spiderman = TrainingRequest.objects.create(
             person=self.spiderman,
             review_process="open",
@@ -54,11 +59,7 @@ class TestTrainingRequestFilter(TestBase):
             family="Parker",
             email="peter@webslinger.net",
             state="a",
-        )
-        Task.objects.create(
-            event=self.ttt_event,
-            person=self.spiderman,
-            role=Role.objects.get(name="learner"),
+            task=self.task_spiderman,
         )
 
         # ironman: preapproved application, pending, matched person
