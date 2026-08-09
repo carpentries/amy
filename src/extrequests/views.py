@@ -10,7 +10,7 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.uploadedfile import UploadedFile
 from django.db import IntegrityError, transaction
-from django.db.models import Prefetch, ProtectedError, Q
+from django.db.models import ProtectedError, Q
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -494,15 +494,7 @@ class SelfOrganisedSubmissionAssign(OnlyForAdminsMixin, PermissionRequiredMixin,
 def all_trainingrequests(request: AuthenticatedHttpRequest) -> HttpResponse:
     filter_ = TrainingRequestFilter(
         request.GET,
-        queryset=TrainingRequest.objects.all()
-        .select_related("benefit")
-        .prefetch_related(
-            Prefetch(
-                "person__task_set",
-                to_attr="training_tasks",
-                queryset=Task.objects.filter(role__name="learner", event__tags__name="TTT").select_related("event"),
-            ),
-        ),
+        queryset=TrainingRequest.objects.all().select_related("benefit", "person", "task", "task__event"),
     )
 
     form = BulkChangeTrainingRequestForm()
@@ -725,9 +717,10 @@ def all_trainingrequests(request: AuthenticatedHttpRequest) -> HttpResponse:
         if form.is_valid():
             # Perform bulk unmatch
             for training_request in form.cleaned_data["requests"]:
-                training_request.person.get_training_tasks().delete()
+                if training_request.task:
+                    training_request.task.delete()
 
-            messages.success(request, "Successfully unmatched selected people from src.trainings.")
+            messages.success(request, "Successfully unmatched selected people from trainings.")
 
     context = {
         "title": "Training Requests",

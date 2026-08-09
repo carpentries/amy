@@ -1318,7 +1318,10 @@ class TrainingRequestUpdateForm(forms.ModelForm[TrainingRequest]):
 
     class Meta:
         model = TrainingRequest
-        exclude = ()
+        # `task` is maintained by matching/unmatching, not edited by hand - and with
+        # `exclude = ()` it would otherwise render every Task in the database as a
+        # plain <select>, since there's no lookup view behind it.
+        exclude = ("task",)
         widgets = {
             "occupation": forms.RadioSelect(),
             "domains": forms.CheckboxSelectMultiple(),

@@ -94,12 +94,8 @@
             {% else %}—{% endif %}
           </td>
           <td>
-            {% if req.person %}
-              {% for task in req.person.training_tasks %}
-                <a href="{% url 'event_details' task.event.slug %}">{{ task.event }}</a><br />
-              {% empty %}
-                —
-              {% endfor %}
+            {% if req.task %}
+              <a href="{% url 'event_details' req.task.event.slug %}">{{ req.task.event }}</a><br />
             {% else %}
               —
             {% endif %}

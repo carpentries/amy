@@ -90,7 +90,7 @@ class TestTrainingRequestModel(TestBase):
         training = Event.objects.create(slug="training", host=org)
         training.tags.add(Tag.objects.get(name="TTT"))
         learner = Role.objects.get(name="learner")
-        Task.objects.create(person=self.trainee, event=training, role=learner)
+        self.training_task = Task.objects.create(person=self.trainee, event=training, role=learner)
 
     def test_accepted_request_are_always_valid(self) -> None:
         """Accepted training requests are valid regardless of whether they
@@ -113,6 +113,7 @@ class TestTrainingRequestModel(TestBase):
 
     def test_pending_request_must_not_be_matched(self) -> None:
         req = create_training_request(state="p", person=self.trainee)
+        req.task = self.training_task
         with self.assertRaises(ValidationError):
             req.full_clean()
 
@@ -296,7 +297,8 @@ class TestTrainingRequestsListView(TestBase):
             slug="ttt-event", host=self.org, event_category=training_event_category
         )
         self.first_training.tags.add(self.ttt)
-        Task.objects.create(person=self.spiderman, role=self.learner, event=self.first_training)
+        self.first_req.task = Task.objects.create(person=self.spiderman, role=self.learner, event=self.first_training)
+        self.first_req.save()
         self.second_training = Event.objects.create(
             slug="second-ttt-event", host=self.org, event_category=training_event_category
         )
@@ -402,7 +404,7 @@ class TestTrainingRequestsListView(TestBase):
             "benefit_override": self.benefit.pk,
         }
         # Spiderman is already matched with first_training
-        assert self.spiderman.get_training_tasks()[0].event == self.first_training
+        assert self.first_req.task is not None and self.first_req.task.event == self.first_training
 
         rv = self.client.post(reverse("all_trainingrequests"), data, follow=True)
 
@@ -481,7 +483,7 @@ class TestTrainingRequestsListView(TestBase):
             "requests": [self.first_req.pk, self.second_req.pk],
         }
         # Spiderman is already matched with first_training
-        assert self.spiderman.get_training_tasks()[0].event == self.first_training
+        assert self.first_req.task is not None and self.first_req.task.event == self.first_training
 
         rv = self.client.post(reverse("all_trainingrequests"), data, follow=True)
         self.assertEqual(rv.status_code, 200)
@@ -510,7 +512,7 @@ class TestTrainingRequestsListView(TestBase):
 
         self.assertEqual(rv.status_code, 200)
         self.assertEqual(rv.resolver_match.view_name, "all_trainingrequests")
-        msg = "Successfully unmatched selected people from src.trainings."
+        msg = "Successfully unmatched selected people from trainings."
         self.assertContains(rv, msg)
 
         self.assertEqual(

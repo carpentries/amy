@@ -166,10 +166,6 @@ def accept_training_request_and_match_to_event(
     seat_membership: Membership | None = None,
     allocated_benefit: AccountBenefit | None = None,
 ) -> Task:
-    # accept the request
-    request.state = "a"
-    request.save()
-
     # assign to an event
     task, _ = Task.objects.get_or_create(
         event=event,
@@ -182,6 +178,11 @@ def accept_training_request_and_match_to_event(
             allocated_benefit=allocated_benefit,
         ),
     )
+
+    # accept the request and link it to the task
+    request.state = "a"
+    request.task = task
+    request.save()
 
     return task
 

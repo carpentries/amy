@@ -988,11 +988,6 @@ class Person(
         except AttributeError as e:
             raise Exception("Did you forget to call annotate_with_instructor_eligibility()?") from e
 
-    def get_training_tasks(self) -> QuerySet[Task]:
-        """Returns Tasks related to Instuctor Training events at which this
-        person was trained."""
-        return Task.objects.filter(person=self, role__name="learner", event__tags__name="TTT")
-
     def clean(self) -> None:
         """This will be called by the ModelForm.is_valid(). No saving to the
         database."""
@@ -2130,6 +2125,19 @@ class TrainingRequest(
         "score_notes",
     )
 
+    # Mirrors `EventLinkMixin`, which links the other request types to the event they
+    # produced. `SET_NULL` rather than `PROTECT`, because unmatching a trainee deletes
+    # their training task - and that should clear the link, not block the deletion.
+    task = models.OneToOneField(
+        "workshops.Task",
+        null=True,
+        blank=True,
+        default=None,
+        on_delete=models.SET_NULL,
+        verbose_name="Linked training task",
+        help_text="Task created when this request was matched to a training.",
+    )
+
     benefit = models.ForeignKey(
         "offering.Benefit",
         on_delete=models.PROTECT,
@@ -2521,7 +2529,7 @@ class TrainingRequest(
     def clean(self) -> None:
         super().clean()
 
-        if self.state == "p" and self.person is not None and self.person.get_training_tasks().exists():
+        if self.state == "p" and self.task is not None:
             raise ValidationError({"state": "Pending training request cannot be matched with a training."})
 
     def recalculate_score_auto(self) -> int:
