@@ -592,6 +592,7 @@ class PersonUpdate(OnlyForAdminsMixin, UserPassesTestMixin, AMYUpdateView[Person
                     form_tag=False,
                     prefix="task",
                     failed_trainings=failed_trainings,
+                    show_allocated_benefit=flag_enabled("SERVICE_OFFERING", request=self.request),
                     **kwargs,
                 ),
                 "community_roles": self.object.communityrole_set.select_related(

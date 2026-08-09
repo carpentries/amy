@@ -40,6 +40,11 @@ urlpatterns = [
                     name="autoupdate_profile",
                 ),
                 path(
+                    "partnerships/",
+                    views.UserPartnerships.as_view(),
+                    name="user-partnerships",
+                ),
+                path(
                     "teaching_opportunities/",
                     views.UpcomingTeachingOpportunitiesList.as_view(),
                     name="upcoming-teaching-opportunities",
