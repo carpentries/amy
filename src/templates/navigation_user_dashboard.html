@@ -1,6 +1,7 @@
 {% load navigation %}
 {% load communityroles %}
 {% load feature_flags %}
+{% load offering %}
 {% block navbar %}
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
       <a class="navbar-brand ms-3" href="{% url 'admin-dashboard' %}">AMY</a>
@@ -17,6 +18,14 @@
           {% navbar_element "Update data" "autoupdate_profile" %}
           {% navbar_element "Training progress" "training-progress" %}
 
+          {% flag_enabled 'SERVICE_OFFERING' as SERVICE_OFFERING_ENABLED %}
+          {% if SERVICE_OFFERING_ENABLED %}
+            {% is_account_owner user as IS_ACCOUNT_OWNER %}
+            {% if IS_ACCOUNT_OWNER %}
+              {% navbar_element "Your partnerships" "user-partnerships" %}
+            {% endif %}
+          {% endif %}
+
           {% flag_enabled 'INSTRUCTOR_RECRUITMENT' as INSTRUCTOR_RECRUITMENT_ENABLED %}
           {% get_community_role user role_name="instructor" as INSTRUCTOR_COMMUNITY_ROLE %}
           {% if INSTRUCTOR_RECRUITMENT_ENABLED %}
@@ -26,7 +35,7 @@
           {% endif %}
         </ul>
 
-        <ul class="navbar-nav ml-auto">
+        <ul class="navbar-nav ms-auto">
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Hello, {{ user.get_short_name }}</a>
             <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">

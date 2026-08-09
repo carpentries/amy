@@ -1,12 +1,14 @@
 import uuid
 from datetime import date
+from typing import Annotated, TypedDict
 
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
-from django.db.models import Q
+from django.db.models import Count, Q, QuerySet
 from django.urls import reverse
 from django.utils import timezone
+from django_stubs_ext import Annotations
 from reversion import revisions as reversion
 
 from src.workshops.consts import STR_LONG, STR_LONGEST, STR_MED
@@ -119,6 +121,23 @@ class AccountBenefitDiscount(CreatedUpdatedMixin, models.Model):
         return self.name
 
 
+class AccountBenefitUsage(TypedDict):
+    seats_used: int
+    events_used: int
+
+
+class AccountBenefitManager(models.Manager["AccountBenefit"]):
+    def usage_annotation(self) -> QuerySet[Annotated[AccountBenefit, Annotations[AccountBenefitUsage]]]:
+        """Annotate with allocation used, counted separately for both unit types.
+
+        Only one of the annotations is meaningful for a given account benefit - which one
+        depends on `benefit.unit_type`. See `AccountBenefit.allocation_used`."""
+        return self.get_queryset().annotate(
+            seats_used=Count("task", distinct=True),
+            events_used=Count("event", distinct=True),
+        )
+
+
 @reversion.register
 class AccountBenefit(CreatedUpdatedMixin, models.Model):
     """A single benefit purchased for an account."""
@@ -148,6 +167,8 @@ class AccountBenefit(CreatedUpdatedMixin, models.Model):
     end_date = models.DateField()
     allocation = models.PositiveIntegerField()
     frozen = models.BooleanField(default=False)
+
+    objects = AccountBenefitManager()
 
     class Meta:
         constraints = [

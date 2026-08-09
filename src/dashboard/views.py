@@ -51,6 +51,7 @@ from src.dashboard.utils import (
 from src.emails.signals import instructor_signs_up_for_workshop_signal
 from src.extrequests.base_views import AMYCreateAndFetchObjectView
 from src.fiscal.models import Consortium, MembershipTask, Partnership
+from src.offering.utils import get_owned_account_summaries, is_account_owner
 from src.recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
 from src.workshops.base_forms import GenericDeleteForm
 from src.workshops.base_views import (
@@ -383,6 +384,37 @@ class GetInvolvedDeleteView(LoginRequiredMixin, AMYDeleteView[TrainingProgress, 
             requirement__name="Get Involved",
             state="n",
         )
+
+
+# ------------------------------------------------------------
+# Views for account owners
+
+
+class UserPartnerships(
+    LoginRequiredMixin,
+    FlaggedViewMixin,  # type: ignore[misc]
+    ConditionallyEnabledMixin,
+    TemplateView,
+):
+    """Read-only summary of partnerships and account benefits of every account the
+    logged-in user is an owner of."""
+
+    flag_name = "SERVICE_OFFERING"
+    template_name = "dashboard/user_partnerships.html"
+    request: AuthenticatedHttpRequest
+
+    def get_view_enabled(self, request: AuthenticatedHttpRequest) -> bool:  # type: ignore[override]
+        return is_account_owner(request.user)
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {
+                "title": "Your partnerships",
+                "account_summaries": get_owned_account_summaries(self.request.user),
+            }
+        )
+        return context
 
 
 # ------------------------------------------------------------
