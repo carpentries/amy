@@ -4,6 +4,36 @@
  * defined in workshop_metadata.js.
  */
 
+/**
+ * Read a value from a `<select>` that may be enhanced with Tom Select
+ * (see the initialisation in amy_utils.js).
+ */
+function _getSelectValue(selector) {
+    const element = document.querySelector(selector);
+    if (element === null) return null;
+    return element.tomselect ? element.tomselect.getValue() : $(element).val();
+}
+
+/**
+ * Set a value on a `<select>` that may be enhanced with Tom Select.
+ *
+ * Tom Select hides the original `<select>` and keeps its own state, so
+ * `$(el).val(...)` changes only the hidden element: the visible widget keeps
+ * displaying the old value, and Tom Select overwrites the change on its next
+ * update. Going through the widget instead keeps both in sync and emits the
+ * native "input" / "change" events other code relies on (eg. Alpine's
+ * `x-model` on the country field).
+ */
+function _setSelectValue(selector, value) {
+    const element = document.querySelector(selector);
+    if (element === null) return;
+    if (element.tomselect) {
+        element.tomselect.setValue(value);
+    } else {
+        $(element).val(value).trigger("change");
+    }
+}
+
 function _fillEventForm(data) {
     $("#id_slug").val(data.slug);
     $("#id_start").val(data.start);
@@ -26,7 +56,7 @@ function _fillEventForm(data) {
 
     $('#id_venue').val(data.venue);
     $('#id_address').val(data.address);
-    $('#id_country').val(data.country);
+    _setSelectValue('#id_country', data.country);
     $('#id_latitude').val(data.latitude);
     $('#id_longitude').val(data.longitude);
 }
@@ -86,7 +116,7 @@ async function update_from_url(url, action) {
             }
             if ($("#id_venue").val() === "") { $('#id_venue').val(data.venue); }
             if ($("#id_address").val() === "") { $('#id_address').val(data.address); }
-            if ($("#id_country").val() === "") { $('#id_country').val(data.country); }
+            if (!_getSelectValue("#id_country")) { _setSelectValue('#id_country', data.country); }
             if ($("#id_latitude").val() === "") { $('#id_latitude').val(data.latitude); }
             if ($("#id_longitude").val() === "") { $('#id_longitude').val(data.longitude); }
 
