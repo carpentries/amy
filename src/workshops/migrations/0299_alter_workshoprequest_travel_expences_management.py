@@ -4,15 +4,27 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('workshops', '0298_alter_person_options'),
+        ("workshops", "0298_alter_person_options"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='workshoprequest',
-            name='travel_expences_management',
-            field=models.CharField(choices=[('booked', 'Hotel and airfare will be booked by site; ground travel and meals/incidentals will be reimbursed within 60 days.'), ('reimbursed', 'All expenses will be booked by instructors and reimbursed within 60 days.'), ('online', 'Not applicable, as this will be an online workshop.'), ('other', 'Other:')], default='', max_length=20, verbose_name='How will you manage travel expenses for Carpentries Instructors?'),
+            model_name="workshoprequest",
+            name="travel_expences_management",
+            field=models.CharField(
+                choices=[
+                    (
+                        "booked",
+                        "Hotel and airfare will be booked by site; ground travel and meals/incidentals will be reimbursed within 60 days.",
+                    ),
+                    ("reimbursed", "All expenses will be booked by instructors and reimbursed within 60 days."),
+                    ("online", "Not applicable, as this will be an online workshop."),
+                    ("other", "Other:"),
+                ],
+                default="",
+                max_length=20,
+                verbose_name="How will you manage travel expenses for Carpentries Instructors?",
+            ),
         ),
     ]
