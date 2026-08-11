@@ -3271,6 +3271,10 @@ class WorkshopRequest(
             "reimbursed",
             "All expenses will be booked by instructors and reimbursed within 60 days.",
         ),
+        (
+            "online",
+            "Not applicable, as this will be an online workshop.",
+        ),
         ("other", "Other:"),
     )
     travel_expences_management = models.CharField(
