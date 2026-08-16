@@ -2125,17 +2125,16 @@ class TrainingRequest(
         "score_notes",
     )
 
-    # Mirrors `EventLinkMixin`, which links the other request types to the event they
-    # produced. `SET_NULL` rather than `PROTECT`, because unmatching a trainee deletes
-    # their training task - and that should clear the link, not block the deletion.
-    task = models.OneToOneField(
+    # Many-to-many, not a single link: a person may be matched to more than one training
+    # (for example after re-taking it), and may hold more than one request that the same
+    # training answers. Deleting a task - which is what unmatching a trainee does - drops
+    # the rows from the through table, so the link disappears without blocking anything.
+    tasks = models.ManyToManyField(
         "workshops.Task",
-        null=True,
         blank=True,
-        default=None,
-        on_delete=models.SET_NULL,
-        verbose_name="Linked training task",
-        help_text="Task created when this request was matched to a training.",
+        related_name="training_requests",
+        verbose_name="Linked training tasks",
+        help_text="Tasks this request was matched to.",
     )
 
     benefit = models.ForeignKey(
@@ -2529,7 +2528,9 @@ class TrainingRequest(
     def clean(self) -> None:
         super().clean()
 
-        if self.state == "p" and self.task is not None:
+        # `tasks` is a many-to-many, so it can only be read once the request has a PK -
+        # and a request being created has nothing linked to it yet anyway.
+        if self.state == "p" and self.pk is not None and self.tasks.exists():
             raise ValidationError({"state": "Pending training request cannot be matched with a training."})
 
     def recalculate_score_auto(self) -> int:
