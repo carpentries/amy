@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Any
 
 from django_test_migrations.contrib.unittest_case import MigratorTestCase
 
@@ -343,3 +344,131 @@ class TestWorkshops0263Rollback(MigratorTestCase):
         WorkshopRequest = self.new_state.apps.get_model("workshops", "WorkshopRequest")
         request = WorkshopRequest.objects.get(location="London")
         self.assertEqual(request.number_attendees, "")
+
+
+class TestWorkshops0300LinkTrainingRequestsToTasks(MigratorTestCase):
+    """Every training task a person holds should end up linked to every accepted
+    training request they hold, and to nothing else."""
+
+    migrate_from = ("workshops", "0299_trainingrequest_tasks")
+    migrate_to = ("workshops", "0300_link_training_requests_to_tasks")
+
+    def create_person(self, username: str) -> Any:
+        Person = self.old_state.apps.get_model("workshops", "Person")
+        # `github` is unique and defaults to "", so it has to differ between people.
+        return Person.objects.create(
+            personal=username,
+            family="Tester",
+            username=username,
+            country="US",
+            github=username,
+        )
+
+    def create_request(self, person: Any, state: str) -> Any:
+        TrainingRequest = self.old_state.apps.get_model("workshops", "TrainingRequest")
+        return TrainingRequest.objects.create(
+            person=person,
+            state=state,
+            personal=person.personal,
+            family=person.family,
+            email=f"{person.username}@example.org",
+            affiliation="Test University",
+            location="Cracow",
+            country="PL",
+            reason="Just for fun.",
+        )
+
+    def create_task(self, person: Any, event: Any, role: Any) -> Any:
+        Task = self.old_state.apps.get_model("workshops", "Task")
+        return Task.objects.create(person=person, event=event, role=role)
+
+    def prepare(self) -> None:
+        Event = self.old_state.apps.get_model("workshops", "Event")
+        Organization = self.old_state.apps.get_model("workshops", "Organization")
+        Role = self.old_state.apps.get_model("workshops", "Role")
+        Tag = self.old_state.apps.get_model("workshops", "Tag")
+
+        org = Organization.objects.create(domain="example.org", fullname="Test Org")
+        ttt, _ = Tag.objects.get_or_create(name="TTT")
+        learner, _ = Role.objects.get_or_create(name="learner")
+        helper, _ = Role.objects.get_or_create(name="helper")
+
+        self.ttt_event = Event.objects.create(slug="ttt-event", host=org)
+        self.ttt_event.tags.add(ttt)
+        self.other_ttt_event = Event.objects.create(slug="ttt-event-2", host=org)
+        self.other_ttt_event.tags.add(ttt)
+        self.non_ttt_event = Event.objects.create(slug="regular-event", host=org)
+
+        # One task, one accepted request -> linked.
+        simple = self.create_person("simple")
+        self.simple_request = self.create_request(simple, "a")
+        self.simple_task = self.create_task(simple, self.ttt_event, learner)
+
+        # One task, one accepted request among discarded/pending ones -> only the
+        # accepted one is linked.
+        reapplied = self.create_person("reapplied")
+        self.discarded_request = self.create_request(reapplied, "d")
+        self.accepted_request = self.create_request(reapplied, "a")
+        self.pending_request = self.create_request(reapplied, "p")
+        self.reapplied_task = self.create_task(reapplied, self.ttt_event, learner)
+
+        # One task, but the request was never accepted -> not linked.
+        pending_only = self.create_person("pendingonly")
+        self.pending_only_request = self.create_request(pending_only, "p")
+        self.create_task(pending_only, self.ttt_event, learner)
+
+        # One task, two accepted requests -> both linked to it.
+        two_accepted = self.create_person("twoaccepted")
+        self.first_accepted = self.create_request(two_accepted, "a")
+        self.second_accepted = self.create_request(two_accepted, "a")
+        self.shared_task = self.create_task(two_accepted, self.ttt_event, learner)
+
+        # Two tasks, one accepted request -> both linked to it.
+        two_tasks = self.create_person("twotasks")
+        self.two_tasks_request = self.create_request(two_tasks, "a")
+        self.first_task = self.create_task(two_tasks, self.ttt_event, learner)
+        self.second_task = self.create_task(two_tasks, self.other_ttt_event, learner)
+
+        # Tasks failing the role/tag conditions -> no link at all.
+        wrong_role = self.create_person("wrongrole")
+        self.wrong_role_request = self.create_request(wrong_role, "a")
+        self.create_task(wrong_role, self.ttt_event, helper)
+
+        wrong_tag = self.create_person("wrongtag")
+        self.wrong_tag_request = self.create_request(wrong_tag, "a")
+        self.create_task(wrong_tag, self.non_ttt_event, learner)
+
+        # A request whose person never got a training task.
+        self.unmatched_request = self.create_request(self.create_person("unmatched"), "a")
+
+    def linked_tasks(self, request: Any) -> set[int]:
+        TrainingRequest = self.new_state.apps.get_model("workshops", "TrainingRequest")
+        return set(TrainingRequest.objects.get(pk=request.pk).tasks.values_list("pk", flat=True))
+
+    def test_single_pair_is_linked(self) -> None:
+        self.assertEqual(self.linked_tasks(self.simple_request), {self.simple_task.pk})
+
+    def test_only_accepted_request_is_linked(self) -> None:
+        self.assertEqual(self.linked_tasks(self.accepted_request), {self.reapplied_task.pk})
+        self.assertEqual(self.linked_tasks(self.discarded_request), set())
+        self.assertEqual(self.linked_tasks(self.pending_request), set())
+
+    def test_request_never_accepted_is_left_alone(self) -> None:
+        self.assertEqual(self.linked_tasks(self.pending_only_request), set())
+
+    def test_one_task_is_linked_to_every_accepted_request(self) -> None:
+        self.assertEqual(self.linked_tasks(self.first_accepted), {self.shared_task.pk})
+        self.assertEqual(self.linked_tasks(self.second_accepted), {self.shared_task.pk})
+
+    def test_every_task_is_linked_to_one_request(self) -> None:
+        self.assertEqual(
+            self.linked_tasks(self.two_tasks_request),
+            {self.first_task.pk, self.second_task.pk},
+        )
+
+    def test_tasks_failing_role_or_tag_are_ignored(self) -> None:
+        self.assertEqual(self.linked_tasks(self.wrong_role_request), set())
+        self.assertEqual(self.linked_tasks(self.wrong_tag_request), set())
+
+    def test_request_without_any_task_is_left_alone(self) -> None:
+        self.assertEqual(self.linked_tasks(self.unmatched_request), set())

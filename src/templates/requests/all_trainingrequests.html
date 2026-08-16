@@ -39,7 +39,7 @@
           <th>Location</th>
           <th>Created at</th>
           <th>Matched Trainee</th>
-          <th>Matched Training</th>
+          <th>Matched Trainings</th>
           <th>Score</th>
           <th width="50px">
             State
@@ -94,12 +94,12 @@
             {% else %}—{% endif %}
           </td>
           <td>
-            {% if req.person %}
-              {% for task in req.person.training_tasks %}
-                <a href="{% url 'event_details' task.event.slug %}">{{ task.event }}</a><br />
-              {% empty %}
-                —
-              {% endfor %}
+            {% if req.tasks.all %}
+            <ul class="ps-3 m-0">
+            {% for task in req.tasks.all %}
+              <li><a href="{% url 'event_details' task.event.slug %}">{{ task.event }}</a></li>
+            {% endfor %}
+            </ul>
             {% else %}
               —
             {% endif %}

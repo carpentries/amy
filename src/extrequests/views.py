@@ -495,14 +495,8 @@ def all_trainingrequests(request: AuthenticatedHttpRequest) -> HttpResponse:
     filter_ = TrainingRequestFilter(
         request.GET,
         queryset=TrainingRequest.objects.all()
-        .select_related("benefit")
-        .prefetch_related(
-            Prefetch(
-                "person__task_set",
-                to_attr="training_tasks",
-                queryset=Task.objects.filter(role__name="learner", event__tags__name="TTT").select_related("event"),
-            ),
-        ),
+        .select_related("benefit", "person")
+        .prefetch_related(Prefetch("tasks", queryset=Task.objects.select_related("event"))),
     )
 
     form = BulkChangeTrainingRequestForm()
@@ -723,11 +717,15 @@ def all_trainingrequests(request: AuthenticatedHttpRequest) -> HttpResponse:
 
         form.check_person_matched = True
         if form.is_valid():
-            # Perform bulk unmatch
-            for training_request in form.cleaned_data["requests"]:
-                training_request.person.get_training_tasks().delete()
+            # Perform bulk unmatch. Deleting a task drops its rows from the through
+            # table, so the requests end up unlinked; collecting the PKs first keeps a
+            # task shared by two selected requests from being deleted twice.
+            task_ids = {
+                task.pk for training_request in form.cleaned_data["requests"] for task in training_request.tasks.all()
+            }
+            Task.objects.filter(pk__in=task_ids).delete()
 
-            messages.success(request, "Successfully unmatched selected people from src.trainings.")
+            messages.success(request, "Successfully unmatched selected people from trainings.")
 
     context = {
         "title": "Training Requests",
@@ -1003,6 +1001,7 @@ def trainingrequests_merge(request: AuthenticatedHttpRequest) -> HttpResponse:
             )
             # M2M relationships
             difficult = (
+                "tasks",
                 "domains",
                 "previous_involvement",
                 "comments",

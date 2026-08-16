@@ -196,7 +196,7 @@ class BootstrapHelperFilter(FormHelper):
         super().__init__(form)  # type: ignore
         self.attrs["role"] = "form"
         self.inputs.append(
-            Submit("", "Submit"),  # type: ignore
+            Submit("", "Apply filters"),  # type: ignore
         )
 
 

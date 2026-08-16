@@ -988,11 +988,6 @@ class Person(
         except AttributeError as e:
             raise Exception("Did you forget to call annotate_with_instructor_eligibility()?") from e
 
-    def get_training_tasks(self) -> QuerySet[Task]:
-        """Returns Tasks related to Instuctor Training events at which this
-        person was trained."""
-        return Task.objects.filter(person=self, role__name="learner", event__tags__name="TTT")
-
     def clean(self) -> None:
         """This will be called by the ModelForm.is_valid(). No saving to the
         database."""
@@ -2130,6 +2125,18 @@ class TrainingRequest(
         "score_notes",
     )
 
+    # Many-to-many, not a single link: a person may be matched to more than one training
+    # (for example after re-taking it), and may hold more than one request that the same
+    # training answers. Deleting a task - which is what unmatching a trainee does - drops
+    # the rows from the through table, so the link disappears without blocking anything.
+    tasks = models.ManyToManyField(
+        "workshops.Task",
+        blank=True,
+        related_name="training_requests",
+        verbose_name="Linked training tasks",
+        help_text="Tasks this request was matched to.",
+    )
+
     benefit = models.ForeignKey(
         "offering.Benefit",
         on_delete=models.PROTECT,
@@ -2521,7 +2528,9 @@ class TrainingRequest(
     def clean(self) -> None:
         super().clean()
 
-        if self.state == "p" and self.person is not None and self.person.get_training_tasks().exists():
+        # `tasks` is a many-to-many, so it can only be read once the request has a PK -
+        # and a request being created has nothing linked to it yet anyway.
+        if self.state == "p" and self.pk is not None and self.tasks.exists():
             raise ValidationError({"state": "Pending training request cannot be matched with a training."})
 
     def recalculate_score_auto(self) -> int:

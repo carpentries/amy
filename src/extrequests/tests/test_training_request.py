@@ -90,7 +90,7 @@ class TestTrainingRequestModel(TestBase):
         training = Event.objects.create(slug="training", host=org)
         training.tags.add(Tag.objects.get(name="TTT"))
         learner = Role.objects.get(name="learner")
-        Task.objects.create(person=self.trainee, event=training, role=learner)
+        self.training_task = Task.objects.create(person=self.trainee, event=training, role=learner)
 
     def test_accepted_request_are_always_valid(self) -> None:
         """Accepted training requests are valid regardless of whether they
@@ -111,8 +111,13 @@ class TestTrainingRequestModel(TestBase):
         req = create_training_request(state="p", person=self.admin)
         req.full_clean()
 
+        # the trainee holds a training task, but it isn't linked to this request
+        req = create_training_request(state="p", person=self.trainee)
+        req.full_clean()
+
     def test_pending_request_must_not_be_matched(self) -> None:
         req = create_training_request(state="p", person=self.trainee)
+        req.tasks.add(self.training_task)
         with self.assertRaises(ValidationError):
             req.full_clean()
 
@@ -296,7 +301,9 @@ class TestTrainingRequestsListView(TestBase):
             slug="ttt-event", host=self.org, event_category=training_event_category
         )
         self.first_training.tags.add(self.ttt)
-        Task.objects.create(person=self.spiderman, role=self.learner, event=self.first_training)
+        self.first_req.tasks.add(
+            Task.objects.create(person=self.spiderman, role=self.learner, event=self.first_training)
+        )
         self.second_training = Event.objects.create(
             slug="second-ttt-event", host=self.org, event_category=training_event_category
         )
@@ -402,7 +409,7 @@ class TestTrainingRequestsListView(TestBase):
             "benefit_override": self.benefit.pk,
         }
         # Spiderman is already matched with first_training
-        assert self.spiderman.get_training_tasks()[0].event == self.first_training
+        assert [task.event for task in self.first_req.tasks.all()] == [self.first_training]
 
         rv = self.client.post(reverse("all_trainingrequests"), data, follow=True)
 
@@ -481,7 +488,7 @@ class TestTrainingRequestsListView(TestBase):
             "requests": [self.first_req.pk, self.second_req.pk],
         }
         # Spiderman is already matched with first_training
-        assert self.spiderman.get_training_tasks()[0].event == self.first_training
+        assert [task.event for task in self.first_req.tasks.all()] == [self.first_training]
 
         rv = self.client.post(reverse("all_trainingrequests"), data, follow=True)
         self.assertEqual(rv.status_code, 200)
@@ -510,7 +517,7 @@ class TestTrainingRequestsListView(TestBase):
 
         self.assertEqual(rv.status_code, 200)
         self.assertEqual(rv.resolver_match.view_name, "all_trainingrequests")
-        msg = "Successfully unmatched selected people from src.trainings."
+        msg = "Successfully unmatched selected people from trainings."
         self.assertContains(rv, msg)
 
         self.assertEqual(
@@ -1534,6 +1541,18 @@ class TestTrainingRequestMerging(TestBase):
         self.second_req.previous_involvement.set([self.helper])
         self.third_req.previous_involvement.set([self.instructor, self.contributor])
 
+        # trainings the requests were matched to
+        org = Organization.objects.create(domain="merge.example.org", fullname="Merge Test Org")
+        ttt = Tag.objects.get(name="TTT")
+        self.first_training = Event.objects.create(slug="merge-ttt-event", host=org)
+        self.first_training.tags.add(ttt)
+        self.third_training = Event.objects.create(slug="merge-ttt-event-2", host=org)
+        self.third_training.tags.add(ttt)
+        self.first_task = Task.objects.create(person=self.spiderman, event=self.first_training, role=self.learner)
+        self.third_task = Task.objects.create(person=self.ironman, event=self.third_training, role=self.learner)
+        self.first_req.tasks.set([self.first_task])
+        self.third_req.tasks.set([self.third_task])
+
         # consents
         may_contact_term = Term.objects.get_by_key(TermEnum.MAY_CONTACT)
         privacy_policy_term = Term.objects.get_by_key(TermEnum.PRIVACY_POLICY)
@@ -1618,6 +1637,7 @@ class TestTrainingRequestMerging(TestBase):
             "id": "obj_a",
             "state": "obj_b",
             "person": "obj_a",
+            "tasks": "obj_a",
             "member_code": "obj_a",
             "personal": "obj_a",
             "middle": "obj_a",
@@ -1665,6 +1685,7 @@ class TestTrainingRequestMerging(TestBase):
             "id": "obj_b",
             "state": "obj_a",
             "person": "obj_a",
+            "tasks": "combine",
             "member_code": "obj_b",
             "personal": "obj_b",
             "middle": "obj_b",
@@ -1773,6 +1794,7 @@ class TestTrainingRequestMerging(TestBase):
         }
         # fields additionally accepting "combine"
         passing = {
+            "tasks": "combine",
             "domains": "combine",
             "previous_involvement": "combine",
             "reason": "combine",
@@ -1860,6 +1882,7 @@ class TestTrainingRequestMerging(TestBase):
         assertions = {
             "domains": set([self.chemistry, self.physics]),
             "previous_involvement": set([self.helper]),
+            "tasks": set([self.first_task]),
             # comments are not relational, they're related via generic FKs,
             # so they won't appear here
         }
@@ -1870,6 +1893,15 @@ class TestTrainingRequestMerging(TestBase):
 
         for key, value in assertions.items():
             self.assertEqual(set(getattr(self.first_req, key).all()), value, key)
+
+    def test_merging_tasks_combined(self) -> None:
+        """Merging: both requests' trainings survive under the "combine" strategy."""
+        rv = self.client.post(self.url_2, data=self.strategy_2)
+        self.assertEqual(rv.status_code, 302)
+        self.third_req.refresh_from_db()
+
+        # strategy_2 keeps obj_b (third_req) as the base object
+        self.assertEqual(set(self.third_req.tasks.all()), {self.first_task, self.third_task})
 
     def test_merging(self) -> None:
         rv = self.client.post(self.url_1, self.strategy_1, follow=True)

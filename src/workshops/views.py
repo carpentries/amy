@@ -231,13 +231,6 @@ class PersonDetails(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDetailView[P
                 "task_set",
                 queryset=Task.objects.select_related("role", "event"),
             ),
-            Prefetch(
-                "task_set",
-                to_attr="training_tasks",
-                queryset=Task.objects.filter(role__name="learner", event__tags__name="TTT").select_related(
-                    "role", "event"
-                ),
-            ),
             "trainingrequest_set",
             "trainingprogress_set",
             Prefetch(
