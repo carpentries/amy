@@ -256,7 +256,6 @@ class TestTrainingRequestUpdateForm(TestBase):
         data["member_code"] = "valid123"
         data["member_code_override"] = True
         data.pop("score_manual")  # can't encode None in POST request, so omit
-        data.pop("task_id")  # ditto
 
         # Act
         rv = self.client.post(

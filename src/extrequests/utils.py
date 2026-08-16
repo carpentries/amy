@@ -181,8 +181,8 @@ def accept_training_request_and_match_to_event(
 
     # accept the request and link it to the task
     request.state = "a"
-    request.task = task
     request.save()
+    request.tasks.add(task)
 
     return task
 

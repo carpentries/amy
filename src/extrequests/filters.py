@@ -121,9 +121,11 @@ class TrainingRequestFilter(AMYFilterSet):
         elif choice == "u":  # unmatched
             return queryset.filter(person__isnull=True)
         elif choice == "p":  # matched trainee, unmatched training
-            return queryset.filter(person__isnull=False, task__isnull=True)
+            return queryset.filter(person__isnull=False, tasks__isnull=True)
         else:  # choice == 't' <==> matched trainee and training
-            return queryset.filter(person__isnull=False, task__isnull=False)
+            # `tasks` is a many-to-many, so a request linked to two trainings would
+            # otherwise come back twice.
+            return queryset.filter(person__isnull=False, tasks__isnull=False).distinct()
 
     def filter_by_person(self, queryset: QuerySet[TrainingRequest], name: str, value: str) -> QuerySet[TrainingRequest]:
         if value == "":

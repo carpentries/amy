@@ -1318,10 +1318,10 @@ class TrainingRequestUpdateForm(forms.ModelForm[TrainingRequest]):
 
     class Meta:
         model = TrainingRequest
-        # `task` is maintained by matching/unmatching, not edited by hand - and with
+        # `tasks` is maintained by matching/unmatching, not edited by hand - and with
         # `exclude = ()` it would otherwise render every Task in the database as a
-        # plain <select>, since there's no lookup view behind it.
-        exclude = ("task",)
+        # plain <select multiple>, since there's no lookup view behind it.
+        exclude = ("tasks",)
         widgets = {
             "occupation": forms.RadioSelect(),
             "domains": forms.CheckboxSelectMultiple(),
@@ -1408,6 +1408,10 @@ class TrainingRequestsMergeForm(forms.Form):
     id = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
     state = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
     person = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
+    # Combining is the sensible default here: both requests belong to the same person,
+    # so the trainings they were matched to are all trainings the surviving request
+    # covers, and dropping one set would lose the record of a training that happened.
+    tasks = forms.ChoiceField(choices=THREE, initial="combine", widget=forms.RadioSelect)
     member_code = forms.ChoiceField(
         choices=TWO,
         initial=DEFAULT,

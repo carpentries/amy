@@ -59,8 +59,8 @@ class TestTrainingRequestFilter(TestBase):
             family="Parker",
             email="peter@webslinger.net",
             state="a",
-            task=self.task_spiderman,
         )
+        self.request_spiderman.tasks.add(self.task_spiderman)
 
         # ironman: preapproved application, pending, matched person
         self.request_ironman = TrainingRequest.objects.create(

@@ -10,7 +10,7 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.uploadedfile import UploadedFile
 from django.db import IntegrityError, transaction
-from django.db.models import ProtectedError, Q
+from django.db.models import Prefetch, ProtectedError, Q
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -494,7 +494,9 @@ class SelfOrganisedSubmissionAssign(OnlyForAdminsMixin, PermissionRequiredMixin,
 def all_trainingrequests(request: AuthenticatedHttpRequest) -> HttpResponse:
     filter_ = TrainingRequestFilter(
         request.GET,
-        queryset=TrainingRequest.objects.all().select_related("benefit", "person", "task", "task__event"),
+        queryset=TrainingRequest.objects.all()
+        .select_related("benefit", "person")
+        .prefetch_related(Prefetch("tasks", queryset=Task.objects.select_related("event"))),
     )
 
     form = BulkChangeTrainingRequestForm()
@@ -715,10 +717,13 @@ def all_trainingrequests(request: AuthenticatedHttpRequest) -> HttpResponse:
 
         form.check_person_matched = True
         if form.is_valid():
-            # Perform bulk unmatch
-            for training_request in form.cleaned_data["requests"]:
-                if training_request.task:
-                    training_request.task.delete()
+            # Perform bulk unmatch. Deleting a task drops its rows from the through
+            # table, so the requests end up unlinked; collecting the PKs first keeps a
+            # task shared by two selected requests from being deleted twice.
+            task_ids = {
+                task.pk for training_request in form.cleaned_data["requests"] for task in training_request.tasks.all()
+            }
+            Task.objects.filter(pk__in=task_ids).delete()
 
             messages.success(request, "Successfully unmatched selected people from trainings.")
 
@@ -996,6 +1001,7 @@ def trainingrequests_merge(request: AuthenticatedHttpRequest) -> HttpResponse:
             )
             # M2M relationships
             difficult = (
+                "tasks",
                 "domains",
                 "previous_involvement",
                 "comments",
