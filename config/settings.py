@@ -379,6 +379,7 @@ TEMPLATES = [
                 # AMY version
                 "src.workshops.context_processors.version",
                 "src.workshops.context_processors.site_banner",
+                "src.workshops.context_processors.environments",
                 "src.workshops.context_processors.feature_flags_enabled",
                 # Consent enums
                 "src.consents.context_processors.terms",
@@ -618,6 +619,8 @@ if SITE_BANNER_STYLE not in ("local", "testing", "production"):
     raise ImproperlyConfigured("SITE_BANNER_STYLE accepts only one of 'local', 'testing', 'production'.")
 
 PROD_ENVIRONMENT = bool(SITE_BANNER_STYLE == "production")
+LOCAL_ENVIRONMENT = bool(SITE_BANNER_STYLE == "local")
+print(LOCAL_ENVIRONMENT)
 
 # Feature Flags
 # -----------------------------------------------------------------------------
