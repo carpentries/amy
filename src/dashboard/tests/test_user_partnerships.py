@@ -5,6 +5,7 @@ from django.urls import reverse
 
 from src.fiscal.models import Partnership, PartnershipTier
 from src.offering.models import Account, AccountBenefit, AccountOwner, Benefit
+from src.offering.utils import get_owned_account_summaries
 from src.workshops.models import Event, Organization, Person, Role, Task
 from src.workshops.tests.base import TestBase
 
@@ -93,10 +94,11 @@ class TestUserPartnerships(TestBase):
         return account
 
     def _use_seats(self, count: int) -> None:
-        """Allocate `count` seats of `self.seat_account_benefit` to tasks."""
-        event = Event.objects.create(slug="2026-01-01-test", host=self.organisation)
-        role = Role.objects.create(name="learner", verbose_name="Learner")
-        for i in range(count):
+        """Allocate `count` more seats of `self.seat_account_benefit` to tasks."""
+        event, _ = Event.objects.get_or_create(slug="2026-01-01-test", host=self.organisation)
+        role, _ = Role.objects.get_or_create(name="learner", verbose_name="Learner")
+        already_used = Task.objects.filter(allocated_benefit=self.seat_account_benefit).count()
+        for i in range(already_used, already_used + count):
             person = Person.objects.create(
                 username=f"learner{i}",
                 personal="Learner",
@@ -109,6 +111,28 @@ class TestUserPartnerships(TestBase):
                 role=role,
                 allocated_benefit=self.seat_account_benefit,
             )
+
+    def _use_events(self, count: int) -> None:
+        """Allocate `count` more events of `self.event_account_benefit` to events."""
+        already_used = Event.objects.filter(allocated_benefit=self.event_account_benefit).count()
+        for i in range(already_used, already_used + count):
+            Event.objects.create(
+                slug=f"2026-02-{i + 1:02d}-workshop",
+                host=self.organisation,
+                allocated_benefit=self.event_account_benefit,
+            )
+
+    def _create_standalone_benefit(self) -> AccountBenefit:
+        """Create an account benefit not linked to any partnership."""
+        return AccountBenefit.objects.create(
+            account=self.account,
+            partnership=None,
+            benefit=self.seat_benefit,
+            start_date=self.today - timedelta(days=10),
+            end_date=self.today + timedelta(days=10),
+            allocation=3,
+            registration_code="STANDALONE-2026",
+        )
 
     def test_login_required(self) -> None:
         # Arrange
@@ -224,8 +248,6 @@ class TestUserPartnerships(TestBase):
         (summary,) = rv.context["account_summaries"]
         self.assertEqual(summary.account, self.account)
         self.assertEqual(summary.permission_types, ["Owner"])
-        self.assertEqual(summary.stats.credits_allowed, 100)
-        self.assertEqual(summary.stats.credits_used, 6 * 1 + 2 * 10)
         self.assertEqual(summary.stats.seats_allocated, 6)
         self.assertEqual(summary.stats.seats_used, 2)
         self.assertEqual(summary.stats.seats_remaining, 4)
@@ -259,12 +281,159 @@ class TestUserPartnerships(TestBase):
 
         # Assert
         (summary,) = rv.context["account_summaries"]
+        (partnership_summary,) = summary.partnerships
         usage = {
             benefit_summary.account_benefit.pk: (benefit_summary.used, benefit_summary.remaining)
-            for benefit_summary in summary.account_benefits
+            for benefit_summary in partnership_summary.account_benefits
         }
         self.assertEqual(usage[self.seat_account_benefit.pk], (2, 4))
         self.assertEqual(usage[self.event_account_benefit.pk], (0, 2))
+
+    def test_partnership_credits(self) -> None:
+        """Credits are counted per partnership, not per account."""
+        # Act
+        rv = self.client.get(self.url)
+
+        # Assert
+        (summary,) = rv.context["account_summaries"]
+        (partnership_summary,) = summary.partnerships
+        self.assertEqual(partnership_summary.partnership, self.partnership)
+        self.assertEqual(partnership_summary.partnership.credits, 100)
+        self.assertEqual(partnership_summary.partnership.credits_used, 6 * 1 + 2 * 10)
+
+    def test_partnership_listed_once(self) -> None:
+        """A partnership is listed once, no matter how many benefits it has."""
+        # Act
+        rv = self.client.get(self.url)
+
+        # Assert
+        (summary,) = rv.context["account_summaries"]
+        self.assertEqual([ps.partnership.pk for ps in summary.partnerships], [self.partnership.pk])
+
+    def test_benefits_nested_under_their_partnership(self) -> None:
+        """Benefits purchased under a partnership are listed under it, not on the
+        account."""
+        # Act
+        rv = self.client.get(self.url)
+
+        # Assert
+        (summary,) = rv.context["account_summaries"]
+        (partnership_summary,) = summary.partnerships
+        self.assertEqual(
+            {benefit_summary.account_benefit.pk for benefit_summary in partnership_summary.account_benefits},
+            {self.seat_account_benefit.pk, self.event_account_benefit.pk},
+        )
+        self.assertEqual(summary.account_benefits, [])
+
+    def test_benefits_without_partnership_listed_on_account(self) -> None:
+        # Arrange
+        standalone_benefit = self._create_standalone_benefit()
+
+        # Act
+        rv = self.client.get(self.url)
+
+        # Assert
+        (summary,) = rv.context["account_summaries"]
+        (partnership_summary,) = summary.partnerships
+        self.assertEqual(
+            [benefit_summary.account_benefit.pk for benefit_summary in summary.account_benefits],
+            [standalone_benefit.pk],
+        )
+        self.assertNotIn(
+            standalone_benefit.pk,
+            [benefit_summary.account_benefit.pk for benefit_summary in partnership_summary.account_benefits],
+        )
+        self.assertContains(rv, "STANDALONE-2026")
+
+    def test_stats_count_benefits_from_both_sources(self) -> None:
+        """Benefits under a partnership and outside of it are counted together."""
+        # Arrange
+        self._create_standalone_benefit()
+
+        # Act
+        rv = self.client.get(self.url)
+
+        # Assert
+        (summary,) = rv.context["account_summaries"]
+        self.assertEqual(summary.stats.benefits_total, 3)
+        self.assertEqual(summary.stats.seats_allocated, 6 + 3)
+        self.assertEqual(summary.stats.events_allocated, 2)
+
+    def test_seat_benefit_lists_people(self) -> None:
+        # Arrange
+        self._use_seats(2)
+
+        # Act
+        rv = self.client.get(self.url)
+
+        # Assert
+        (summary,) = rv.context["account_summaries"]
+        (partnership_summary,) = summary.partnerships
+        benefit_summaries = {
+            benefit_summary.account_benefit.pk: benefit_summary
+            for benefit_summary in partnership_summary.account_benefits
+        }
+        seat_summary = benefit_summaries[self.seat_account_benefit.pk]
+        self.assertEqual(
+            sorted(task.person.username for task in seat_summary.tasks),
+            ["learner0", "learner1"],
+        )
+        self.assertEqual(seat_summary.events, [])
+        self.assertContains(rv, "Learner 0")
+        self.assertContains(rv, "Learner 1")
+        self.assertContains(rv, "2026-01-01-test")
+
+    def test_event_benefit_lists_events(self) -> None:
+        # Arrange
+        self._use_events(2)
+
+        # Act
+        rv = self.client.get(self.url)
+
+        # Assert
+        (summary,) = rv.context["account_summaries"]
+        (partnership_summary,) = summary.partnerships
+        benefit_summaries = {
+            benefit_summary.account_benefit.pk: benefit_summary
+            for benefit_summary in partnership_summary.account_benefits
+        }
+        event_summary = benefit_summaries[self.event_account_benefit.pk]
+        self.assertEqual(
+            sorted(event.slug for event in event_summary.events),
+            ["2026-02-01-workshop", "2026-02-02-workshop"],
+        )
+        self.assertEqual(event_summary.tasks, [])
+        self.assertEqual(event_summary.used, 2)
+        self.assertContains(rv, "2026-02-01-workshop")
+        self.assertContains(rv, "2026-02-02-workshop")
+
+    def test_number_of_queries_doesnt_grow_with_nested_data(self) -> None:
+        """People and events nested under benefits are prefetched, not fetched per row."""
+        # Arrange
+        self._use_seats(1)
+        self._use_events(1)
+        with self.assertNumQueries(5) as baseline:
+            get_owned_account_summaries(self.user)
+
+        # Act
+        self._use_seats(4)
+        self._use_events(2)
+        self._create_standalone_benefit()
+
+        # Assert
+        with self.assertNumQueries(len(baseline.captured_queries)):
+            get_owned_account_summaries(self.user)
+
+    def test_unused_benefit_lists_nothing(self) -> None:
+        # Act
+        rv = self.client.get(self.url)
+
+        # Assert
+        (summary,) = rv.context["account_summaries"]
+        (partnership_summary,) = summary.partnerships
+        for benefit_summary in partnership_summary.account_benefits:
+            self.assertEqual(benefit_summary.tasks, [])
+            self.assertEqual(benefit_summary.events, [])
 
     def test_other_accounts_not_displayed(self) -> None:
         """Partnerships of accounts the user doesn't own are not shown."""

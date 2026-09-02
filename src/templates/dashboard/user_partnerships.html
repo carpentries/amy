@@ -3,6 +3,13 @@
   {% include 'navigation_user_dashboard.html' %}
 {% endblock %}
 
+{% block extrastyle %}
+<style>
+  .benefit-usage-toggle .fa-caret-right { transition: transform .15s ease-in-out; }
+  .benefit-usage-toggle:not(.collapsed) .fa-caret-right { transform: rotate(90deg); }
+</style>
+{% endblock extrastyle %}
+
 {% block content %}
 
 <p>
@@ -14,137 +21,70 @@
 {% for summary in account_summaries %}
 <div class="card mb-4">
   <div class="card-header">
-    <h2 class="h5 mb-0">{{ summary.account.generic_relation }}</h2>
-    <small class="text-muted">
+    <h2 class="h4 mb-0">{{ summary.account.generic_relation }}</h2>
+    <small class="text-body-secondary">
       {{ summary.account.get_account_type_display|capfirst }} account &mdash;
       your role: {{ summary.permission_types|join:", " }}
     </small>
   </div>
 
   <div class="card-body">
-    <h3 class="h6">Benefits at a glance</h3>
-    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-2 mb-4">
+    <h3 class="h5">Benefits at a glance</h3>
+    <div class="row row-cols-1 row-cols-md-3 g-2 mb-4">
       <div class="col">
         <div class="border rounded p-2 h-100">
-          <div class="text-muted small">Credits (used / allowed)</div>
-          <div class="h4 mb-0">{{ summary.stats.credits_used }} / {{ summary.stats.credits_allowed }}</div>
-          <div class="small text-muted">{{ summary.stats.credits_remaining }} remaining</div>
-        </div>
-      </div>
-      <div class="col">
-        <div class="border rounded p-2 h-100">
-          <div class="text-muted small">Seats (used / allocated)</div>
+          <div class="text-body-secondary small">Seats (used / allocated)</div>
           <div class="h4 mb-0">{{ summary.stats.seats_used }} / {{ summary.stats.seats_allocated }}</div>
-          <div class="small text-muted">{{ summary.stats.seats_remaining }} remaining</div>
+          <div class="small text-body-secondary">{{ summary.stats.seats_remaining }} remaining</div>
         </div>
       </div>
       <div class="col">
         <div class="border rounded p-2 h-100">
-          <div class="text-muted small">Events (used / allocated)</div>
+          <div class="text-body-secondary small">Events (used / allocated)</div>
           <div class="h4 mb-0">{{ summary.stats.events_used }} / {{ summary.stats.events_allocated }}</div>
-          <div class="small text-muted">{{ summary.stats.events_remaining }} remaining</div>
+          <div class="small text-body-secondary">{{ summary.stats.events_remaining }} remaining</div>
         </div>
       </div>
       <div class="col">
         <div class="border rounded p-2 h-100">
-          <div class="text-muted small">Benefits (active / total)</div>
+          <div class="text-body-secondary small">Benefits (active / total)</div>
           <div class="h4 mb-0">{{ summary.stats.benefits_active }} / {{ summary.stats.benefits_total }}</div>
-          <div class="small text-muted">{{ summary.partnerships|length }} partnership{{ summary.partnerships|length|pluralize }}</div>
+          <div class="small text-body-secondary">{{ summary.partnerships|length }} partnership{{ summary.partnerships|length|pluralize }}</div>
         </div>
       </div>
     </div>
 
-    <h3 class="h6">Partnerships</h3>
-    {% if summary.partnerships %}
-    <div class="table-responsive">
-      <table class="table table-striped">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Organisation / Consortium</th>
-            <th>Dates</th>
-            <th>Tier</th>
-            <th>Credits (used / allowed)</th>
-            <th>Registration code</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for partnership in summary.partnerships %}
-          <tr>
-            <td>{{ partnership.name }}</td>
-            <td>
-              {% if partnership.partner_consortium %}
-                {{ partnership.partner_consortium }} (consortium)
-              {% elif partnership.partner_organisation %}
-                {{ partnership.partner_organisation }}
-              {% else %}
-                &mdash;
-              {% endif %}
-            </td>
-            <td>{{ partnership.human_daterange }}</td>
-            <td>{{ partnership.tier|default_if_none:"&mdash;" }}</td>
-            <td>{{ partnership.credits_used }} / {{ partnership.credits }}</td>
-            <td>
-              {% if partnership.registration_code %}
-              <code>{{ partnership.registration_code }}</code>
-              {% else %}
-              &mdash;
-              {% endif %}
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+    <h3 class="h5">Partnerships</h3>
+    {% for partnership_summary in summary.partnerships %}
+    {% with partnership=partnership_summary.partnership %}
+    <div class="card mb-3">
+      <div class="card-header">
+        <h4 class="h6 mb-1">
+          {{ partnership.name }}
+          {% if partnership.is_active %}
+          <span class="badge text-bg-success">Active</span>
+          {% else %}
+          <span class="badge text-bg-secondary">Inactive</span>
+          {% endif %}
+        </h4>
+        <div class="small text-body-secondary">
+          {{ partnership.human_daterange }}<br>
+          Tier: {{ partnership.tier.name|default_if_none:"none" }}<br>
+          Registration code:
+          {% if partnership.registration_code %}<code>{{ partnership.registration_code }}</code>{% else %}none{% endif %}
+        </div>
+      </div>
+      <div class="card-body px-0 py-0">
+        {% include "includes/account_benefits_table.html" with benefit_summaries=partnership_summary.account_benefits empty_message="No benefits purchased under this partnership." show_registration_code=False %}
+      </div>
     </div>
-    {% else %}
-    <p class="text-muted">No partnerships for this account.</p>
-    {% endif %}
+    {% endwith %}
+    {% empty %}
+    <p class="text-body-secondary">No partnerships for this account.</p>
+    {% endfor %}
 
-    <h3 class="h6">Account benefits</h3>
-    {% if summary.account_benefits %}
-    <div class="table-responsive">
-      <table class="table table-striped">
-        <thead>
-          <tr>
-            <th>Benefit</th>
-            <th>Partnership</th>
-            <th>Dates</th>
-            <th>Used / allocated</th>
-            <th>Remaining</th>
-            <th>Curriculum</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for benefit_summary in summary.account_benefits %}
-          {% with account_benefit=benefit_summary.account_benefit %}
-          <tr>
-            <td>{{ account_benefit.benefit.name }} ({{ account_benefit.benefit.unit_type }})</td>
-            <td>{{ account_benefit.partnership.name|default:"&mdash;" }}</td>
-            <td>{{ account_benefit.human_daterange }}</td>
-            <td>{{ benefit_summary.used }} / {{ account_benefit.allocation }}</td>
-            <td>{{ benefit_summary.remaining }}</td>
-            <td>{{ account_benefit.curriculum|default_if_none:"&mdash;" }}</td>
-            <td>
-              {% if account_benefit.frozen %}
-              Frozen
-              {% elif account_benefit.in_future %}
-              Not started yet
-              {% elif account_benefit.in_past %}
-              Expired
-              {% else %}
-              Active
-              {% endif %}
-            </td>
-          </tr>
-          {% endwith %}
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-    {% else %}
-    <p class="text-muted">No benefits for this account.</p>
-    {% endif %}
+    <h3 class="h5 mt-4">Benefits outside of a partnership</h3>
+    {% include "includes/account_benefits_table.html" with benefit_summaries=summary.account_benefits empty_message="No benefits purchased outside of a partnership." show_registration_code=True %}
   </div>
 </div>
 {% empty %}

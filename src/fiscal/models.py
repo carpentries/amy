@@ -1,4 +1,5 @@
 import uuid
+from datetime import date
 from typing import Annotated, TypedDict
 
 from django.contrib.postgres.fields import ArrayField
@@ -7,6 +8,7 @@ from django.db import models
 from django.db.models import F, Q, QuerySet, Sum
 from django.db.models.functions import Coalesce
 from django.urls import reverse
+from django.utils import timezone
 from django_stubs_ext import Annotations
 from reversion import revisions as reversion
 
@@ -207,3 +209,7 @@ class Partnership(CreatedUpdatedMixin, models.Model):
     @property
     def human_daterange(self) -> str:
         return human_daterange(self.agreement_start, self.agreement_end)
+
+    def is_active(self, current_date: date | None = None) -> bool:
+        """Check if the agreement is running at `current_date`."""
+        return self.agreement_start <= (current_date or timezone.now().date()) <= self.agreement_end
