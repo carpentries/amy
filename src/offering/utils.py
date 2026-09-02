@@ -3,26 +3,41 @@ from typing import Annotated
 from uuid import UUID
 
 from django.contrib.auth.models import AnonymousUser
-from django.db.models import QuerySet
+from django.db.models import Prefetch, QuerySet
 from django_stubs_ext import Annotations
 
 from src.fiscal.models import Partnership, PartnershipCreditsUsage
-from src.offering.models import Account, AccountBenefit, AccountOwner
-from src.workshops.models import Person
+from src.offering.models import Account, AccountBenefit, AccountBenefitUsage, AccountOwner
+from src.workshops.models import Event, Person, Task
 
 AnnotatedPartnership = Annotated[Partnership, Annotations[PartnershipCreditsUsage]]
+AnnotatedAccountBenefit = Annotated[AccountBenefit, Annotations[AccountBenefitUsage]]
 
 
 @dataclass
 class AccountBenefitSummary:
-    """A single account benefit paired with its allocation usage."""
+    """A single account benefit paired with its allocation usage, and with the objects
+    the allocation was spent on.
 
-    account_benefit: AccountBenefit
+    Only one of `tasks` and `events` is ever populated - which one depends on
+    `account_benefit.benefit.unit_type`."""
+
+    account_benefit: AnnotatedAccountBenefit
     used: int
+    tasks: list[Task] = field(default_factory=list)
+    events: list[Event] = field(default_factory=list)
 
     @property
     def remaining(self) -> int:
         return max(self.account_benefit.allocation - self.used, 0)
+
+
+@dataclass
+class PartnershipSummary:
+    """A single partnership paired with the account benefits purchased under it."""
+
+    partnership: AnnotatedPartnership
+    account_benefits: list[AccountBenefitSummary] = field(default_factory=list)
 
 
 @dataclass
@@ -35,8 +50,6 @@ class AccountBenefitStats:
     seats_used: int = 0
     events_allocated: int = 0
     events_used: int = 0
-    credits_allowed: int = 0
-    credits_used: int = 0
 
     @property
     def seats_remaining(self) -> int:
@@ -46,10 +59,6 @@ class AccountBenefitStats:
     def events_remaining(self) -> int:
         return max(self.events_allocated - self.events_used, 0)
 
-    @property
-    def credits_remaining(self) -> int:
-        return max(self.credits_allowed - self.credits_used, 0)
-
 
 @dataclass
 class OwnedAccountSummary:
@@ -57,7 +66,7 @@ class OwnedAccountSummary:
 
     account: Account
     permission_types: list[str] = field(default_factory=list)
-    partnerships: list[AnnotatedPartnership] = field(default_factory=list)
+    partnerships: list[PartnershipSummary] = field(default_factory=list)
     account_benefits: list[AccountBenefitSummary] = field(default_factory=list)
     stats: AccountBenefitStats = field(default_factory=AccountBenefitStats)
 
@@ -87,7 +96,11 @@ def is_account_owner(person: Person | AnonymousUser) -> bool:
 
 def get_owned_account_summaries(person: Person) -> list[OwnedAccountSummary]:
     """Collect partnerships, account benefits and benefit usage stats for every account
-    owned by `person`."""
+    owned by `person`.
+
+    Account benefits are nested under the partnership they were purchased under; benefits
+    bought outside of a partnership are kept on the account itself. Every benefit carries
+    the tasks (seats) or events its allocation was spent on."""
     summaries: dict[UUID, OwnedAccountSummary] = {}
 
     owners = (
@@ -100,6 +113,7 @@ def get_owned_account_summaries(person: Person) -> list[OwnedAccountSummary]:
     if not summaries:
         return []
 
+    partnership_summaries: dict[int, PartnershipSummary] = {}
     partnerships = (
         Partnership.objects.credits_usage_annotation()
         .filter(account__in=summaries.keys())
@@ -107,15 +121,18 @@ def get_owned_account_summaries(person: Person) -> list[OwnedAccountSummary]:
         .order_by("-agreement_start", "name")
     )
     for partnership in partnerships:
-        summary = summaries[partnership.account_id]
-        summary.partnerships.append(partnership)
-        summary.stats.credits_allowed += partnership.credits
-        summary.stats.credits_used += partnership.credits_used
+        partnership_summary = PartnershipSummary(partnership=partnership)
+        partnership_summaries[partnership.pk] = partnership_summary
+        summaries[partnership.account_id].partnerships.append(partnership_summary)
 
     account_benefits = (
         AccountBenefit.objects.usage_annotation()
         .filter(account__in=summaries.keys())
         .select_related("benefit", "partnership", "curriculum", "discount")
+        .prefetch_related(
+            Prefetch("task_set", queryset=Task.objects.select_related("person", "event", "role")),
+            Prefetch("event_set", queryset=Event.objects.select_related("host")),
+        )
         .order_by("-start_date", "benefit__name")
     )
     for account_benefit in account_benefits:
@@ -126,15 +143,35 @@ def get_owned_account_summaries(person: Person) -> list[OwnedAccountSummary]:
             used = account_benefit.seats_used
             stats.seats_allocated += account_benefit.allocation
             stats.seats_used += used
+            benefit_summary = AccountBenefitSummary(
+                account_benefit=account_benefit,
+                used=used,
+                tasks=list(account_benefit.task_set.all()),
+            )
         else:
             used = account_benefit.events_used
             stats.events_allocated += account_benefit.allocation
             stats.events_used += used
+            benefit_summary = AccountBenefitSummary(
+                account_benefit=account_benefit,
+                used=used,
+                events=list(account_benefit.event_set.all()),
+            )
 
         stats.benefits_total += 1
         if account_benefit.active() and not account_benefit.frozen:
             stats.benefits_active += 1
 
-        summary.account_benefits.append(AccountBenefitSummary(account_benefit=account_benefit, used=used))
+        # A benefit can only be nested under a partnership of an account the person owns;
+        # anything else (including benefits without a partnership) stays on the account.
+        parent = (
+            partnership_summaries.get(account_benefit.partnership_id)
+            if account_benefit.partnership_id is not None
+            else None
+        )
+        if parent is not None:
+            parent.account_benefits.append(benefit_summary)
+        else:
+            summary.account_benefits.append(benefit_summary)
 
     return list(summaries.values())
