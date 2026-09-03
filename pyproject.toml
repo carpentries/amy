@@ -37,7 +37,7 @@ dependencies = [
   "gunicorn (>=23.0.0,<24.0.0)",
   "jinja2 (>=3.1.5,<4.0.0)",
   "mkdocs (>=1.6.1,<2.0.0)",
-  "mkdocs-material (>=9.5.49,<10.0.0)",
+  "mkdocs-material>=9.7.7,<10.0.0",
   "mypy",
   "pre-commit",
   "psycopg (>=3.2.3,<4.0.0)",
