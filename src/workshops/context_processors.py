@@ -23,6 +23,14 @@ def site_banner(request: HttpRequest) -> dict[str, str]:
     return data
 
 
+def environments(request: HttpRequest) -> dict[str, bool]:
+    data = {
+        "LOCAL_ENVIRONMENT": settings.LOCAL_ENVIRONMENT,
+        "PROD_ENVIRONMENT": settings.PROD_ENVIRONMENT,
+    }
+    return data
+
+
 def feature_flags_enabled(request: HttpRequest) -> dict[str, Any]:
     flags = get_flags(request=request)
     data = {"FEATURE_FLAGS_ENABLED": [flag for flag in flags.values() if flag.check_state(request=request) is True]}
