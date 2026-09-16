@@ -1,6 +1,7 @@
 import csv
 import io
 import logging
+from collections import defaultdict
 from typing import Any, cast
 
 from django.conf import settings
@@ -717,15 +718,33 @@ def all_trainingrequests(request: AuthenticatedHttpRequest) -> HttpResponse:
 
         form.check_person_matched = True
         if form.is_valid():
-            # Perform bulk unmatch. Deleting a task drops its rows from the through
-            # table, so the requests end up unlinked; collecting the PKs first keeps a
-            # task shared by two selected requests from being deleted twice.
-            task_ids = {
-                task.pk for training_request in form.cleaned_data["requests"] for task in training_request.tasks.all()
-            }
-            Task.objects.filter(pk__in=task_ids).delete()
+            # Validate if all selected training requests are linked to the tasks that are going to be removed.
+            # If not, show an error message and do not perform unmatch.
+            selected_task_to_requests: dict[int, set[int]] = defaultdict(set)
+            for training_request in form.cleaned_data["requests"]:
+                for task in training_request.tasks.all():
+                    selected_task_to_requests[task.pk].add(training_request.pk)
 
-            messages.success(request, "Successfully unmatched selected people from trainings.")
+            actual_task_to_requests: dict[int, set[int]] = defaultdict(set)
+            for task_pk, request_pk in Task.objects.filter(pk__in=selected_task_to_requests).values_list(
+                "pk", "training_requests"
+            ):
+                actual_task_to_requests[task_pk].add(request_pk)
+
+            if selected_task_to_requests != actual_task_to_requests:
+                # Some training requests that are linked to the tasks were not selected for unmatching.
+                messages.error(
+                    request,
+                    "Some training requests that are linked to the tasks were not selected for unmatching."
+                    " Please select all training requests that are linked to the tasks you want to unmatch.",
+                )
+
+            else:
+                # Perform bulk unmatch. Deleting a task drops its rows from the through
+                # table, so the requests end up unlinked; collecting the PKs first keeps a
+                # task shared by two selected requests from being deleted twice.
+                Task.objects.filter(pk__in=selected_task_to_requests.keys()).delete()
+                messages.success(request, "Successfully unmatched selected people from trainings.")
 
     context = {
         "title": "Training Requests",
