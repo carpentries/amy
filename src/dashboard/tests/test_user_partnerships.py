@@ -472,7 +472,7 @@ class TestUserPartnerships(TestBase):
         AccountOwner.objects.create(
             account=second_account,
             person=self.user,
-            permission_type="billing_contact",
+            permission_type="programmatic_contact",
         )
 
         # Act
@@ -483,8 +483,53 @@ class TestUserPartnerships(TestBase):
         self.assertEqual(len(summaries), 2)
         self.assertEqual(
             [summary.permission_types for summary in summaries],
-            [["Owner"], ["Billing Contact"]],
+            [["Owner"], ["Programmatic Contact"]],
         )
+
+    def test_page_unavailable_for_billing_contact_only(self) -> None:
+        """Billing contacts don't have their own view onto partnerships and benefits -
+        they're only meant to receive invoices."""
+        # Arrange
+        AccountOwner.objects.filter(person=self.user).update(permission_type="billing_contact")
+
+        # Act
+        rv = self.client.get(self.url)
+
+        # Assert
+        self.assertEqual(rv.status_code, 404)
+
+    def test_billing_contact_account_not_displayed(self) -> None:
+        """An account where the user is only a billing contact is left out, even when
+        they own other accounts."""
+        # Arrange
+        second_organisation = Organization.objects.create(fullname="Second Org", domain="second.example.org")
+        second_account = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=second_organisation,
+        )
+        AccountOwner.objects.create(
+            account=second_account,
+            person=self.user,
+            permission_type="billing_contact",
+        )
+
+        # Act
+        rv = self.client.get(self.url)
+
+        # Assert
+        (summary,) = rv.context["account_summaries"]
+        self.assertEqual(summary.account, self.account)
+        self.assertNotEqual(summary.account, second_account)
+
+    def test_navigation_link_not_displayed_for_billing_contact_only(self) -> None:
+        # Arrange
+        AccountOwner.objects.filter(person=self.user).update(permission_type="billing_contact")
+
+        # Act
+        rv = self.client.get(reverse("user-dashboard"))
+
+        # Assert
+        self.assertNotContains(rv, "Your partnerships")
 
     def test_navigation_link_displayed_for_account_owner(self) -> None:
         # Act
