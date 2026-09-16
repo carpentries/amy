@@ -42,6 +42,11 @@
           <span class="badge text-bg-secondary">Inactive</span>
           {% endif %}
         </h4>
+        {% if partnership.ends_within_90_days %}
+        <div class="alert alert-info" role="alert">
+          This partnership ends soon ({{ partnership.agreement_end }}).
+        </div>
+        {% endif %}
         <div class="small text-body-secondary">
           {{ partnership.human_daterange }}<br>
           Tier: {{ partnership.tier.name|default_if_none:"none" }}<br>

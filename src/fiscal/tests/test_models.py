@@ -145,3 +145,25 @@ class TestPartnership(TestCase):
 
         # Assert
         self.assertEqual(result, "Test (No Tier) partnership Oct 01 - 30, 2025 (consortium)")
+
+    def test_ends_within_90_days(self) -> None:
+        # Arrange
+        consortium = Consortium.objects.create(name="Test")
+        account = Account.objects.create(
+            account_type=Account.AccountTypeChoices.CONSORTIUM,
+            generic_relation=consortium,
+        )
+        partnership = Partnership(
+            name="Test",
+            credits=10,
+            account=account,
+            agreement_start=date.today() - timedelta(days=30),
+            agreement_end=date.today() + timedelta(days=60),
+            partner_consortium=consortium,
+        )
+
+        # Act
+        result = partnership.ends_within_90_days
+
+        # Assert
+        self.assertTrue(result)
