@@ -29,32 +29,7 @@
   </div>
 
   <div class="card-body">
-    <h3 class="h5">Benefits at a glance</h3>
-    <div class="row row-cols-1 row-cols-md-3 g-2 mb-4">
-      <div class="col">
-        <div class="border rounded p-2 h-100">
-          <div class="text-body-secondary small">Seats (used / allocated)</div>
-          <div class="h4 mb-0">{{ summary.stats.seats_used }} / {{ summary.stats.seats_allocated }}</div>
-          <div class="small text-body-secondary">{{ summary.stats.seats_remaining }} remaining</div>
-        </div>
-      </div>
-      <div class="col">
-        <div class="border rounded p-2 h-100">
-          <div class="text-body-secondary small">Events (used / allocated)</div>
-          <div class="h4 mb-0">{{ summary.stats.events_used }} / {{ summary.stats.events_allocated }}</div>
-          <div class="small text-body-secondary">{{ summary.stats.events_remaining }} remaining</div>
-        </div>
-      </div>
-      <div class="col">
-        <div class="border rounded p-2 h-100">
-          <div class="text-body-secondary small">Benefits (active / total)</div>
-          <div class="h4 mb-0">{{ summary.stats.benefits_active }} / {{ summary.stats.benefits_total }}</div>
-          <div class="small text-body-secondary">{{ summary.partnerships|length }} partnership{{ summary.partnerships|length|pluralize }}</div>
-        </div>
-      </div>
-    </div>
-
-    <h3 class="h5">Partnerships</h3>
+    <h5>Partnerships</h5>
     {% for partnership_summary in summary.partnerships %}
     {% with partnership=partnership_summary.partnership %}
     <div class="card mb-3">
@@ -83,7 +58,7 @@
     <p class="text-body-secondary">No partnerships for this account.</p>
     {% endfor %}
 
-    <h3 class="h5 mt-4">Benefits outside of a partnership</h3>
+    <h5 class="mt-4">Benefits outside of a partnership</h5>
     {% include "includes/account_benefits_table.html" with benefit_summaries=summary.account_benefits empty_message="No benefits purchased outside of a partnership." show_registration_code=True %}
   </div>
 </div>
