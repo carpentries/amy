@@ -547,6 +547,55 @@ class TestTrainingRequestsListView(TestBase):
             {self.first_training},
         )
 
+    def test_unmatching_fails_when_task_shared_with_unselected_request(self) -> None:
+        """A task may be linked to more than one training request (e.g. two
+        requests matched to the same training seat). Unmatching must be
+        rejected if not all requests sharing a task are selected, otherwise
+        the unselected request would be silently unmatched too."""
+        shared_task = self.first_req.tasks.get()
+        self.third_req.tasks.add(shared_task)
+
+        data = {
+            "unmatch": "",
+            "requests": [self.first_req.pk],
+        }
+        rv = self.client.post(reverse("all_trainingrequests"), data, follow=True)
+
+        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.resolver_match.view_name, "all_trainingrequests")
+        msg = (
+            "Some training requests that are linked to the tasks were not selected for unmatching."
+            " Please select all training requests that are linked to the tasks you want to unmatch."
+        )
+        self.assertContains(rv, msg)
+
+        # The shared task and both links must remain untouched.
+        self.assertTrue(Task.objects.filter(pk=shared_task.pk).exists())
+        self.assertIn(shared_task, self.first_req.tasks.all())
+        self.assertIn(shared_task, self.third_req.tasks.all())
+
+    def test_unmatching_succeeds_when_all_requests_sharing_task_selected(self) -> None:
+        """Unmatching succeeds when every training request sharing a task is
+        selected together, and it removes the task (unmatching all of
+        them)."""
+        shared_task = self.first_req.tasks.get()
+        self.third_req.tasks.add(shared_task)
+
+        data = {
+            "unmatch": "",
+            "requests": [self.first_req.pk, self.third_req.pk],
+        }
+        rv = self.client.post(reverse("all_trainingrequests"), data, follow=True)
+
+        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.resolver_match.view_name, "all_trainingrequests")
+        msg = "Successfully unmatched selected people from trainings."
+        self.assertContains(rv, msg)
+
+        self.assertFalse(Task.objects.filter(pk=shared_task.pk).exists())
+        self.assertEqual(set(self.first_req.tasks.all()), set())
+        self.assertEqual(set(self.third_req.tasks.all()), set())
+
     def test_matching_no_remaining__no_message(self) -> None:
         """Regression test for
         https://github.com/carpentries/amy/issues/1946#issuecomment-875806218.
