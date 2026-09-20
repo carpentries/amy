@@ -146,6 +146,14 @@ class NewPartnershipOnboardingContext(TypedDict):
     benefits: list[Benefit]
 
 
+class PartnershipAgreementEndingKwargs(TypedDict):
+    partnership: Partnership
+
+
+class PartnershipAgreementEndingContext(TypedDict):
+    partnership: Partnership
+
+
 class HostInstructorsIntroductionContext(TypedDict):
     assignee: Person | None
     event: Event
