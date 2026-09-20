@@ -16,6 +16,10 @@ from src.emails.actions.new_partnership_onboarding import (
     new_partnership_onboarding_strategy,
     run_new_partnership_onboarding_strategy,
 )
+from src.emails.actions.partnership_agreement_ending import (
+    partnership_agreement_ending_strategy,
+    run_partnership_agreement_ending_strategy,
+)
 from src.fiscal.models import Partnership
 from src.offering.base_views import AccountFormsetView
 from src.offering.filters import AccountBenefitFilter, AccountFilter, BenefitFilter
@@ -212,6 +216,18 @@ class AccountOwnersUpdate(
             try:
                 run_new_partnership_onboarding_strategy(
                     new_partnership_onboarding_strategy(partnership),
+                    request=self.request,
+                    partnership=partnership,
+                )
+            except EmailStrategyException as exc:
+                messages.error(
+                    self.request,
+                    f"Error when creating or updating scheduled email. {exc}",
+                )
+
+            try:
+                run_partnership_agreement_ending_strategy(
+                    partnership_agreement_ending_strategy(partnership),
                     request=self.request,
                     partnership=partnership,
                 )
