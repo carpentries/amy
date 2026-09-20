@@ -19,6 +19,7 @@ from src.emails.types import (
     NewMembershipOnboardingContext,
     NewPartnershipOnboardingContext,
     NewSelfOrganisedWorkshopContext,
+    PartnershipAgreementEndingContext,
     PersonsMergedContext,
     PostWorkshop7DaysContext,
     RecruitHelpersContext,
@@ -45,6 +46,7 @@ class SignalNameEnum(StrEnum):
     membership_quarterly_3_months = "membership_quarterly_3_months"
     membership_quarterly_6_months = "membership_quarterly_6_months"
     membership_quarterly_9_months = "membership_quarterly_9_months"
+    partnership_agreement_ending = "partnership_agreement_ending"
 
     @staticmethod
     def choices() -> list[tuple[str, str]]:
@@ -202,6 +204,13 @@ MEMBERSHIP_QUARTERLY_9_MONTHS_SIGNAL_NAME = "membership_quarterly_9_months"
     membership_quarterly_9_months_update_signal,
     membership_quarterly_9_months_cancel_signal,
 ) = triple_signals(MEMBERSHIP_QUARTERLY_9_MONTHS_SIGNAL_NAME, MembershipQuarterlyContext)
+
+PARTNERSHIP_AGREEMENT_ENDING_SIGNAL_NAME = "partnership_agreement_ending"
+(
+    partnership_agreement_ending_signal,
+    partnership_agreement_ending_update_signal,
+    partnership_agreement_ending_cancel_signal,
+) = triple_signals(PARTNERSHIP_AGREEMENT_ENDING_SIGNAL_NAME, PartnershipAgreementEndingContext)
 
 ALL_SIGNALS = [item for item in locals().values() if isinstance(item, Signal)]
 

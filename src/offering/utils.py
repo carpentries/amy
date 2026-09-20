@@ -84,6 +84,10 @@ def owned_accounts_queryset(person: Person) -> QuerySet[AccountOwner]:
             Account.AccountTypeChoices.ORGANISATION,
             Account.AccountTypeChoices.CONSORTIUM,
         ],
+        permission_type__in=[
+            AccountOwner.PERMISSION_TYPE_CHOICES[0][0],  # "owner"
+            AccountOwner.PERMISSION_TYPE_CHOICES[1][0],  # "programmatic_contact"
+        ],
     )
 
 

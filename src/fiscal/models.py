@@ -210,6 +210,11 @@ class Partnership(CreatedUpdatedMixin, models.Model):
     def human_daterange(self) -> str:
         return human_daterange(self.agreement_start, self.agreement_end)
 
+    @property
+    def ends_within_90_days(self) -> bool:
+        """Check if the agreement ends within 90 days from today."""
+        return 0 <= (self.agreement_end - timezone.now().date()).days <= 90
+
     def is_active(self, current_date: date | None = None) -> bool:
         """Check if the agreement is running at `current_date`."""
         return self.agreement_start <= (current_date or timezone.now().date()) <= self.agreement_end

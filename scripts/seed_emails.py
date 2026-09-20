@@ -424,6 +424,24 @@ Here is a closing paragraph with other general information.  Please contact us w
 The Carpentries Membership Team
 """,  # noqa: E501
     ),
+    EmailTemplateDef(
+        active=True,
+        id=UUID("3c6e0b8a-4f2e-4d9c-9c3f-8b6a5b4b5b6b"),
+        name="Partnership agreement ending soon",
+        signal=SignalNameEnum.partnership_agreement_ending,
+        from_header="partnerships@carpentries.org",
+        reply_to_header="",
+        cc_header=["partnerships@carpentries.org"],
+        bcc_header=[],
+        subject="Partnership Agreement Ending Soon",
+        body=(
+            "Your Partnership will end on ({{ partnership.agreement_end }}).  Any unused benefits at that time "
+            "will be forfeited.  Please contact partnerships@carpentries.org to begin the renewal process.  "
+            "Feel free to schedule an onboarding call with a member of the Core Team if you have any questions: "
+            "https://calendly.com/carpentries-partnership .  Please log in to your profile at "
+            "https://amy.carpentries.org/ to view the status of your benefit usage."
+        ),
+    ),
 ]
 
 

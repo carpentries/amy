@@ -49,6 +49,11 @@ from src.emails.actions.new_partnership_onboarding import (
 from src.emails.actions.new_self_organised_workshop import (
     new_self_organised_workshop_receiver,
 )
+from src.emails.actions.partnership_agreement_ending import (
+    partnership_agreement_ending_cancel_receiver,
+    partnership_agreement_ending_receiver,
+    partnership_agreement_ending_update_receiver,
+)
 from src.emails.actions.persons_merged import persons_merged_receiver
 from src.emails.actions.post_workshop_7days import (
     post_workshop_7days_cancel_receiver,

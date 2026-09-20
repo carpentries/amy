@@ -26,6 +26,10 @@ from src.emails.actions.new_partnership_onboarding import (
     new_partnership_onboarding_strategy,
     run_new_partnership_onboarding_strategy,
 )
+from src.emails.actions.partnership_agreement_ending import (
+    partnership_agreement_ending_strategy,
+    run_partnership_agreement_ending_strategy,
+)
 from src.emails.signals import (
     MEMBERSHIP_QUARTERLY_3_MONTHS_SIGNAL_NAME,
     MEMBERSHIP_QUARTERLY_6_MONTHS_SIGNAL_NAME,
@@ -1099,6 +1103,18 @@ class PartnershipUpdate(
                 f"Error when creating or updating scheduled email. {exc}",
             )
 
+        try:
+            run_partnership_agreement_ending_strategy(
+                partnership_agreement_ending_strategy(self.object),
+                request=self.request,
+                partnership=self.object,
+            )
+        except EmailStrategyException as exc:
+            messages.error(
+                self.request,
+                f"Error when creating or updating scheduled email. {exc}",
+            )
+
         return HttpResponseRedirect(self.get_success_url())
 
 
@@ -1125,6 +1141,18 @@ class PartnershipDelete(
             messages.error(
                 self.request,
                 f"Error when running new partnership onboarding strategy. {exc}",
+            )
+
+        try:
+            run_partnership_agreement_ending_strategy(
+                StrategyEnum.CANCEL,  # choosing the strategy manually
+                request=self.request,
+                partnership=self.object,
+            )
+        except EmailStrategyException as exc:
+            messages.error(
+                self.request,
+                f"Error when running partnership agreement ending strategy. {exc}",
             )
 
     def get_success_url(self) -> str:
@@ -1178,6 +1206,18 @@ class PartnershipExtend(
                 comment=comment,
             ),
         )
+
+        try:
+            run_partnership_agreement_ending_strategy(
+                partnership_agreement_ending_strategy(self.partnership),
+                request=self.request,
+                partnership=self.partnership,
+            )
+        except EmailStrategyException as exc:
+            messages.error(
+                self.request,
+                f"Error when creating or updating scheduled email. {exc}",
+            )
 
         return super().form_valid(form)
 
@@ -1317,6 +1357,18 @@ class PartnershipRollOver(
         try:
             run_new_partnership_onboarding_strategy(
                 new_partnership_onboarding_strategy(self.object),
+                request=self.request,
+                partnership=self.object,
+            )
+        except EmailStrategyException as exc:
+            messages.error(
+                self.request,
+                f"Error when creating or updating scheduled email. {exc}",
+            )
+
+        try:
+            run_partnership_agreement_ending_strategy(
+                partnership_agreement_ending_strategy(self.object),
                 request=self.request,
                 partnership=self.object,
             )
