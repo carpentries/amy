@@ -8,7 +8,7 @@ from django.utils import timezone
 
 from src.emails.actions.base_action import BaseAction, BaseActionCancel, BaseActionUpdate
 from src.emails.actions.base_strategy import run_strategy
-from src.emails.models import ScheduledEmail
+from src.emails.models import ScheduledEmail, ScheduledEmailStatus
 from src.emails.schemas import ContextModel, SinglePropertyLinkModel, ToHeaderModel
 from src.emails.signals import (
     PARTNERSHIP_AGREEMENT_ENDING_SIGNAL_NAME,
@@ -45,6 +45,7 @@ def partnership_agreement_ending_strategy(partnership: Partnership) -> StrategyE
         generic_relation_content_type=ct,
         generic_relation_pk=partnership.pk,
         template__signal=PARTNERSHIP_AGREEMENT_ENDING_SIGNAL_NAME,
+        state=ScheduledEmailStatus.SCHEDULED,
     ).exists()
     account_owners_exist = AccountOwner.objects.filter(
         account_id=partnership.account_id, permission_type__in=ACCOUNT_OWNER_PERMISSION_TYPES_EXPECTED
