@@ -1052,6 +1052,18 @@ class PartnershipCreate(
         self.object.account = account
         self.object.save()
 
+        try:
+            run_partnership_agreement_ending_strategy(
+                partnership_agreement_ending_strategy(self.object),
+                request=self.request,
+                partnership=self.object,
+            )
+        except EmailStrategyException as exc:
+            messages.error(
+                self.request,
+                f"Error when creating or updating scheduled email. {exc}",
+            )
+
         return HttpResponseRedirect(self.get_success_url())
 
 
