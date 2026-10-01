@@ -591,6 +591,7 @@ class TestPersonPassword(TestBase):
             family="User",
             email="sudo@example.org",
             password="admin",
+            airport_iata="AAA",
         )
         self.person_consent_required_terms(self.admin)
 

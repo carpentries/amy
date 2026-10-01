@@ -22,6 +22,7 @@ class TestAPIStructure(APITestCase):
             family="User",
             email="sudo@example.org",
             password="admin",
+            airport_iata="AAA",
         )
         consent_to_all_required_consents(self.admin)
         self.admin.airport_iata = "KRK"

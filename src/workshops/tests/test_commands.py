@@ -500,6 +500,7 @@ class TestCreateSuperuserCommand(TestCase):
             family="admin",
             email="admin@example.org",
             password="admin",
+            airport_iata="AAA",
         )
         superuser.is_active = False
         superuser.save()

@@ -61,6 +61,7 @@ class TestViews(TestBase):
             family="User",
             email="superuser@example.org",
             password="superuser",
+            airport_iata="AAA",
         )
         self.person_consent_required_terms(self.admin)
         assert admins not in self.admin.groups.all()
