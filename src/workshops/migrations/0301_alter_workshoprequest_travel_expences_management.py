@@ -5,7 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("workshops", "0298_alter_person_options"),
+        ("workshops", "0300_link_training_requests_to_tasks"),
     ]
 
     operations = [
