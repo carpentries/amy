@@ -18,7 +18,8 @@ class Migration(migrations.Migration):
                     ("", "Not sure yet."),
                     (
                         "booked",
-                        "Hotel and airfare will be booked by site; ground travel and meals/incidentals will be reimbursed within 60 days.",
+                        "Hotel and airfare will be booked by site; ground travel and meals/incidentals will be "
+                        "reimbursed within 60 days.",
                     ),
                     ("reimbursed", "All expenses will be booked by instructors and reimbursed within 60 days."),
                     ("online", "Not applicable, as this will be an online workshop."),
