@@ -1,6 +1,8 @@
 from typing import Any
 
 from django.contrib import messages
+from django.contrib.auth.decorators import permission_required
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import ValidationError
 from django.db.models import Case, Count, F, IntegerField, Prefetch, QuerySet, Sum, When
 from django.http import HttpResponse
@@ -37,7 +39,8 @@ from src.workshops.utils.access import OnlyForAdminsMixin, admin_required
 from src.workshops.utils.pagination import get_pagination_items
 
 
-class AllTrainings(OnlyForAdminsMixin, AMYListView[Event]):
+class AllTrainings(OnlyForAdminsMixin, PermissionRequiredMixin, AMYListView[Event]):
+    permission_required = ["workshops.view_event"]
     context_object_name = "all_trainings"
     template_name = "trainings/all_trainings.html"
     queryset = (
@@ -76,8 +79,10 @@ class TrainingProgressCreate(
     RedirectSupportMixin,
     PrepopulationSupportMixin[TrainingProgressForm],
     OnlyForAdminsMixin,
+    PermissionRequiredMixin,
     AMYCreateView[TrainingProgressForm, TrainingProgress],
 ):
+    permission_required = ["workshops.add_trainingprogress"]
     model = TrainingProgress
     form_class = TrainingProgressForm
     populate_fields = ["trainee"]
@@ -107,8 +112,12 @@ class TrainingProgressCreate(
 
 
 class TrainingProgressUpdate(
-    RedirectSupportMixin, OnlyForAdminsMixin, AMYUpdateView[TrainingProgressForm, TrainingProgress]
+    RedirectSupportMixin,
+    OnlyForAdminsMixin,
+    PermissionRequiredMixin,
+    AMYUpdateView[TrainingProgressForm, TrainingProgress],
 ):
+    permission_required = ["workshops.change_trainingprogress"]
     model = TrainingProgress
     form_class = TrainingProgressForm
     template_name = "trainings/trainingprogress_form.html"
@@ -133,8 +142,12 @@ class TrainingProgressUpdate(
 
 
 class TrainingProgressDelete(
-    RedirectSupportMixin, OnlyForAdminsMixin, AMYDeleteView[TrainingProgress, GenericDeleteForm[TrainingProgress]]
+    RedirectSupportMixin,
+    OnlyForAdminsMixin,
+    PermissionRequiredMixin,
+    AMYDeleteView[TrainingProgress, GenericDeleteForm[TrainingProgress]],
 ):
+    permission_required = ["workshops.delete_trainingprogress"]
     model = TrainingProgress
     success_url = reverse_lazy("all_trainees")
     object: TrainingProgress
@@ -188,6 +201,7 @@ def all_trainees_queryset() -> QuerySet[Person]:
 
 
 @admin_required
+@permission_required(["workshops.view_trainingprogress", "workshops.add_trainingprogress"], raise_exception=True)
 def all_trainees(request: AuthenticatedHttpRequest) -> HttpResponse:
     filter = TraineeFilter(
         request.GET,

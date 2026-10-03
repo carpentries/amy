@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block navbar %}
+  {% include 'navigation_user_dashboard.html' %}
+{% endblock %}
+
+{% block extrastyle %}
+<style>
+  .benefit-usage-toggle .fa-caret-right { transition: transform .15s ease-in-out; }
+  .benefit-usage-toggle:not(.collapsed) .fa-caret-right { transform: rotate(90deg); }
+</style>
+{% endblock extrastyle %}
+
+{% block content %}
+
+<p>
+  Below you'll find details of the partnerships and benefits of the accounts you are listed as an owner of.
+  This page is read-only. If anything looks incorrect, please contact us at
+  <a href="mailto:team@carpentries.org">team@carpentries.org</a>.
+</p>
+
+{% for summary in account_summaries %}
+<div class="card mb-4">
+  <div class="card-header">
+    <h2 class="h4 mb-0">{{ summary.account.generic_relation }}</h2>
+    <small class="text-body-secondary">
+      {{ summary.account.get_account_type_display|capfirst }} account &mdash;
+      your role: {{ summary.permission_types|join:", " }}
+    </small>
+  </div>
+
+  <div class="card-body">
+    <h5>Partnerships</h5>
+    {% for partnership_summary in summary.partnerships %}
+    {% with partnership=partnership_summary.partnership %}
+    <div class="card mb-3">
+      <div class="card-header">
+        <h4 class="h6 mb-1">
+          {{ partnership.name }}
+          {% if partnership.is_active %}
+          <span class="badge text-bg-success">Active</span>
+          {% else %}
+          <span class="badge text-bg-secondary">Inactive</span>
+          {% endif %}
+        </h4>
+        {% if partnership.ends_within_90_days %}
+        <div class="alert alert-warning" role="alert">
+          This partnership ends soon ({{ partnership.agreement_end }}).
+        </div>
+        {% endif %}
+        <div class="small text-body-secondary">
+          {{ partnership.human_daterange }}<br>
+          Tier: {{ partnership.tier.name|default_if_none:"none" }}<br>
+          Registration code:
+          {% if partnership.registration_code %}<code>{{ partnership.registration_code }}</code>{% else %}none{% endif %}
+        </div>
+      </div>
+      <div class="card-body px-0 py-0">
+        {% include "includes/account_benefits_table.html" with benefit_summaries=partnership_summary.account_benefits empty_message="No benefits purchased under this partnership." show_registration_code=False %}
+      </div>
+    </div>
+    {% endwith %}
+    {% empty %}
+    <p class="text-body-secondary">No partnerships for this account.</p>
+    {% endfor %}
+
+    <h5 class="mt-4">Benefits outside of a partnership</h5>
+    {% include "includes/account_benefits_table.html" with benefit_summaries=summary.account_benefits empty_message="No benefits purchased outside of a partnership." show_registration_code=True %}
+  </div>
+</div>
+{% empty %}
+<p>You are not listed as an owner of any organisation or consortium account.</p>
+{% endfor %}
+
+{% endblock %}

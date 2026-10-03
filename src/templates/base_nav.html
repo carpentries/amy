@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 {% block navbar %}
-  {% if user.is_admin %}
+  {% if user.is_superuser %}
     {% include 'navigation.html' %}
-  {% elif not user.is_admin and not user.is_anonymous %}
+  {% elif not user.is_superuser and not user.is_anonymous %}
     {% include 'navigation_user_dashboard.html' %}
   {% endif %}
 {% endblock %}

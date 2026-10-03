@@ -58,7 +58,7 @@ def post_workshop_7days_strategy(event: Event) -> StrategyEnum:
         at_least_1_instructor=at_least_1_instructor,
     )
 
-    email_exists = (
+    email_should_exist = (
         # UPDATE 2025-02-15 (#2760):
         #      We're allowing scheduling for centrally-organised
         #      and self-organised workshops.
@@ -73,21 +73,21 @@ def post_workshop_7days_strategy(event: Event) -> StrategyEnum:
         and at_least_1_host
         and at_least_1_instructor
     )
-    logger.debug(f"{email_exists=}")
+    logger.debug(f"{email_should_exist=}")
 
     ct = ContentType.objects.get_for_model(event)
-    has_email_scheduled = ScheduledEmail.objects.filter(
+    email_exists = ScheduledEmail.objects.filter(
         generic_relation_content_type=ct,
         generic_relation_pk=event.pk,
         template__signal=POST_WORKSHOP_7DAYS_SIGNAL_NAME,
     ).exists()
-    logger.debug(f"{has_email_scheduled=}")
+    logger.debug(f"{email_exists=}")
 
-    if not has_email_scheduled and email_exists:
+    if not email_exists and email_should_exist:
         result = StrategyEnum.CREATE
-    elif has_email_scheduled and not email_exists:
+    elif email_exists and not email_should_exist:
         result = StrategyEnum.CANCEL
-    elif has_email_scheduled and email_exists:
+    elif email_exists and email_should_exist:
         result = StrategyEnum.UPDATE
     else:
         result = StrategyEnum.NOOP

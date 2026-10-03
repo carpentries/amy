@@ -12,6 +12,7 @@ from src.offering.models import Account, AccountBenefit, Benefit
 from src.workshops.lookups import (
     AccountBenefitSeatsLookupView,
     AwardLookupView,
+    BenefitSeatsLookupView,
     EventLookupForAwardsView,
     EventLookupView,
     GenericObjectLookupView,
@@ -754,6 +755,8 @@ class TestAccountBenefitsLookupView(TestBase):
         )
 
     def setUpView(self, term: str = "", benefit: str = "") -> AccountBenefitSeatsLookupView:
+        """There are 2 AccountBenefit views: one for seat-type and one for event-type.
+        This test will use the seat-type view."""
         url = f"/?benefit={benefit}" if benefit else "/"
         request = RequestFactory().get(url)
         view = AccountBenefitSeatsLookupView(request=request, term=term)
@@ -785,3 +788,84 @@ class TestAccountBenefitsLookupView(TestBase):
         # Assert - unknown value is not in the whitelist, so no extra filtering
         self.assertIn(self.ab_it, queryset)
         self.assertIn(self.ab_other, queryset)
+
+    def test_parse_results(self) -> None:
+        # Arrange
+        view = self.setUpView()
+        queryset = view.get_queryset().order_by("registration_code")
+        # Act
+        results = view.parse_results(list(queryset))
+        # Assert
+        expected_results = [
+            {
+                "id": str(self.ab_it.pk),
+                "text": str(self.ab_it),
+                "benefit_id": str(self.benefit_it.pk),
+                "benefit_name": self.benefit_it.name,
+            },
+            {
+                "id": str(self.ab_other.pk),
+                "text": str(self.ab_other),
+                "benefit_id": str(self.benefit_other.pk),
+                "benefit_name": self.benefit_other.name,
+            },
+        ]
+        self.assertEqual(results, expected_results)
+
+
+class TestBenefitsLookupView(TestBase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.benefit_it, _ = Benefit.objects.get_or_create(
+            name="Instructor Training",
+            defaults=dict(
+                description="Instructor Training benefit",
+                unit_type="seat",
+                credits=10,
+            ),
+        )
+        self.benefit_other = Benefit.objects.create(
+            name="Other Benefit",
+            description="Other benefit",
+            unit_type="seat",
+            credits=5,
+        )
+
+    def setUpView(self, term: str = "") -> BenefitSeatsLookupView:
+        """There are 2 Benefit views: one for seat-type and one for event-type.
+        This test will use the seat-type view."""
+        request = RequestFactory().get("/")
+        view = BenefitSeatsLookupView(request=request, term=term)
+        return view
+
+    def test_get_queryset(self) -> None:
+        # Arrange
+        view = self.setUpView()
+        # Act
+        queryset = view.get_queryset()
+        # Assert
+        self.assertIn(self.benefit_it, queryset)
+        self.assertIn(self.benefit_other, queryset)
+
+    def test_parse_results(self) -> None:
+        # Arrange
+        view = self.setUpView()
+        queryset = view.get_queryset().order_by("name")
+        # Act
+        results = view.parse_results(list(queryset))
+        # Assert
+        expected_results = [
+            {
+                "id": str(self.benefit_it.pk),
+                "text": str(self.benefit_it),
+                "benefit_id": str(self.benefit_it.pk),
+                "benefit_name": self.benefit_it.name,
+            },
+            {
+                "id": str(self.benefit_other.pk),
+                "text": str(self.benefit_other),
+                "benefit_id": str(self.benefit_other.pk),
+                "benefit_name": self.benefit_other.name,
+            },
+        ]
+        self.assertEqual(results, expected_results)

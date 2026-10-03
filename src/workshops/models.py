@@ -621,7 +621,9 @@ class PersonManager(BaseUserManager["Person"]):
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, username: str, personal: str, family: str, email: str, password: str) -> Person:
+    def create_superuser(
+        self, username: str, personal: str, family: str, email: str, airport_iata: str, password: str
+    ) -> Person:
         """
         Create and save a superuser.
         """
@@ -632,6 +634,7 @@ class PersonManager(BaseUserManager["Person"]):
             email=self.normalize_email(email),
             is_superuser=True,
             is_active=True,
+            airport_iata=airport_iata,
         )
         user.set_password(password)
         user.save(using=self._db)
@@ -898,6 +901,10 @@ class Person(
                 "can_access_restricted_API",
                 "Can this user access the restricted API endpoints?",
             ),
+            ("access_admin_dashboard", "Can access the admin dashboard"),
+            ("use_search", "Can use the global search and workshop-staff finder"),
+            ("view_changelog", "Can view the object changes log"),
+            ("view_reports", "Can view reports"),
         ]
 
     @cached_property
@@ -969,21 +976,6 @@ class Person(
         """Required for logging into admin panel."""
         return self.is_superuser
 
-    @property
-    def is_admin(self) -> bool:
-        return self._is_admin()
-
-    ADMIN_GROUPS = ("administrators", "steering committee", "invoicing", "trainers")
-
-    def _is_admin(self) -> bool:
-        try:
-            if self.is_anonymous:
-                return False
-            else:
-                return self.is_superuser or self.groups.filter(name__in=self.ADMIN_GROUPS).exists()
-        except AttributeError:
-            return False
-
     def get_missing_instructor_requirements(self) -> list[str]:
         """Returns set of requirements' names (list of strings) that are not
         passed yet by the trainee and are mandatory to become an Instructor.
@@ -998,11 +990,6 @@ class Person(
             return [name for field, name in fields if not getattr(self, field)]
         except AttributeError as e:
             raise Exception("Did you forget to call annotate_with_instructor_eligibility()?") from e
-
-    def get_training_tasks(self) -> QuerySet[Task]:
-        """Returns Tasks related to Instuctor Training events at which this
-        person was trained."""
-        return Task.objects.filter(person=self, role__name="learner", event__tags__name="TTT")
 
     def clean(self) -> None:
         """This will be called by the ModelForm.is_valid(). No saving to the
@@ -2141,6 +2128,28 @@ class TrainingRequest(
         "score_notes",
     )
 
+    # Many-to-many, not a single link: a person may be matched to more than one training
+    # (for example after re-taking it), and may hold more than one request that the same
+    # training answers. Deleting a task - which is what unmatching a trainee does - drops
+    # the rows from the through table, so the link disappears without blocking anything.
+    tasks = models.ManyToManyField(
+        "workshops.Task",
+        blank=True,
+        related_name="training_requests",
+        verbose_name="Linked training tasks",
+        help_text="Tasks this request was matched to.",
+    )
+
+    benefit = models.ForeignKey(
+        "offering.Benefit",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=False,
+        default=None,
+        verbose_name="What Carpentries offering are you signing up for?",
+        limit_choices_to=Q(active=True, unit_type="seat"),
+    )
+
     person = models.ForeignKey(
         Person,
         null=True,
@@ -2200,10 +2209,9 @@ class TrainingRequest(
         null=False,
         blank=True,
         default="",
-        verbose_name="Eventbrite URL",
-        help_text="If you are registering or have registered for a training event "
-        "through Eventbrite, enter the URL of that event. You can find this on the "
-        "registration page or in the confirmation email. "
+        verbose_name="Event registration URL",
+        help_text="If you are registering or have registered for an event, enter the URL of that event. "
+        "You can find this on the registration page or in the confirmation email. "
         "If you have not yet registered for an event, leave this field blank.",
     )
 
@@ -2482,7 +2490,7 @@ class TrainingRequest(
     )
 
     reason = models.TextField(
-        verbose_name="Why do you want to attend this training course?",
+        verbose_name="Why do you want to attend this event?",
         null=False,
         blank=False,
     )
@@ -2523,7 +2531,9 @@ class TrainingRequest(
     def clean(self) -> None:
         super().clean()
 
-        if self.state == "p" and self.person is not None and self.person.get_training_tasks().exists():
+        # `tasks` is a many-to-many, so it can only be read once the request has a PK -
+        # and a request being created has nothing linked to it yet anyway.
+        if self.state == "p" and self.pk is not None and self.tasks.exists():
             raise ValidationError({"state": "Pending training request cannot be matched with a training."})
 
     def recalculate_score_auto(self) -> int:
@@ -3229,8 +3239,8 @@ class WorkshopRequest(
         (
             "forprofit",
             "I am with a corporate or for-profit site. I understand the costs for "
-            "for-profit organisations are higher than the price for not-for-profit "
-            "organisations, as listed on The Carpentries website.",
+            "for-profit organisations are higher than what is listed on The "
+            "Carpentries website and will be discussed during the scheduling process.",
         ),
         (
             "member",
@@ -3252,7 +3262,7 @@ class WorkshopRequest(
         verbose_name="Which of the following applies to your payment for the administrative fee?",
         help_text=(
             f"<b><a href='{FEE_DETAILS_URL}' target='_blank' rel='noreferrer nofollow'>"
-            "The Carpentries website workshop fee listing.</a></b>"
+            "Please visit our website to see our current pricing.</a></b>"
         ),
     )
     scholarship_circumstances = models.TextField(
@@ -3272,6 +3282,10 @@ class WorkshopRequest(
         (
             "reimbursed",
             "All expenses will be booked by instructors and reimbursed within 60 days.",
+        ),
+        (
+            "online",
+            "Not applicable, as this will be an online workshop.",
         ),
         ("other", "Other:"),
     )

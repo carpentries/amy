@@ -10,7 +10,14 @@ from src.workshops.models import Person
 class TestMessageAllowed(TestCase):
     def test_notification_not_tagged_for_admins_displays_for_admins(self) -> None:
         # Arrange
-        person = Person.objects.create_superuser("admin", "admin", "admin", "admin@example.org", "admin")
+        person = Person.objects.create_superuser(
+            username="admin",
+            personal="admin",
+            family="admin",
+            email="admin@example.org",
+            password="admin",
+            airport_iata="AAA",
+        )
         request = RequestFactory().get("/")
         request.user = person
         message = Message(constants.INFO, "Test message", extra_tags="")
@@ -36,7 +43,14 @@ class TestMessageAllowed(TestCase):
 
     def test_notification_tagged_for_admins_displays_for_admins(self) -> None:
         # Arrange
-        person = Person.objects.create_superuser("admin", "admin", "admin", "admin@example.org", "admin")
+        person = Person.objects.create_superuser(
+            username="admin",
+            personal="admin",
+            family="admin",
+            email="admin@example.org",
+            password="admin",
+            airport_iata="AAA",
+        )
         request = RequestFactory().get("/")
         request.user = person
         message = Message(constants.INFO, "Test message", extra_tags=settings.ONLY_FOR_ADMINS_TAG)

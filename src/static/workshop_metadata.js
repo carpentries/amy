@@ -18,6 +18,16 @@ const ALLOWED_METADATA_NAMES = [
     "latlng", "lat", "lng", "language", "eventbrite", "instructor", "helper", "contact",
 ];
 
+// The YAML front matter in `index.md` names some fields differently than the
+// `<meta>` tags the built page emits (see `_layouts/workshop.html` in the
+// workshop template). Normalise to the `<meta>` vocabulary, which is what the
+// rest of this file works with.
+const YAML_METADATA_ALIASES = {
+    latitude: "lat",
+    longitude: "lng",
+    email: "contact",
+};
+
 function _workshopValidateUrl(url) {
     return WEBSITE_REGEX.test(url) || REPO_REGEX.test(url);
 }
@@ -28,7 +38,7 @@ function _workshopGenerateRawUrl(url) {
         if (match) {
             const { name, repo } = match.groups;
             return {
-                rawUrl: `https://raw.githubusercontent.com/${name}/${repo}/gh-pages/index.html`,
+                rawUrl: `https://raw.githubusercontent.com/${name}/${repo}/refs/heads/gh-pages/index.md`,
                 repo,
             };
         }
@@ -49,7 +59,7 @@ function _workshopParseHtmlMetadata(html) {
     return result;
 }
 
-function _workshopParseYamlMetadata(text) {
+function _workshopParseYamlMetadata(repo, text) {
     const parts = text.split("---");
     if (parts.length < 3) return {};
     let yaml;
@@ -60,19 +70,24 @@ function _workshopParseYamlMetadata(text) {
     }
     if (!yaml || typeof yaml !== "object" || Array.isArray(yaml)) return {};
     const result = {};
-    for (const key of ALLOWED_METADATA_NAMES) {
+    for (const key of [...ALLOWED_METADATA_NAMES, ...Object.keys(YAML_METADATA_ALIASES)]) {
         if (!(key in yaml)) continue;
+        const name = YAML_METADATA_ALIASES[key] ?? key;
         const val = yaml[key];
         if (Array.isArray(val)) {
-            result[key] = val.join("|");
+            result[name] = val.join("|");
         } else if (val instanceof Date) {
             const y = val.getUTCFullYear();
             const m = String(val.getUTCMonth() + 1).padStart(2, "0");
             const d = String(val.getUTCDate()).padStart(2, "0");
-            result[key] = `${y}-${m}-${d}`;
+            result[name] = `${y}-${m}-${d}`;
         } else if (val !== null && val !== undefined) {
-            result[key] = String(val);
+            result[name] = String(val);
         }
+    }
+    // The front matter carries no slug; the built page uses the repository name.
+    if (Object.keys(result).length > 0 && !("slug" in result)) {
+        result["slug"] = repo;
     }
     return result;
 }
@@ -94,25 +109,40 @@ async function fetchRawWorkshopMetadata(url) {
         url = url + "/";
     }
 
-    const response = await fetch(url);
-    if (!response.ok) {
-        throw new Error(`Request for "${url}" returned status code ${response.status}.`);
-    }
-    const html = await response.text();
-    let metadata = _workshopParseHtmlMetadata(html);
+    let metadata = {};
 
-    if (Object.keys(metadata).length === 0) {
-        const raw = _workshopGenerateRawUrl(url);
-        if (raw) {
-            const rawResponse = await fetch(raw.rawUrl);
-            if (rawResponse.ok) {
-                const rawText = await rawResponse.text();
-                metadata = _workshopParseYamlMetadata(rawText);
-                if (!("slug" in metadata)) {
-                    metadata["slug"] = raw.repo;
-                }
-            }
+    // A workshop served from a custom domain redirects off github.io, and that
+    // redirect carries no CORS headers either, so the request fails outright.
+    // A page may also load but carry no <meta> tags. Both cases fall back to
+    // the YAML front matter in the repository.
+    try {
+        const response = await fetch(url);
+        if (response.ok) {
+            metadata = _workshopParseHtmlMetadata(await response.text());
+        } else {
+            console.warn(`Request for "${url}" returned status code ${response.status}.`);
         }
+    } catch (error) {
+        console.warn(`Request for "${url}" failed:`, error);
+    }
+
+    if (Object.keys(metadata).length > 0) {
+        return metadata;
+    }
+
+    const raw = _workshopGenerateRawUrl(url);
+    if (raw === null) {
+        throw new Error(`Cannot read metadata from "${url}".`);
+    }
+
+    const rawResponse = await fetch(raw.rawUrl);
+    if (!rawResponse.ok) {
+        throw new Error(`Fallback request for "${raw.rawUrl}" returned status code ${rawResponse.status}.`);
+    }
+
+    metadata = _workshopParseYamlMetadata(raw.repo, await rawResponse.text());
+    if (Object.keys(metadata).length === 0) {
+        throw new Error(`No workshop metadata found in "${raw.rawUrl}".`);
     }
 
     return metadata;

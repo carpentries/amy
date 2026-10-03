@@ -21,7 +21,8 @@ from .models import CommunityRole
 # CommunityRole related views
 
 
-class CommunityRoleDetails(OnlyForAdminsMixin, AMYDetailView[CommunityRole]):
+class CommunityRoleDetails(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDetailView[CommunityRole]):
+    permission_required = ["communityroles.view_communityrole"]
     queryset = CommunityRole.objects.all()
     context_object_name = "role"
     template_name = "communityroles/communityrole.html"
@@ -40,7 +41,7 @@ class CommunityRoleDetails(OnlyForAdminsMixin, AMYDetailView[CommunityRole]):
 class CommunityRoleCreate(
     OnlyForAdminsMixin, PermissionRequiredMixin, RedirectSupportMixin, AMYCreateView[CommunityRoleForm, CommunityRole]
 ):
-    permission_required = "communityroles.add_communityrole"
+    permission_required = ["communityroles.add_communityrole"]
     model = CommunityRole
     form_class = CommunityRoleForm
 
@@ -51,7 +52,7 @@ class CommunityRoleCreate(
 
 
 class CommunityRoleUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView[CommunityRoleForm, CommunityRole]):
-    permission_required = "communityroles.change_communityrole"
+    permission_required = ["communityroles.change_communityrole"]
     model = CommunityRole
     form_class = CommunityRoleUpdateForm
 
@@ -67,8 +68,10 @@ class CommunityRoleUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdate
         return kwargs
 
 
-class CommunityRoleDelete(OnlyForAdminsMixin, AMYDeleteView[CommunityRole, GenericDeleteForm[CommunityRole]]):
-    permission_required = "communityroles.delete_communityrole"
+class CommunityRoleDelete(
+    OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView[CommunityRole, GenericDeleteForm[CommunityRole]]
+):
+    permission_required = ["communityroles.delete_communityrole"]
     model = CommunityRole
 
     def get_success_url(self) -> str:

@@ -37,6 +37,12 @@
       <th>{% include "includes/merge_radio.html" with field=form.person %}</th>
     </tr>
     <tr>
+      <th>Matched trainings</th>
+      <td>{% if obj_a.tasks.all %}<ul>{% for task in obj_a.tasks.all %}<li><a href="{{ task.event.get_absolute_url }}">{{ task.event }}</a></li>{% endfor %}</ul>{% else %}—{% endif %}</td>
+      <td>{% if obj_b.tasks.all %}<ul>{% for task in obj_b.tasks.all %}<li><a href="{{ task.event.get_absolute_url }}">{{ task.event }}</a></li>{% endfor %}</ul>{% else %}—{% endif %}</td>
+      <th>{% include "includes/merge_radio.html" with field=form.tasks %}</th>
+    </tr>
+    <tr>
       <th>Registration Code</th>
       <td>{{ obj_a.member_code|default:"—" }}</td><td>{{ obj_b.member_code|default:"—" }}</td>
       <th>{% include "includes/merge_radio.html" with field=form.member_code %}</th>

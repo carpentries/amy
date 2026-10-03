@@ -1,0 +1,132 @@
+{% comment %}
+Table of `AccountBenefitSummary` objects (see `src.offering.utils`). Every row expands to
+show what the allocation was spent on: people holding a seat, or events run.
+
+Context:
+  benefit_summaries      - list of AccountBenefitSummary
+  show_registration_code - render the registration code column. Only meaningful for
+                           benefits outside of a partnership: benefits under a partnership
+                           inherit its code.
+  empty_message          - text displayed instead of the table when there are no benefits
+{% endcomment %}
+{% if benefit_summaries %}
+<div class="table-responsive">
+  <table class="table table-hover align-middle mb-0">
+    <thead>
+      <tr>
+        <th scope="col">Benefit</th>
+        <th scope="col">Dates</th>
+        {% if show_registration_code %}<th scope="col">Registration code</th>{% endif %}
+        <th scope="col">Curriculum</th>
+        <th scope="col">Status</th>
+        <th scope="col">Used / allocated</th>
+        <th scope="col">Remaining</th>
+      </tr>
+    </thead>
+    {% for benefit_summary in benefit_summaries %}
+    {% with account_benefit=benefit_summary.account_benefit %}
+    <tbody class="border-top">
+      <tr>
+        <th scope="row" class="fw-normal">
+          {{ account_benefit.benefit.name }}
+          <span class="text-body-secondary">({{ account_benefit.benefit.unit_type }})</span>
+        </th>
+        <td>{{ account_benefit.human_daterange }}</td>
+        {% if show_registration_code %}
+        <td>
+          {% if account_benefit.registration_code %}<code>{{ account_benefit.registration_code }}</code>{% else %}&mdash;{% endif %}
+        </td>
+        {% endif %}
+        <td>{{ account_benefit.curriculum|default_if_none:"&mdash;" }}</td>
+        <td>
+          {% if account_benefit.frozen %}
+          <span class="badge text-bg-secondary">Frozen</span>
+          {% elif account_benefit.in_future %}
+          <span class="badge text-bg-info">Not started yet</span>
+          {% elif account_benefit.in_past %}
+          <span class="badge text-bg-light">Expired</span>
+          {% else %}
+          <span class="badge text-bg-success">Active</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if benefit_summary.tasks or benefit_summary.events %}
+          <button class="btn btn-sm btn-link p-0 text-decoration-none benefit-usage-toggle collapsed"
+                  type="button" data-bs-toggle="collapse"
+                  data-bs-target="#benefit-usage-{{ account_benefit.pk }}"
+                  aria-expanded="false" aria-controls="benefit-usage-{{ account_benefit.pk }}">
+            {{ benefit_summary.used }} / {{ account_benefit.allocation }}
+            <i class="fas fa-caret-right" aria-hidden="true"></i>
+            <span class="visually-hidden">Show what {{ account_benefit.benefit.name }} was used for</span>
+          </button>
+          {% else %}
+          {{ benefit_summary.used }} / {{ account_benefit.allocation }}
+          {% endif %}
+        </td>
+        <td>{{ benefit_summary.remaining }}</td>
+      </tr>
+      {% if benefit_summary.tasks or benefit_summary.events %}
+      <tr>
+        <td colspan="{% if show_registration_code %}7{% else %}6{% endif %}" class="p-0 border-0">
+          <div class="collapse" id="benefit-usage-{{ account_benefit.pk }}">
+            <div class="bg-body-tertiary px-3 py-2">
+              {% if benefit_summary.tasks %}
+              <h6>Seats used</h6>
+              <div class="table-responsive">
+                <table class="table table-sm mb-1 p-1">
+                  <thead>
+                    <tr>
+                      <th scope="col">Person</th>
+                      <th scope="col">Role</th>
+                      <th scope="col">Event</th>
+                      <th scope="col">Event dates</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for task in benefit_summary.tasks %}
+                    <tr>
+                      <td>{{ task.person.full_name }}</td>
+                      <td>{{ task.role }}</td>
+                      <td>{{ task.event.slug }}</td>
+                      <td>{% if task.event.start or task.event.end %}{{ task.event.human_readable_date }}{% else %}&mdash;{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+              {% else %}
+              <h6>Events run</h6>
+              <div class="table-responsive">
+                <table class="table table-sm mb-0">
+                  <thead>
+                    <tr>
+                      <th scope="col">Event</th>
+                      <th scope="col">Dates</th>
+                      <th scope="col">Host</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for event in benefit_summary.events %}
+                    <tr>
+                      <td>{{ event.slug }}</td>
+                      <td>{% if event.start or event.end %}{{ event.human_readable_date }}{% else %}&mdash;{% endif %}</td>
+                      <td>{{ event.host }}</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </td>
+      </tr>
+      {% endif %}
+    </tbody>
+    {% endwith %}
+    {% endfor %}
+  </table>
+</div>
+{% else %}
+<p class="text-body-secondary mb-0 p-1">{{ empty_message }}</p>
+{% endif %}

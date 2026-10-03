@@ -9,6 +9,7 @@ from src.extrequests.tests.test_training_request import create_training_request
 from src.offering.models import Account, AccountBenefit, Benefit
 from src.workshops.models import (
     Event,
+    EventCategory,
     Member,
     MemberRole,
     Membership,
@@ -251,6 +252,7 @@ class TestTrainingRequestUpdateForm(TestBase):
         self.setUpMembership()
         data = self.request.__dict__
         data["person_id"] = self.spiderman.pk
+        data["benefit"] = self.request.benefit_id  # __dict__ holds "benefit_id", form expects "benefit"
         data["member_code"] = "valid123"
         data["member_code_override"] = True
         data.pop("score_manual")  # can't encode None in POST request, so omit
@@ -275,7 +277,8 @@ class TestBulkMatchTrainingRequestForm(TestCase):
         person = Person.objects.create(username="test")
         training_request = create_training_request(state="p", person=person)
         organisation = Organization.objects.create(fullname="Test Org", domain="test.org")
-        event = Event.objects.create(slug="test-event", host=organisation)
+        training_event_category = EventCategory.objects.create(name="training")
+        event = Event.objects.create(slug="test-event", host=organisation, event_category=training_event_category)
         event.tags.create(name="TTT")
 
         data = {
@@ -295,7 +298,8 @@ class TestBulkMatchTrainingRequestForm(TestCase):
         person = Person.objects.create(username="test")
         training_request = create_training_request(state="p", person=person)
         organisation = Organization.objects.create(fullname="Test Org", domain="test.org")
-        event = Event.objects.create(slug="test-event", host=organisation)
+        training_event_category = EventCategory.objects.create(name="training")
+        event = Event.objects.create(slug="test-event", host=organisation, event_category=training_event_category)
         event.tags.create(name="TTT")
         membership = Membership.objects.create(
             name="alpha-name",
@@ -329,7 +333,8 @@ class TestBulkMatchTrainingRequestForm(TestCase):
         person = Person.objects.create(username="test")
         training_request = create_training_request(state="p", person=person, reg_code="test")
         organisation = Organization.objects.create(fullname="Test Org", domain="test.org")
-        event = Event.objects.create(slug="test-event", host=organisation)
+        training_event_category = EventCategory.objects.create(name="training")
+        event = Event.objects.create(slug="test-event", host=organisation, event_category=training_event_category)
         event.tags.create(name="TTT")
         membership = Membership.objects.create(
             name="alpha-name",
@@ -363,7 +368,8 @@ class TestBulkMatchTrainingRequestForm(TestCase):
         person = Person.objects.create(username="test")
         training_request = create_training_request(state="p", person=person)
         organisation = Organization.objects.create(fullname="Test Org", domain="test.org")
-        event = Event.objects.create(slug="test-event", host=organisation)
+        training_event_category = EventCategory.objects.create(name="training")
+        event = Event.objects.create(slug="test-event", host=organisation, event_category=training_event_category)
         event.tags.create(name="TTT")
         account = Account.objects.create(
             account_type=Account.AccountTypeChoices.ORGANISATION,
@@ -401,7 +407,8 @@ class TestBulkMatchTrainingRequestForm(TestCase):
         # Arrange
         training_request = create_training_request(state="p", person=None)
         organisation = Organization.objects.create(fullname="Test Org", domain="test.org")
-        event = Event.objects.create(slug="test-event", host=organisation)
+        training_event_category = EventCategory.objects.create(name="training")
+        event = Event.objects.create(slug="test-event", host=organisation, event_category=training_event_category)
         event.tags.create(name="TTT")
         data = {
             "requests": [training_request.pk],
@@ -425,7 +432,8 @@ class TestBulkMatchTrainingRequestForm(TestCase):
         person = Person.objects.create(username="test")
         training_request = create_training_request(state="p", person=person)
         organisation = Organization.objects.create(fullname="Test Org", domain="test.org")
-        event = Event.objects.create(slug="test-event", host=organisation)
+        training_event_category = EventCategory.objects.create(name="training")
+        event = Event.objects.create(slug="test-event", host=organisation, event_category=training_event_category)
         event.tags.create(name="TTT")
         membership = Membership.objects.create(
             name="alpha-name",
@@ -540,27 +548,41 @@ class TestBulkMatchTrainingRequestForm(TestCase):
         self.assertIn(msg, form2.errors["auto_assign"])
 
     def test_clean__benefit_override(self) -> None:
-        """Test that form is invalid when benefit override is empty and the feature flag indicates
-        that the field should be rendered."""
+        """Test that form is invalid when benefit override is empty while auto-assigning and the
+        feature flag indicates that the field should be rendered."""
         # Arrange
         person = Person.objects.create(username="test")
         training_request = create_training_request(state="p", person=person)
         organisation = Organization.objects.create(fullname="Test Org", domain="test.org")
         event = Event.objects.create(slug="test-event", host=organisation)
         event.tags.create(name="TTT")
-        membership = Membership.objects.create(
-            name="alpha-name",
-            variant="partner",
-            registration_code="test",
-            agreement_start=date.today(),
-            agreement_end=date.today() + timedelta(days=365),
-            contribution_type="financial",
-        )
-        Member.objects.create(
-            membership=membership,
-            organization=organisation,
-            role=MemberRole.objects.all()[0],
-        )
+
+        data = {
+            "requests": [training_request.pk],
+            "event": event.pk,
+            "auto_assign": True,
+            "benefit_override": "",
+        }
+
+        # Act
+        form = BulkMatchTrainingRequestForm(data, show_allocated_benefit=True)
+
+        # Assert
+        msg = "Must not be empty."
+
+        self.assertFalse(form.is_valid())
+        self.assertIn(msg, form.errors["benefit_override"])
+
+    def test_clean__benefit_override_not_required_without_auto_assign(self) -> None:
+        """Test that benefit override may be empty when not auto-assigning. The template disables
+        the field in that case, so the browser doesn't submit it at all."""
+        # Arrange
+        person = Person.objects.create(username="test")
+        training_request = create_training_request(state="p", person=person)
+        organisation = Organization.objects.create(fullname="Test Org", domain="test.org")
+        training_event_category = EventCategory.objects.create(name="training")
+        event = Event.objects.create(slug="test-event", host=organisation, event_category=training_event_category)
+        event.tags.create(name="TTT")
         account = Account.objects.create(
             account_type=Account.AccountTypeChoices.ORGANISATION,
             generic_relation=organisation,
@@ -582,17 +604,13 @@ class TestBulkMatchTrainingRequestForm(TestCase):
             "requests": [training_request.pk],
             "event": event.pk,
             "allocated_benefit": account_benefit.pk,
-            "benefit_override": "",
         }
 
         # Act
         form = BulkMatchTrainingRequestForm(data, show_allocated_benefit=True)
 
         # Assert
-        msg = "Must not be empty."
-
-        self.assertFalse(form.is_valid())
-        self.assertIn(msg, form.errors["benefit_override"])
+        self.assertTrue(form.is_valid(), form.errors)
 
     def test_auto_assign_label_help_text_based_on_feature_flag(self) -> None:
         """Test that auto-assign field label and help text change based on feature flag."""

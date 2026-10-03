@@ -464,7 +464,7 @@ class ChangeRequestStateView[M2: StateMixin](PermissionRequiredMixin, SingleObje
         return super().get(request, *args, **kwargs)
 
 
-class AssignView(PermissionRequiredMixin, SingleObjectMixin[_M], FormMixin[AdminLookupForm], RedirectView):
+class AssignView(SingleObjectMixin[_M], FormMixin[AdminLookupForm], RedirectView):
     # URL keyword argument for requested person.
     permanent = False
     person_url_kwarg = "person_id"

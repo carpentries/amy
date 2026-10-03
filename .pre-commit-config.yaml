@@ -10,7 +10,7 @@ repos:
 
       - id: ruff-linter
         name: Ruff Linter
-        entry: uv run ruff check --fix
+        entry: uv run ruff check --fix --show-fixes
         require_serial: true
         language: system
         types: [python]

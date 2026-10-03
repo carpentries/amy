@@ -10,6 +10,7 @@ from django.utils.datastructures import MultiValueDict
 
 from src.extrequests.models import SelfOrganisedSubmission, WorkshopInquiryRequest
 from src.extrequests.utils import get_eventbrite_id_from_url_or_return_input
+from src.offering.models import Benefit
 from src.workshops.fields import Select2Widget
 from src.workshops.filters import (
     AllCountriesFilter,
@@ -40,6 +41,12 @@ class TrainingRequestFilter(AMYFilterSet):
     search = django_filters.CharFilter(
         label="Name or Email",
         method="filter_by_person",
+    )
+
+    benefit = django_filters.ModelChoiceFilter(
+        label="Benefit",
+        queryset=Benefit.objects.all(),
+        to_field_name="id",
     )
 
     member_code = django_filters.CharFilter(
@@ -99,6 +106,7 @@ class TrainingRequestFilter(AMYFilterSet):
         model = TrainingRequest
         fields = [
             "search",
+            "benefit",
             "member_code",
             "invalid_member_code",
             "state",
@@ -111,21 +119,13 @@ class TrainingRequestFilter(AMYFilterSet):
         if choice == "":
             return queryset
         elif choice == "u":  # unmatched
-            return queryset.filter(person=None)
+            return queryset.filter(person__isnull=True)
         elif choice == "p":  # matched trainee, unmatched training
-            return (
-                queryset.filter(person__isnull=False)
-                .exclude(
-                    person__task__role__name="learner",
-                    person__task__event__tags__name="TTT",
-                )
-                .distinct()
-            )
+            return queryset.filter(person__isnull=False, tasks__isnull=True)
         else:  # choice == 't' <==> matched trainee and training
-            return queryset.filter(
-                person__task__role__name="learner",
-                person__task__event__tags__name="TTT",
-            ).distinct()
+            # `tasks` is a many-to-many, so a request linked to two trainings would
+            # otherwise come back twice.
+            return queryset.filter(person__isnull=False, tasks__isnull=False).distinct()
 
     def filter_by_person(self, queryset: QuerySet[TrainingRequest], name: str, value: str) -> QuerySet[TrainingRequest]:
         if value == "":

@@ -320,6 +320,10 @@ STATICFILES_DIRS = [
     str(ROOT_DIR / "node_modules" / "js-cookie" / "dist"),
     str(ROOT_DIR / "node_modules" / "js-yaml" / "dist"),
     str(ROOT_DIR / "node_modules" / "urijs" / "src"),
+    str(ROOT_DIR / "node_modules" / "htmx.org" / "dist"),
+    str(ROOT_DIR / "node_modules" / "alpinejs" / "dist"),  # WARNING: files named e.g. 'cdn.min.js'
+    str(ROOT_DIR / "node_modules" / "tom-select" / "dist" / "js"),
+    str(ROOT_DIR / "node_modules" / "tom-select" / "dist" / "css"),
 ]
 # https://docs.djangoproject.com/en/dev/ref/contrib/staticfiles/#staticfiles-finders
 STATICFILES_FINDERS = [
@@ -658,9 +662,7 @@ FLAGS = {
     # ------------
     # Enable High Performance Computing Carpentry (HPCC).
     "HPCC": [
-        {"condition": "anonymous", "value": False, "required": True},
-        {"condition": "parameter", "value": "hpcc=true"},
-        {"condition": "session", "value": "hpcc"},
+        {"condition": "boolean", "value": True},
     ],
 }
 

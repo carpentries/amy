@@ -11,7 +11,7 @@ from django.db import IntegrityError
 from django.db.models import Case, Count, IntegerField, Prefetch, Q, Value, When
 from django.forms import BaseForm
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, QueryDict
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.html import format_html
 from django.views.generic import View
@@ -63,10 +63,11 @@ logger = logging.getLogger("amy")
 class InstructorRecruitmentList(
     OnlyForAdminsMixin,
     FlaggedViewMixin,  # type: ignore[misc]
+    PermissionRequiredMixin,
     AMYListView[InstructorRecruitment],
 ):
     flag_name = "INSTRUCTOR_RECRUITMENT"
-    permission_required = "recruitment.view_instructorrecruitment"
+    permission_required = ["recruitment.view_instructorrecruitment"]
     title = "Recruitment processes"
     filter_class = InstructorRecruitmentFilter
     request: AuthenticatedHttpRequest
@@ -231,10 +232,11 @@ class InstructorRecruitmentCreate(
 class InstructorRecruitmentDetails(
     OnlyForAdminsMixin,
     FlaggedViewMixin,  # type: ignore[misc]
+    PermissionRequiredMixin,
     AMYDetailView[InstructorRecruitment],
 ):
     flag_name = "INSTRUCTOR_RECRUITMENT"
-    permission_required = "recruitment.view_instructorrecruitment"
+    permission_required = ["recruitment.view_instructorrecruitment"]
     queryset = (
         InstructorRecruitment.objects.annotate_with_priority()
         .prefetch_related(
@@ -299,7 +301,7 @@ class InstructorRecruitmentAddSignup(
     flag_name = "INSTRUCTOR_RECRUITMENT"
     permission_required = [
         "recruitment.change_instructorrecruitment",
-        "recruitment.view_instructorrecruitmentsignup",
+        "recruitment.add_instructorrecruitmentsignup",
     ]
     form_class = InstructorRecruitmentAddSignupForm
     template_name = "recruitment/instructorrecruitment_add_signup.html"
@@ -374,7 +376,7 @@ class InstructorRecruitmentSignupChangeState(
     """POST requests for editing (confirming or declining) the instructor signup."""
 
     flag_name = "INSTRUCTOR_RECRUITMENT"
-    permission_required = "recruitment.change_instructorrecruitmentsignup"
+    permission_required = ["recruitment.change_instructorrecruitmentsignup", "workshops.add_task"]
     form_class = InstructorRecruitmentSignupChangeStateForm
 
     def get_object(self) -> InstructorRecruitmentSignup:
@@ -677,3 +679,20 @@ class InstructorRecruitmentSignupUpdate(
 
     def get_success_url(self) -> str:
         return reverse("all_instructorrecruitment")
+
+
+class InstructorRecruitmentNotes(OnlyForAdminsMixin, PermissionRequiredMixin, View):
+    permission_required = "recruitment.change_instructorrecruitment"
+    DISPLAY_TEMPLATE = "recruitment/instructorrecruitment_notes.html"
+    EDIT_TEMPLATE = "recruitment/instructorrecruitment_notes_edit.html"
+
+    def get(self, request: AuthenticatedHttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        obj = get_object_or_404(InstructorRecruitment, pk=kwargs["pk"])
+        template = self.EDIT_TEMPLATE if "edit" in request.GET else self.DISPLAY_TEMPLATE
+        return render(request, template, {"object": obj})
+
+    def post(self, request: AuthenticatedHttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        obj = get_object_or_404(InstructorRecruitment, pk=kwargs["pk"])
+        obj.notes = request.POST.get("notes", "")
+        obj.save(update_fields=["notes"])
+        return render(request, self.DISPLAY_TEMPLATE, {"object": obj})

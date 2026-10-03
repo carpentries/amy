@@ -24,12 +24,12 @@ from django.views.generic import RedirectView
 from django_comments.views.comments import comment_done, post_comment
 from markdownx.views import ImageUploadView, MarkdownifyView
 
-from src.dashboard.views import dispatch
+from src.dashboard.views import DashboardDispatch
 from src.workshops.utils.access import login_required
-from src.workshops.views import logout_then_login_with_msg
+from src.workshops.views import LogoutThenLoginWithMsg
 
 urlpatterns: list[URLPattern | URLResolver] = [
-    path("", dispatch, name="dispatch"),
+    path("", DashboardDispatch.as_view(), name="dispatch"),
     path(settings.ADMIN_URL, admin.site.urls),  # {% url 'admin:index' %}
     path("api/v1/", include("src.api.v1.urls")),  # REST API v1
     path("api/v2/", include("src.api.v2.urls")),  # REST API v2
@@ -56,7 +56,7 @@ urlpatterns: list[URLPattern | URLResolver] = [
         ),
         name="login",
     ),
-    path("account/logout/", logout_then_login_with_msg, name="logout"),
+    path("account/logout/", LogoutThenLoginWithMsg.as_view(), name="logout"),
     path(
         "account/password_reset/",
         auth_views.PasswordResetView.as_view(

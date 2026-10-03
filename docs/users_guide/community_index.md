@@ -7,7 +7,7 @@
 
 ## User profiles
 
-The Carpentries can maintain the following information about individuals in our program. Any of the following can be updated directly by the individual, except for *email* and *GitHub username* as these two fields are used for login.  *Personal (first) name* is the only required field.
+The Carpentries can maintain the following information about individuals in our program. Any of the following can be updated directly by the individual, except for *email* and *GitHub username* as these two fields are used for login. 
 
 * Personal (first) name
 * Middle name
@@ -15,8 +15,9 @@ The Carpentries can maintain the following information about individuals in our 
 * Email address (Primary email address, used for communication and as a login.)
 * Secondary email address (This is an optional, secondary email address we can use to contact you.)
 * Gender (options include *Prefer not to say*, *Female*, *Gender variant*, *Male*, *Other*)
-* Country
-* Airport (Airports are used as approximate geographic identifiers for our instructors. Instructors can self-select the airport closest to them or the airport they most frequently use. If your aiport is not in the drop down, please contact <team@carpentries.org> so we can add it in.)
+* Airport  (Required field. Airports are used as approximate geographic identifiers for our instructors. Instructors can self-select the airport closest to them or the airport they most frequently use.)
+* Country (derived from Airport; can be overridden)
+* Timezone (derived from Airport; can be overridden)
 * Affiliation
 * GitHub username
 * Twitter username

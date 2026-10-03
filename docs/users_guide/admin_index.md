@@ -17,7 +17,7 @@ All menus and a search bar are displayed across the top. The main page has two c
 
 Current Data, Library, and Software Carpentry workshops will be listed on [The Carpentries website](https://carpentries.org/), the corresponding lesson program website, and [The Carpentries data feeds](https://feeds.carpentries.org/) if the box to publish the workshop is checked.  Instructor Training events are not publicly listed.
 
-From here you can also add new [events](#adding-a-new-event), [organisations](#adding-a-new-organisation),  [persons](#adding-a-new-person), or [airports](#adding-a-new-airport) to the database.
+From here you can also add new [events](#adding-a-new-event), [organisations](#adding-a-new-organisation), or [persons](#adding-a-new-person) to the database.
 
 ![AMY add new elements](images/amy_add_new.png)
 
@@ -30,7 +30,11 @@ The "Affiliated Organization" field is not being used; always leave this blank.
 ![AMY add new organisation](images/amy_new_organisation.png)
 
 
-### Memberships
+### Memberships (Deprecated)
+
+!!! note
+
+    The Carpentries Membership program has been deprecated.  This section remains as reference until all current memberships have expired.
 
 AMY is also used to track all Carpentries memberships.  To create a new membership, the site must first be listed as an [organisation](#adding-a-new-organisation) in AMY.
 
@@ -108,6 +112,35 @@ This also includes the options to automatically copy over member organisations (
 
 The number of workshops or instructor training seats rolled over from the previous membership should be manually entered.  These workshop/instructor training seats counts will be reflected in the available counts for both the new and previous memberships.
 
+### Service Offerings
+
+The Membership program was deprecated in April 2026 in favor of a new service offerings program. This allows individuals or institutions to purchase either a set of benefits as a Partnership, or purchase benefits ala carte.
+
+[Accounts](https://amy.carpentries.org/offering/accounts/) can be created for individuals or for organizations to track the use of these benefits.  
+
+Create a new account by clicking on the green "New account" button on the [Accounts](https://amy.carpentries.org/offering/accounts/) page. Note the individual or organization record must already exist in AMY.  When a new organization is created, an account is automatically created for that organization.
+
+#### Organization Accounts
+
+Organization accounts can have individuals assigned to the following organization roles: Owner, Billing Contact, Programmatic Contact.  Account owners can be assigned on the Account page.
+
+Organizations can purchase benefits ala carte or as a Partnership.
+
+
+##### Organization Partnerships
+
+A new Partnership can be created on the Organization's Account page.  Select a tier and the number of credits will automatically fill in.  If the number of credits requested does not match one of the tiers, select "Custom."  This will allow you to fill in the number of credits. 
+
+Benefits are not specified at this stage. When a workshop or seat at one of our events is purchased, it is assigned for that event or task. Benefits used will display on the Partnership page.
+
+##### Organization ala carte purchases
+
+Organizations can also purchase a-la-carte benefits, not associated with any Partnership.  These benefits can be assigned from the Organization's Account page. The benefit must be specified at this stage.
+
+#### Individual Accounts
+
+Accounts can be created for individuals who may purchase benefits directly. These benefits can be assigned from the individual's Account page (accessed from the individual's profile page).
+
 
 ### Adding a New Person
 
@@ -115,14 +148,13 @@ A Person record can be created by [accepting an Instructor Training application]
 
 #### Adding an Individual Person Record
 
-Select "New person" and enter in as much information as possible.  At minimum a personal name is required.  If the airport is not listed, it will need to be [added in](#adding-a-new-airport).
-
+Select "New person" and enter in as much information as possible.  At minimum a personal name is required and airport are required.  
 
 ![AMY add new person](images/new_person.png)
 
 #### Adding Bulk Person Records
 
-`Person` records can also be added in bulk from a `.csv` file using the `Bulk add people` menu option in the  `New` menu at the top right or the `More` menu. Use the blank template to generate a well formed CSV noting each person's personal name, family name (optional), email address (optional), role, and associated event. Any additional information about the person must be entered manually.  **Note: To bulk add records, the persons must have a role specified (instructor, helper, learner, host) associated with a specific event**.  Because the *learner* role at an Instructor Training event requires a membership or open application affiliation, Instructor Training learner roles can not be bulk added.
+`Person` records can also be added in bulk from a `.csv` file using the `Bulk add people` menu option in the  `New` menu at the top right or the `More` menu. Use the blank template to generate a well formed CSV noting each person's personal name, airport code, family name (optional), email address (optional), role, and associated event. Any additional information about the person must be entered manually.  **Note: To bulk add records, the persons must have a role specified (instructor, helper, learner, host) associated with a specific event**.  Because the *learner* role at an Instructor Training event requires a membership/partnership or open application affiliation, Instructor Training learner roles can not be bulk added.
 
 ![AMY bulk add person menu](images/bulk_add_persons.png)
 
@@ -149,14 +181,6 @@ AMY asks all users for the following consents:
 By default, all consents have null values (i.e., neither yes nor no). After a Person's record has been created, the individual can log in to AMY and edit their own consents. Admin users may also make these edits on behalf of the user, but this should be used only in rare circumstances. Consents are edited in the "Consents" tab in the Person view. This tab also shows the full consent history for the Person.
 
 Some of the questions above are also asked during the [instructor training application](https://amy.carpentries.org/forms/request_training/). If a [Person record is created from a training request](#accepting-trainee-applications), the consents from that training request will be carried across to the Person.
-
-### Adding a New Airport
-
-Airports are used as approximate geographic identifiers for our instructors.  Instructors can self-select the airport closest to them or the airport they most frequently use. Instructors can select an airport only after it has been added to AMY by an admin.  Each airport is identified by its three character IATA code which can be looked up using [the link in AMY](https://www.world-airport-codes.com/).
-
-Enter in the airport's IATA code, full name, country, and latitude and longitude.
-
-![AMY add airport](images/new_airport.png)
 
 ### Adding a New Event
 
@@ -207,7 +231,7 @@ The workshop requests list includes a filter to find requests submitted by a mem
 
     Workshop requests include a field for a registration (member) code. The code is validated against active memberships, partnerships and account benefits. If the code is invalid or inactive, the form displays an error — unlike training requests, there is no option for the submitter to override an invalid code.
 
-    When viewing a workshop request detail page, an info box shows the membership associated with the submitted member code (if applicable) and the number of workshops remaining for that membership. If the request is submitted with a member code from a partnership or account benefit, then a link to that model is shown.
+    When viewing a workshop request detail page, an info box shows the membership/partnership associated with the submitted member code (if applicable) and the number of workshops remaining for that membership/partnership. If the request is submitted with a member code from a partnership or account benefit, then a link to that model is shown.
 
 At the bottom of the request information page, the user has the option to accept or discard the request. All requests should be accepted (unless spam or otherwise inappropriate) so The Carpentries can maintain a history of workshop requests. Events can later be tagged as stalled or cancelled. Choosing "Change state to Accepted" will mark it as accepted in the workshop request list but will not create a new event. Select "Accept and create a new event" to create a new event from this request.
 
@@ -228,6 +252,8 @@ This will open a page with a side by side view of the request details and view t
 * **Sponsor** Select the Sponsor name from the drop down menu.  The Sponsor is the institution responsible for funding or organising the workshop and is often the same as the Host.
 
 * **Membership** Select the Membership this event should be applied to, by membership term and membership dates.
+
+* **Allocated benefit** Select the allocated benefit (Partnership or other benefit) this should be applied to. Event can be applied to Membership or Allocated benefit, not both.
 
 * **Administrator** Select the administrator from the drop down menu.  This will always be  `Data Carpentry`, `Library Carpentry`, `Software Carpentry`,  `Instructor Training`, `Collaborative Lesson Development Training` or `Self-Organised`.
 
@@ -330,15 +356,14 @@ Fill in the following fields:
 
 * **Person** Start typing in the person's name.  Auto-completed suggested names will appear.
 * **Role** Add the person's role in the event (Helper, Instructor, Supporting Instructor, Workshop Host, Learner, Workshop Organiser. Contributed to Lesson Materials is not used in this context.).
-* **Title** and **URL** are not used in this context.
 
 If a person's name does not appear in the dropdown, they will need to be [added to the database](#adding-a-new-person).
 
 If this is a learner role at an Instructor Training event, the following fields should also be filled in.  These fields apply only to Instructor Training, and can be left blank for other types of events.
 
 * **Associated member site in TTT event** Note the membership (institution name and membership year) that this seat should be assigned to.
-* **Count seat as public or in-house?** Note whether the learner seat should be counted as public or inhouse.  Most seats will be public. Inhouse only applies to select Platinum level memberships.
-* **Open training seat** Note whether this learner came through our open program, and is not affiliated with a member site.
+
+* **Allocated account benefit (of type 'seat')**  Select the allocated benefit (Partnership or other benefit) this should be applied to. Seat can be applied to Membership or Allocated benefit, not both.
 
 Click "Submit" to save your changes.
 
@@ -358,7 +383,7 @@ See [section above](#adding-bulk-person-records).
 
 #### Accepting Trainee Applications
 
-In addition to tracking workshops, AMY also allows us to track applications to instructor training events. [The public facing application is here](https://amy.carpentries.org/forms/request_training/). Applicants are given a registration code if participating in a member training event. Open applicants will not have a registration code.
+In addition to tracking workshops, AMY also allows us to track applications to instructor training events. [The public facing application is here](https://amy.carpentries.org/forms/request_training/). All applicants are given a registration code.
 
 Once an individual submits the form, they receive an email that confirms their application has been received and includes a copy of the individual's responses. An admin user can then view the record by going to Requests --> [Training Requests](https://amy.carpentries.org/requests/training_requests/).
 
@@ -370,9 +395,9 @@ There is also a filter to show only applications where the applicant submitted w
 
 ![Training request list view](images/amy_training_requests.png)
 
-!!! note "Member code validation on training requests"
+!!! note "Code validation on training requests"
 
-    AMY validates the registration code entered by applicants. If the code is invalid, inactive, or has no seats remaining (applicable for memberships), the form will display an error. However, applicants may check a box labelled "Continue with registration code marked as invalid" to submit the application anyway.
+    AMY validates the registration code entered by applicants. If the code is invalid, inactive, or has no seats remaining, the form will display an error. However, applicants may check a box labelled "Continue with registration code marked as invalid" to submit the application anyway.
 
 Some trainees will already be in AMY. If there is a record with a matching name and email address, they will show up with a "matched trainee" when you search for them. You can match the application to this trainee, or if the match was incorrect, search for a different Person record or create a new Person.
 
@@ -386,9 +411,9 @@ This will return you to the [instructor training application search screen](http
 
 Continue doing this until all relevant applications have a new trainee account. This must be done individually; it can not be done in bulk.
 
-Once all trainees for a given event have trainee accounts, we can assign them to a specific training event and associate them with a specific member contract. This part can be done in bulk for each group of trainees with a unique training date and member site affiliation. The [event](#adding-a-new-event) and the [member agreement](#memberships) must already have been created in AMY.
+Once all trainees for a given event have trainee accounts, we can assign them to a specific training event and associate them with a specific account benefit. This part can be done in bulk for each group of trainees with a unique training date and account benefit. The [event](#adding-a-new-event) and the account benefit must already have been created in AMY.
 
-Check all the names to be assigned to the training event and membership, and then select the training event from the first drop down menu.  Select the member agreement from the second drop down menu. If the trainees are coming through the open application process rather than a member agreement, check this box instead of choosing a member agreement.
+Check all the names to be assigned to the training event and account benefit, and then select the training event from the first drop down menu.  Select the account benefit from the second drop down menu. 
 
 Click "Accept & match selected trainees to chosen training." The search screen will then update to show that the trainees have been matched to this event. The event page will also update to list these trainees as learners at that event.
 
@@ -528,7 +553,7 @@ An admin user can view their profile as if they were an ordinary user on [this d
 
 ### Automated emails
 
-AMY sends automated emails for membership, instructor training, and workshop administration. This system was completely revamped in October 2024.
+AMY sends automated emails for membership/partnership, instructor training, and workshop administration. This system was completely revamped in October 2024.
 
 [Email templates](https://amy.carpentries.org/emails/templates/) and [status of scheduled emails](https://amy.carpentries.org/emails/scheduled_emails/) can be viewed directly through the user interface under the "More" menu.  Not all templated emails are currently active.
 
@@ -611,7 +636,7 @@ From, Reply to, CC, and BCC are all set in the AMY interface.  The email subject
     **Date sent:** One month before event start
     **Conditions:** Tag TTT; At least 2 Trainers; Start date in future
 
-#### Active emails (Memberships)
+#### Active emails (Memberships/Partnerships)
 
 ??? abstract "New / renewing membership starting (member onboarding)"
     [View in AMY](https://amy.carpentries.org/emails/template/f1311aaf-c546-429b-930c-c36a5a8009fb/)
@@ -619,6 +644,14 @@ From, Reply to, CC, and BCC are all set in the AMY interface.  The email subject
     **Sent to:**   Programmatic and billing contacts
     **Date sent:** One month before membership start date or immediately (whichever is later)
     **Conditions:** Membership roles exist; membership variant is bronze, silver, gold or platinum.
+
+
+??? abstract "New / renewing partnership starting (partner onboarding)"
+    [View in AMY](https://amy.carpentries.org/emails/template/08df391d-8e2f-48d0-877f-c3d24250e1fc/)
+    **Email description:**  Onboarding message for new/renewing partnership
+    **Sent to:**   Programmatic and billing contacts
+    **Date sent:** One month before partnership start date or immediately (whichever is later)
+    **Conditions:** Partnership roles exist
 
 #### Inactive emails
 
@@ -675,7 +708,7 @@ The quickest and easiest way to search is using the search box in the top menu b
 * `ola tes` will match `Nikola Tesla` and `Nolan Bates`
 * `stanford` will match any one with a `stanford` email address, with `stanford` in their name, any workshops with `stanford` in the slug, or the site `Stanford University`.
 
-If only one result is found across all fields, AMY will automatically redirect to that result.  Otherwise, AMY will redirect to a search results view.  The search results view will include a new search box, with results appearing in a tabbed view, separated by Organisations, Memberships, Events, Persons, Airports, Training Requests, and Comments.
+If only one result is found across all fields, AMY will automatically redirect to that result.  Otherwise, AMY will redirect to a search results view.  The search results view will include a new search box, with results appearing in a tabbed view, separated by Organisations, Memberships, Partnerships, Consortiums, Events, Persons, Training Requests, and Comments.
 
 [This search view can also be accessed directly from the More menu](https://amy.carpentries.org/dashboard/admin/search/).
 
@@ -724,6 +757,15 @@ Clicking "[Memberships](https://amy.carpentries.org/fiscal/memberships/)" on the
 * **Only show memberships with non-zero allowed training seats**
 * **Only show memberships with zero or less remaining seats**
 * **Ordering** Select sort order for returned list
+
+#### Searching for Partnerships
+
+Clicking "[Service offering > Partnerships](https://amy.carpentries.org/fiscal/partnerships/)" on the top menu bar will take you to a list of all Carpentries partnerships - past, present, and future.  Here you can filter by the following criteria:
+
+* Tier
+* Active only
+* Credits (under or over limit)
+* Sort by Name 
 
 #### Searching for Persons
 
