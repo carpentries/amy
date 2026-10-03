@@ -123,6 +123,7 @@ class TestAdminDashboard(TestBase):
             family="User",
             email="other_sudo@example.org",
             password="admin",
+            airport_iata="AAA",
         )
         consent_to_all_required_consents(other_admin)
 
@@ -161,6 +162,7 @@ class TestDispatch(TestBase):
             family="",
             email="admin@example.org",
             password="pass",
+            airport_iata="AAA",
         )
         consent_to_all_required_consents(person)
 

@@ -25,6 +25,7 @@ class TestFilter(APITestCase):
             family="User",
             email="sudo1@example.org",
             password="admin",
+            airport_iata="AAA",
         )
         consent_to_all_required_consents(self.admin_1)
         self.admin_1.airport_iata = "CDG"
@@ -36,6 +37,7 @@ class TestFilter(APITestCase):
             family="User",
             email="sudo@example.org",
             password="admin",
+            airport_iata="AAA",
         )
         consent_to_all_required_consents(self.admin_2)
         self.admin_2.airport_iata = "LAX"

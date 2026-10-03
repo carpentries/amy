@@ -57,6 +57,7 @@ class SuperuserMixin(_T):
             family="User",
             email="sudo@example.org",
             password=self.admin_password,
+            airport_iata="AAA",
         )
         self._superUserConsent()
         self.admin.save()

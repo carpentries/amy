@@ -54,6 +54,7 @@ class TestViews(TestBase):
             family="User",
             email="superuser@example.org",
             password="superuser",
+            airport_iata="AAA",
         )
         self.person_consent_required_terms(self.superuser)
         assert self.superuser.is_superuser
