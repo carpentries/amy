@@ -314,6 +314,8 @@ class PartnershipSerializer(serializers.ModelSerializer[Partnership]):
     partner_consortium = serializers.PrimaryKeyRelatedField[Account](read_only=True)
     partner_organisation = serializers.PrimaryKeyRelatedField[Account](read_only=True)
     human_daterange = serializers.CharField(read_only=True)
+    agreement_start__human = serializers.CharField(read_only=True)
+    agreement_end__human = serializers.CharField(read_only=True)
 
     class Meta:
         model = Partnership
@@ -336,6 +338,8 @@ class PartnershipSerializer(serializers.ModelSerializer[Partnership]):
             "created_at",
             "last_updated_at",
             "human_daterange",
+            "agreement_start__human",
+            "agreement_end__human",
         )
 
 
