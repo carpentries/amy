@@ -13,6 +13,52 @@ Then paste output from that script here.
 
 -----------------------------------------------------------------
 
+## v4.11 - 2026-10-03
+
+### Bugfixes
+* Fallback to raw GH repo read; populate 'country' field - [#3018](https://github.com/carpentries/amy/pull/3018) by @pbanaszkiewicz
+
+### Features
+* Improve partnerships - [#3041](https://github.com/carpentries/amy/pull/3041) by @pbanaszkiewicz
+* chore(deps): Bump virtualenv from 21.1.0 to 21.7.13 - [#3039](https://github.com/carpentries/amy/pull/3039) by @dependabot[bot]
+* chore(deps): Bump pyjwt from 2.13.0 to 2.15.0 - [#3038](https://github.com/carpentries/amy/pull/3038) by @dependabot[bot]
+* chore(deps): Bump urllib3 from 2.7.0 to 2.8.0 - [#3036](https://github.com/carpentries/amy/pull/3036) by @dependabot[bot]
+* chore(deps): Bump django from 5.2.16 to 5.2.17 - [#3035](https://github.com/carpentries/amy/pull/3035) by @dependabot[bot]
+* chore(deps): Bump social-auth-core from 4.8.5 to 5.0.0 - [#3032](https://github.com/carpentries/amy/pull/3032) by @dependabot[bot]
+* Bugfix/3027 when to run partnership ending soon emails - [#3031](https://github.com/carpentries/amy/pull/3031) by @pbanaszkiewicz
+* [#3027] Improvements to partnership owner dashboard - [#3030](https://github.com/carpentries/amy/pull/3030) by @pbanaszkiewicz
+* fix(#3028): Validate unmatching tasks from multiple training requests - [#3029](https://github.com/carpentries/amy/pull/3029) by @pbanaszkiewicz
+* chore(deps): Bump js-yaml from 4.2.0 to 4.3.2 - [#3026](https://github.com/carpentries/amy/pull/3026) by @dependabot[bot]
+* chore(deps): Bump mkdocs-material from 9.7.4 to 9.7.7 - [#3025](https://github.com/carpentries/amy/pull/3025) by @dependabot[bot]
+* feat(#3022): Improve layout and data in user dashboard for partnerships - [#3024](https://github.com/carpentries/amy/pull/3024) by @pbanaszkiewicz
+* chore(deps): Bump djangorestframework from 3.16.1 to 3.17.2 - [#3023](https://github.com/carpentries/amy/pull/3023) by @dependabot[bot]
+* chore(deps): Bump sqlparse from 0.5.5 to 0.6.0 - [#3021](https://github.com/carpentries/amy/pull/3021) by @dependabot[bot]
+* Travel expenses for online workshop - [#3019](https://github.com/carpentries/amy/pull/3019) by @maneesha
+* chore(deps): Bump django from 5.2.15 to 5.2.16 - [#3017](https://github.com/carpentries/amy/pull/3017) by @dependabot[bot]
+* chore(deps): Bump pymdown-extensions from 10.21.3 to 11.0.1 - [#3016](https://github.com/carpentries/amy/pull/3016) by @dependabot[bot]
+* feat(#3007): Add partnership stats read-only page - [#3015](https://github.com/carpentries/amy/pull/3015) by @pbanaszkiewicz
+* [#3006] Link training request to task - [#3014](https://github.com/carpentries/amy/pull/3014) by @pbanaszkiewicz
+* feat(#3005): Add confirmation modal for assigning trainees to different offerings - [#3012](https://github.com/carpentries/amy/pull/3012) by @pbanaszkiewicz
+* chore(deps): Bump cryptography from 48.0.1 to 50.0.0 - [#3011](https://github.com/carpentries/amy/pull/3011) by @dependabot[bot]
+* feat(#3004): Enable HPCC flag (always-on) - [#3010](https://github.com/carpentries/amy/pull/3010) by @pbanaszkiewicz
+* [#2957] ACL - [#2999](https://github.com/carpentries/amy/pull/2999) by @pbanaszkiewicz
+* chore(deps): Bump pillow from 12.2.0 to 12.3.0 - [#2998](https://github.com/carpentries/amy/pull/2998) by @dependabot[bot]
+* Class-based views - [#2997](https://github.com/carpentries/amy/pull/2997) by @pbanaszkiewicz
+* chore(deps): Bump django from 5.2.14 to 5.2.15 - [#2996](https://github.com/carpentries/amy/pull/2996) by @dependabot[bot]
+* Benefit form ordering - [#2992](https://github.com/carpentries/amy/pull/2992) by @maneesha
+* New documentation (mainly for partnership/offerings) - [#2990](https://github.com/carpentries/amy/pull/2990) by @maneesha
+* feat(#2974): Display Partnership-related emails - [#2989](https://github.com/carpentries/amy/pull/2989) by @pbanaszkiewicz
+* fix(#2984): Change TrainingRequest.benefit to only include active, seat benefits - [#2988](https://github.com/carpentries/amy/pull/2988) by @pbanaszkiewicz
+* [#2984] Benefits in training request form - [#2987](https://github.com/carpentries/amy/pull/2987) by @pbanaszkiewicz
+* Add AlpineJS - [#2986](https://github.com/carpentries/amy/pull/2986) by @pbanaszkiewicz
+* chore(deps): Bump cryptography from 46.0.7 to 48.0.1 - [#2983](https://github.com/carpentries/amy/pull/2983) by @dependabot[bot]
+* chore(deps): Bump js-yaml from 4.1.1 to 4.2.0 - [#2982](https://github.com/carpentries/amy/pull/2982) by @dependabot[bot]
+* chore(deps): Bump pyjwt from 2.12.0 to 2.13.0 - [#2981](https://github.com/carpentries/amy/pull/2981) by @dependabot[bot]
+* fix(#2978): Right-align dropdowns in navbar menu - [#2980](https://github.com/carpentries/amy/pull/2980) by @pbanaszkiewicz
+* Add HTMX - [#2979](https://github.com/carpentries/amy/pull/2979) by @pbanaszkiewicz
+* Add airport to test superuser - [#2962](https://github.com/carpentries/amy/pull/2962) by @maneesha
+
+
 ## v4.10 - 2026-05-31
 
 ### Features
