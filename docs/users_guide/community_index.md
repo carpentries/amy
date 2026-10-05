@@ -9,7 +9,7 @@
 
 The Carpentries can maintain the following information about individuals in our program. Any of the following can be updated directly by the individual, except for *email* and *GitHub username* as these two fields are used for login. 
 
-* Personal (first) namee
+* Personal (first) name
 * Middle name
 * Family (last) name
 * Email address (Primary email address, used for communication and as a login.)
