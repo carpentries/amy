@@ -9,7 +9,7 @@
 
 The Carpentries can maintain the following information about individuals in our program. Any of the following can be updated directly by the individual, except for *email* and *GitHub username* as these two fields are used for login. 
 
-* Personal (first) name
+* Personal (first) namee
 * Middle name
 * Family (last) name
 * Email address (Primary email address, used for communication and as a login.)
@@ -107,7 +107,7 @@ Once you have completed all three steps, your summary page will show your status
 ![AMY Checkout Complete](images/checkout_complete.png)
 
 
-## Viewing teaching opportunities
+### Viewing teaching opportunities
 
 Currently badged and active Instructors can view and sign up for upcoming teaching opportunities at Centrally-Organised workshops by clicking the "View upcoming teaching opportunities with The Carpentries" button at the top of their profile page. This button is available only to currently badged and active Instructors.
 
@@ -123,7 +123,25 @@ Instructors can then register their interest in teaching specific workshop.
 
 A workshop administrator will follow up shortly to confirm or decline each instructor.
 
-### Notes about signing up
+#### Notes about signing up
 
 * Instructors will get a warning if they sign up as interested in concurrent workshops or workshops within two weeks of confirmed workshops.  This is to remind Instructors about possible scheduling conflicts and that they may be overextending themsleves.  This does not prevent Instructors from signing up.
 * Instructors will be blocked from signing up for workshops if they are already confirmed to teach a concurrent workshop. This is to prevent actual scheduling conflicts.  Instructors may contact <workshops@carpentries.org> if they are interested in teaching concurrent workshops to discuss scheduling options.
+
+## Partnerships
+
+Partnership Owners and Programmatic Contacts (as named on the partnership agreement) can view their selected benefits in [AMY](https://amy.carpentries.org) by [logging in with GitHub](#logging-in). If you have trouble logging in, please contact [The Carpentries Partnership Team](mailto:partnership@carpentries.org).
+
+Once you are logged in, a new **Your Partnership** item appears on your dashboard. From there you can:
+
+- **View your Partnerships:** see all past and present Partnerships, along with the benefits selected and used under each.
+
+  ![Partnership Dashboard](images/partnership_dashboard.jpeg)
+
+- **See who has used a benefit:** click the blue arrow beside a benefit to expand its details.
+
+  ![Partnership Benefits Used](images/partnership_dashboard_seats_used.jpeg)
+
+- **Watch for renewal reminders:** a **Partnership Renewal Warning** appears on your dashboard when your Partnership term enters its final quarter. **Note:** You will still receive a renewal reminder by email, as before.
+
+  ![Partnership Renewal Warning](images/partnership_dashboard_renewal_warning.jpeg)
