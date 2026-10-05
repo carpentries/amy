@@ -59,7 +59,7 @@ In addition to the following information, The Carpentries also maintains data on
 
 Individuals can view this information but can not edit it directly.  Please contact <team@carpentries.org> with questions about this information.
 
-## Instructor
+## Instructor Training
 
 Carpentries Instructor trainees can [log in to AMY](#logging-in) to view their checkout progress towards their Instructor badge and submit their "Get Involved" step towards certification.  More information about the [Instructor Training checkout process is in our curriculum](https://carpentries.github.io/instructor-training/checkout.html).  Log into your AMY profile and click on "Training Progress" in the top menu bar:
 
@@ -106,8 +106,9 @@ Once you have completed all three steps, your summary page will show your status
 
 ![AMY Checkout Complete](images/checkout_complete.png)
 
+## Certified Instructors
 
-## Viewing teaching opportunities
+### Viewing teaching opportunities
 
 Currently badged and active Instructors can view and sign up for upcoming teaching opportunities at Centrally-Organised workshops by clicking the "View upcoming teaching opportunities with The Carpentries" button at the top of their profile page. This button is available only to currently badged and active Instructors.
 
@@ -123,7 +124,7 @@ Instructors can then register their interest in teaching a specific workshop.
 
 A workshop administrator will follow up shortly to confirm or decline each instructor.
 
-### Notes about signing up
+#### Notes about signing up
 
 * Instructors will get a warning if they sign up as interested in concurrent workshops or workshops within two weeks of confirmed workshops.  This is to remind Instructors about possible scheduling conflicts and that they may be overextending themselves.  This does not prevent Instructors from signing up.
 * Instructors will be blocked from signing up for workshops if they are already confirmed to teach a concurrent workshop. This is to prevent actual scheduling conflicts.  Instructors may contact <workshops@carpentries.org> if they are interested in teaching concurrent workshops to discuss scheduling options.
