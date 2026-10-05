@@ -7,7 +7,7 @@
 
 ## User profiles
 
-The Carpentries can maintain the following information about individuals in our program. Any of the following can be updated directly by the individual, except for *email* and *GitHub username* as these two fields are used for login. 
+The Carpentries can maintain the following information about individuals in our program. Any of the following can be updated directly by the individual, except for *email* and *GitHub username*, as these two fields are used for login. 
 
 * Personal (first) name
 * Middle name
@@ -22,7 +22,7 @@ The Carpentries can maintain the following information about individuals in our 
 * GitHub username
 * Twitter username
 * Bluesky username
-* Mastodon url
+* Mastodon URL
 * Personal website
 * Current occupation/career stage
 * ORCID ID
@@ -31,7 +31,7 @@ The Carpentries can maintain the following information about individuals in our 
 * Areas of expertise  (List of academic/scientific/professional domains)
 * Languages (human languages)
 * Comments (additional notes or comments from individual)
-* Consents (*Note consents can be changed by the individual at any time*)
+* Consents (*Note: consents can be changed by the individual at any time*)
 
     **Mandatory consents:**
 
@@ -52,7 +52,7 @@ The Carpentries can maintain the following information about individuals in our 
 In addition to the following information, The Carpentries also maintains data on user activity.  This may include:
 
 * tasks at an event (learner, helper, Instructor, Host, etc.)
-* progress toward badges such as *Trainer*, *Instructor*, *Maintainer*, etc. See the [Instructor Training section](#instructor-training) for more inforamtion.
+* progress toward badges such as *Trainer*, *Instructor*, *Maintainer*, etc. See the [Instructor Training section](#instructor-training) for more information.
 * awards received such as *Trainer*, *Instructor*, *Maintainer*, etc.
 * other roles the individual may have or have had, such as Core Team member, Executive Team member, etc.
 * whether the individual is actively serving in a role
@@ -94,7 +94,7 @@ Once you submit your Get Involved step, your summary page will show your submiss
 
 ### Teaching Demonstration
 
-The Trainer leading your Teaching Demonstration will inform the Instructor Training Team whether you passed or were asked to repeat your teaching demo, and your participation will be recorded by our Instructor Training team.
+The Trainer leading your Teaching Demonstration will inform the Instructor Training Team whether you passed or were asked to repeat your teaching demo, and your participation will be recorded by our Team.
 
 ### Welcome Session
 
@@ -102,28 +102,49 @@ If you signed in on the [Welcome Session Etherpad](https://pad.carpentries.org/w
 
 ### Certificate
 
-Once you have completed all three steps, your summary page will show your status as complete.  The Instructor Training team will award your badge and you will receive an email with a pdf certificate attached.
+Once you have completed all three steps, your summary page will show your status as complete.  The Instructor Training team will award your badge, and you will receive an email with a PDF certificate attached.
 
 ![AMY Checkout Complete](images/checkout_complete.png)
 
+## Certified Instructors
 
-## Viewing teaching opportunities
+### Viewing teaching opportunities
 
 Currently badged and active Instructors can view and sign up for upcoming teaching opportunities at Centrally-Organised workshops by clicking the "View upcoming teaching opportunities with The Carpentries" button at the top of their profile page. This button is available only to currently badged and active Instructors.
 
 ![AMY Instructor Signup button](images/amy_instructor_signup.png)
 
-The next page will list all upcoming teaching opportunites.  This list can be sorted and filtered by criteria such as country and curriculum.
+The next page will list all upcoming teaching opportunities.  This list can be sorted and filtered by criteria such as country and curriculum.
 
 ![AMY Instructor signup filter view](images/upcoming_teaching_opportunities.png)
 
-Instructors can then register their interest in teaching specific workshop.
+Instructors can then register their interest in teaching a specific workshop.
 
 ![AMY Instructor signup form](images/workshop_intersted_signup.png)
 
 A workshop administrator will follow up shortly to confirm or decline each instructor.
 
-### Notes about signing up
+#### Notes about signing up
 
-* Instructors will get a warning if they sign up as interested in concurrent workshops or workshops within two weeks of confirmed workshops.  This is to remind Instructors about possible scheduling conflicts and that they may be overextending themsleves.  This does not prevent Instructors from signing up.
+* Instructors will get a warning if they sign up as interested in concurrent workshops or workshops within two weeks of confirmed workshops.  This is to remind Instructors about possible scheduling conflicts and that they may be overextending themselves.  This does not prevent Instructors from signing up.
 * Instructors will be blocked from signing up for workshops if they are already confirmed to teach a concurrent workshop. This is to prevent actual scheduling conflicts.  Instructors may contact <workshops@carpentries.org> if they are interested in teaching concurrent workshops to discuss scheduling options.
+
+## Partnerships
+
+Partnership Owners and Programmatic Contacts (as named on the partnership agreement) can view their selected benefits in [AMY](https://amy.carpentries.org) by [logging in with GitHub](#logging-in). If you have trouble logging in, please contact [The Carpentries Partnership Team](mailto:partnership@carpentries.org).
+
+Once you are logged in, a new **Your Partnership** item appears on your dashboard. From there, you can:
+
+- **View your Partnerships:** see all past and present Partnerships, along with the benefits selected and used under each.
+
+  ![Partnership Dashboard](images/partnership_dashboard.jpeg)
+
+- **See who has used a benefit:** click the blue arrow beside a benefit to expand its details.
+
+  ![Partnership Benefits Used](images/partnership_dashboard_seats_used.jpeg)
+
+- **Watch for renewal reminders:** A **Partnership Renewal Warning** appears on your dashboard when your Partnership term enters its final quarter. **Note:** You will still receive a renewal reminder by email, as before.
+
+  ![Partnership Renewal Warning](images/partnership_dashboard_renewal_warning.jpeg)
+
+  **Note:** This change applies to Partnerships only. Members will continue to receive quarterly update emails.
