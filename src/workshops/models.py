@@ -890,6 +890,13 @@ class Person(
         help_text="Set this to a newer / actual timestamp when Person is reviewed by admin.",
     )
 
+    # Internal field - used by ForcePasswordChangeMiddleware to force user to change password upon login
+    force_password_change_on_login = models.BooleanField(
+        default=False,
+        verbose_name="Force password change on next login",
+        help_text="If checked, user will be forced to change password on next login.",
+    )
+
     objects = PersonManager()
 
     class Meta:

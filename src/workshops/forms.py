@@ -1,11 +1,12 @@
 import re
 from collections import defaultdict
 from datetime import UTC, date, datetime
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import HTML, Button, Div, Field, Layout, Submit
 from django import forms
+from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.models import Permission
 from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
@@ -891,6 +892,27 @@ class PersonCreateForm(PersonForm):
         fields = PersonForm.Meta.fields.copy()
         fields.remove("username")
         fields.append("comment")
+
+
+# `SetPasswordForm` is generic only in django-stubs; it's not subscriptable at runtime.
+if TYPE_CHECKING:
+    PersonSetPasswordForm = SetPasswordForm[Person]
+else:
+    PersonSetPasswordForm = SetPasswordForm
+
+
+class PersonPasswordForm(PersonSetPasswordForm):
+    force_password_change_on_login = forms.BooleanField(
+        label="Force password change on next login",
+        required=False,
+    )
+
+    def save(self, commit: bool = True) -> Person:
+        user = super().save(commit)
+        user.force_password_change_on_login = self.cleaned_data["force_password_change_on_login"]
+        if commit:
+            user.save()
+        return user
 
 
 class PersonPermissionsForm(forms.ModelForm[Person]):
