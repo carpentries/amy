@@ -48,6 +48,12 @@ sudo apt-get install python3-dev libpq-dev
     git config blame.ignoreRevsFile .git-blame-ignore-revs
     ~~~
 
+1. Decide if you want to use stable code or switch to the current development branch.  The `develop` branch is where new features are added, and it may be unstable.  If you want to use the stable version, switch to the `main` branch:
+
+    ~~~
+    git checkout main
+    ~~~
+
 1. Install [uv](https://docs.astral.sh/uv/getting-started/installation/).
 
 1. Install Python dependencies:
@@ -69,6 +75,8 @@ sudo apt-get install python3-dev libpq-dev
     npm install
     ~~~
 
+    **Note**:  this installs front-end dependencies for AMY, for example [Bootstrap][bootstrap] ([full list here](https://github.com/carpentries/amy/blob/develop/package.json)).
+
 1. Create a local instance of Postgres (in a container). This requires Docker to be installed locally.
 
     ~~~
@@ -88,8 +96,6 @@ sudo apt-get install python3-dev libpq-dev
     ~~~
     uv run python manage.py runserver
     ~~~
-
-    **Note**:  this also installs front-end dependencies for AMY, including [jQuery][jquery] and [Bootstrap][bootstrap] ([full list here](https://github.com/carpentries/amy/blob/develop/package.json)).
 
 1. Open <http://127.0.0.1:8000/workshops/> in your browser and start clicking. Use the default "admin" as username and password.
 
@@ -131,25 +137,17 @@ directory) with tags `amy:latest` and `amy:$LAST_COMMIT`.
 
 ## Upgrading
 
+1. Switch to the code branch that you want to upgrade to (e.g., `main` for stable or `develop` for development code):
+
+    ~~~
+    git checkout <branch_name>
+    ~~~
+
 1. Update the code:
 
-    1. Get the list of changes:
-
-        ~~~
-        git fetch
-        ~~~
-
-    1. Look for the newest tag:
-
-        ~~~~
-        git tag -n
-        ~~~~
-
-    1. Get the code from the newest tag:
-
-        ~~~~
-        git checkout tags/<tag_name>
-        ~~~~
+    ~~~
+    git pull
+    ~~~
 
 1. Update back-end dependencies:
 
@@ -160,7 +158,7 @@ directory) with tags `amy:latest` and `amy:$LAST_COMMIT`.
 1. Update front-end dependencies:
 
     ~~~
-    npm ci
+    npm install
     ~~~
 
 1. (Optional) make fresh development-ready database:
@@ -218,20 +216,6 @@ pa11y-ci
 ```
 
 Pa11y will exit with a failure code if accessibility failures are found. Reports are stored in the `pa11y-ci-report/` folder.
-
-## Edit the CSS theme
-
-The AMY theme is primarily based on Bootstrap 4.
-
-To update the custom CSS that sits on top of the Bootstrap theme, edit `amy/static/css/amy.css`.
-
-To override Bootstrap 4 defaults such as colors, edit the [Sass](https://sass-lang.com/) file `amy/static/scss/custom_bootstrap.scss` as required, then compile it to CSS:
-
-```shell
-npx sass amy/static/scss/custom_bootstrap.scss amy/static/css/custom_bootstrap.min.css --style compressed
-```
-
-See the [Bootstrap documentation](https://getbootstrap.com/docs/4.0/getting-started/theming/) for more guidance on overriding Bootstrap defaults.
 
 [bootstrap]: https://getbootstrap.com/
 [contact-address]: mailto:team@carpentries.org
