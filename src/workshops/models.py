@@ -1642,7 +1642,7 @@ class Event(AssignmentMixin, models.Model):
             self.latitude = None
             self.longitude = None
 
-        if self.slug and not self.completed:
+        if self.slug:
             self.instructors_pre = reports_link(self.slug)
 
         super().save(*args, **kwargs)
