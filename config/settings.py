@@ -289,6 +289,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "src.workshops.middleware.github_auth.GithubAuthMiddleware",
+    "src.workshops.middleware.force_password_change.ForcePasswordChangeMiddleware",
     "src.consents.middleware.TermsMiddleware",
     "src.workshops.middleware.feature_flags.SaveSessionFeatureFlagMiddleware",
 ]

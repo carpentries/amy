@@ -9,7 +9,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import permission_required
-from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm
+from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.mixins import (
     LoginRequiredMixin,
     PermissionRequiredMixin,
@@ -136,7 +136,9 @@ from src.workshops.forms import (
     EventsSelectionForm,
     PersonCreateForm,
     PersonForm,
+    PersonPasswordForm,
     PersonPermissionsForm,
+    PersonSetPasswordForm,
     PersonsMergeForm,
     PersonsSelectionForm,
     TaskForm,
@@ -697,7 +699,7 @@ class PersonPermissions(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateVi
     )
 
 
-class PersonPassword(LoginRequiredMixin, AMYFormView[PasswordChangeForm]):
+class PersonPassword(LoginRequiredMixin, AMYFormView[PersonSetPasswordForm]):
     template_name = "generic_form.html"
     title = "Change password"
     target: Person
@@ -719,9 +721,9 @@ class PersonPassword(LoginRequiredMixin, AMYFormView[PasswordChangeForm]):
 
         return super().dispatch(request, *args, **kwargs)
 
-    def get_form_class(self) -> type[PasswordChangeForm] | type[SetPasswordForm[Person]]:  # type: ignore[override]
+    def get_form_class(self) -> type[PersonSetPasswordForm]:
         if self.request.user.is_superuser:
-            return SetPasswordForm
+            return PersonPasswordForm
         return PasswordChangeForm
 
     def get_form_kwargs(self) -> dict[str, Any]:
@@ -729,7 +731,7 @@ class PersonPassword(LoginRequiredMixin, AMYFormView[PasswordChangeForm]):
         kwargs["user"] = self.target
         return kwargs
 
-    def get_form(self, form_class: type[PasswordChangeForm] | None = None) -> PasswordChangeForm:
+    def get_form(self, form_class: type[PersonSetPasswordForm] | None = None) -> PersonSetPasswordForm:
         form = super().get_form(form_class)
         form.helper = BootstrapHelper(add_cancel_button=False)  # type: ignore[attr-defined]
         return form
@@ -740,18 +742,24 @@ class PersonPassword(LoginRequiredMixin, AMYFormView[PasswordChangeForm]):
         context["object"] = self.target
         return context
 
-    def form_valid(self, form: PasswordChangeForm) -> HttpResponse:
-        form.save()  # saves the password for the user
-        update_session_auth_hash(self.request, form.user)
+    def form_valid(self, form: PersonSetPasswordForm) -> HttpResponse:
+        user = form.save()  # saves the password for the user
+
+        # User changed their own password, so they no longer need to be forced to do it.
+        if user.pk == self.request.user.pk and user.force_password_change_on_login:
+            user.force_password_change_on_login = False
+            user.save(update_fields=["force_password_change_on_login"])
+
+        update_session_auth_hash(self.request, user)
         messages.success(self.request, "Password was changed successfully.")
         return super().form_valid(form)
 
-    def form_invalid(self, form: PasswordChangeForm) -> HttpResponse:
+    def form_invalid(self, form: PersonSetPasswordForm) -> HttpResponse:
         messages.error(self.request, "Fix errors below.")
         return super().form_invalid(form)
 
     def get_success_url(self) -> str:
-        return reverse("person_details", args=[self.target.id])
+        return safe_next_or_default_url(self.request.GET.get("next"), reverse("person_details", args=[self.target.id]))
 
 
 @admin_required
