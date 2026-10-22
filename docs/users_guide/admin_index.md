@@ -116,7 +116,7 @@ The number of workshops or instructor training seats rolled over from the previo
 
 The Membership program was deprecated in April 2026 in favor of a new service offerings program. This allows individuals or institutions to purchase either a set of benefits as a Partnership, or purchase benefits ala carte.
 
-[Accounts](https://amy.carpentries.org/offering/accounts/) can be created for individuals or for organizations to track the use of these benefits.  
+[Accounts](https://amy.carpentries.org/offering/accounts/) can be created for individuals or for organizations to track the use of these benefits.
 
 Create a new account by clicking on the green "New account" button on the [Accounts](https://amy.carpentries.org/offering/accounts/) page. Note the individual or organization record must already exist in AMY.  When a new organization is created, an account is automatically created for that organization.
 
@@ -129,7 +129,7 @@ Organizations can purchase benefits ala carte or as a Partnership.
 
 ##### Organization Partnerships
 
-A new Partnership can be created on the Organization's Account page.  Select a tier and the number of credits will automatically fill in.  If the number of credits requested does not match one of the tiers, select "Custom."  This will allow you to fill in the number of credits. 
+A new Partnership can be created on the Organization's Account page.  Select a tier and the number of credits will automatically fill in.  If the number of credits requested does not match one of the tiers, select "Custom."  This will allow you to fill in the number of credits.
 
 Benefits are not specified at this stage. When a workshop or seat at one of our events is purchased, it is assigned for that event or task. Benefits used will display on the Partnership page.
 
@@ -148,7 +148,7 @@ A Person record can be created by [accepting an Instructor Training application]
 
 #### Adding an Individual Person Record
 
-Select "New person" and enter in as much information as possible.  At minimum a personal name is required and airport are required.  
+Select "New person" and enter in as much information as possible.  At minimum a personal name and airport are required. A new Person can't log in until you activate the account and set up a login method. See [Creating a Person Who Can Log In](#creating-a-person-who-can-log-in).
 
 ![AMY add new person](images/new_person.png)
 
@@ -413,7 +413,7 @@ Continue doing this until all relevant applications have a new trainee account. 
 
 Once all trainees for a given event have trainee accounts, we can assign them to a specific training event and associate them with a specific account benefit. This part can be done in bulk for each group of trainees with a unique training date and account benefit. The [event](#adding-a-new-event) and the account benefit must already have been created in AMY.
 
-Check all the names to be assigned to the training event and account benefit, and then select the training event from the first drop down menu.  Select the account benefit from the second drop down menu. 
+Check all the names to be assigned to the training event and account benefit, and then select the training event from the first drop down menu.  Select the account benefit from the second drop down menu.
 
 Click "Accept & match selected trainees to chosen training." The search screen will then update to show that the trainees have been matched to this event. The event page will also update to list these trainees as learners at that event.
 
@@ -533,6 +533,38 @@ AMY comes with several built in reporting features that can be accessed by click
 ### User and Administrator Roles
 
 What you are able to edit or view depends on your assigned role as a user or administrator in AMY.
+
+#### Creating a Person Who Can Log In
+
+Follow these steps to create one Person record and let that person log in to AMY. You must be an administrator (superuser) to do this.
+
+1. **Create the Person record.** Click `New >> New person` and fill in the form as described in [Adding an Individual Person Record](#adding-an-individual-person-record). You must enter at least the personal name and the airport. To let the person log in with GitHub, also enter their GitHub username. To let them log in with their email address or reset their own password, also enter their email address. You can't choose the username: AMY creates it from the personal and family names (for example, `smith_jane`). After you save the record, the username is shown at the top of the Person's profile.
+2. **Activate the account.** New Person records are inactive, and inactive users can't log in at all. On the Person's profile, click `Change permissions`, check `Is active`, and save. Leave `Is superuser`, `User permissions` and `Groups` empty unless the person also needs administrator access (see [Admin Roles](#admin-roles)).
+3. **Choose how the person will log in.** Set up one of the two methods below, or both.
+
+##### Option A: Logging in with GitHub (recommended for instructors and community members)
+
+1. Make sure the `GitHub` field on the Person's profile has the person's GitHub username. If it doesn't, click `Edit` and add it.
+2. Next to the GitHub username on the profile, click `Allow logging in with GitHub`. Do this **after** activating the account. AMY looks up the GitHub account, and the lookup doesn't run for inactive users.
+3. If it worked, the button changes to `Logging in allowed`, and `Can login with` shows `Github`. If you see an error, check that the GitHub username is spelled correctly and that the account exists on GitHub.
+4. The person can now log in from the [AMY login page](https://amy.carpentries.org/account/login/) by clicking `Log in with your GitHub account`.
+
+If the person changes their GitHub username later, update the `GitHub` field and click `Allow logging in with GitHub` again.
+
+##### Option B: Logging in with a username and password (usually for administrators)
+
+1. On the Person's profile, click `Change password`. Only superusers can set a password for someone else.
+2. Enter a temporary password twice. Check `Force password change on next login` so the person has to pick their own password the first time they log in.
+3. Click `Submit`.
+4. Send the person their username (or the email address on their profile) and the temporary password over a secure channel. They log in with the `For The Carpentries Administrators` form on the [AMY login page](https://amy.carpentries.org/account/login/).
+
+If the Person record has an email address, the person can also set their own password with the `Forgotten your password?` link on the login page. You don't need to send them a temporary password in that case.
+
+##### What happens on the first login
+
+* AMY asks the person to accept the required [consents](#consents) before they can do anything else.
+* If you checked `Force password change on next login`, AMY sends the person to the `Change password` page and keeps them there until they choose a new password. They can still log out.
+* Users without administrator access land on their own dashboard. There they can view and update their profile, consents, and training progress.
 
 #### Instructor Login
 
@@ -765,7 +797,7 @@ Clicking "[Service offering > Partnerships](https://amy.carpentries.org/fiscal/p
 * Tier
 * Active only
 * Credits (under or over limit)
-* Sort by Name 
+* Sort by Name
 
 #### Searching for Persons
 
