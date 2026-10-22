@@ -193,7 +193,7 @@ class MembershipLookupView(OnlyForAdminsNoRedirectMixin, PermissionRequiredMixin
     permission_required = ["workshops.view_membership"]
 
     def get_queryset(self) -> QuerySet[models.Membership]:
-        results = models.Membership.objects.all()
+        results = models.Membership.objects.order_by("-agreement_start", "name")
 
         if self.term:
             # parse query into date
