@@ -17,7 +17,6 @@ from django.urls import reverse
 from django_comments.models import Comment
 from django_countries import Countries
 from django_countries.fields import CountryField
-from markdownx.fields import MarkdownxFormField
 
 from src.communityroles.models import CommunityRole
 from src.dashboard.models import Continent
@@ -27,6 +26,7 @@ from src.dashboard.models import Continent
 from src.workshops.consts import ACCOUNT_BENEFIT_FILTER_WHITELIST
 from src.workshops.fields import (
     AirportSelect2Widget,
+    MarkdownTextarea,
     ModelSelect2MultipleWidget,
     ModelSelect2Widget,
     RadioSelectWithOther,
@@ -410,12 +410,12 @@ class EventForm(forms.ModelForm[Event]):
         ),
     )  # type: ignore
 
-    comment = MarkdownxFormField(
+    comment = forms.CharField(
         label="Comment",
         help_text="Any content in here will be added to comments after this event is saved.",
-        widget=forms.Textarea,
+        widget=MarkdownTextarea,
         required=False,
-    )  # type: ignore
+    )
 
     instructors_pre = forms.URLField(
         label="Assessment survey for instructors:",
@@ -655,12 +655,12 @@ class EventForm(forms.ModelForm[Event]):
 
 
 class EventCreateForm(EventForm):
-    comment = MarkdownxFormField(
+    comment = forms.CharField(
         label="Comment",
         help_text="This will be added to comments after the event is created.",
-        widget=forms.Textarea,
+        widget=MarkdownTextarea,
         required=False,
-    )  # type: ignore
+    )
 
 
 class EventCategoryForm(forms.ModelForm[EventCategory]):
@@ -879,12 +879,12 @@ class PersonForm(forms.ModelForm[Person]):
 
 
 class PersonCreateForm(PersonForm):
-    comment = MarkdownxFormField(
+    comment = forms.CharField(
         label="Comment",
         help_text="This will be added to comments after the person is created.",
-        widget=forms.Textarea,
+        widget=MarkdownTextarea,
         required=False,
-    )  # type: ignore
+    )
 
     class Meta(PersonForm.Meta):
         # remove 'username' field as it's being populated after form save

@@ -162,7 +162,6 @@ THIRD_PARTY_APPS = [
     "django_extensions",
     "anymail",
     "django_comments",  # this used to be in django.contrib
-    "markdownx",
     "djangoformsetjs",
     "django_better_admin_arrayfield",
     "flags",
@@ -577,11 +576,6 @@ DEBUG_TOOLBAR_PANELS = [
 # -----------------------------------------------------------------------------
 # https://django-contrib-comments.readthedocs.io/en/latest/settings.html
 COMMENTS_APP = "src.extcomments"
-
-# Django-markdownx
-# -----------------------------------------------------------------------------
-# https://neutronx.github.io/django-markdownx/customization/
-MARKDOWNX_MARKDOWNIFY_FUNCTION = "src.workshops.utils.markdown.render_markdown"
 
 # Django-Select2 settings
 # -----------------------------------------------------------------------------

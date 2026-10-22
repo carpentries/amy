@@ -22,11 +22,10 @@ from django.contrib.contenttypes.views import shortcut
 from django.urls import URLPattern, URLResolver, include, path
 from django.views.generic import RedirectView
 from django_comments.views.comments import comment_done, post_comment
-from markdownx.views import ImageUploadView, MarkdownifyView
 
 from src.dashboard.views import DashboardDispatch
 from src.workshops.utils.access import login_required
-from src.workshops.views import LogoutThenLoginWithMsg
+from src.workshops.views import LogoutThenLoginWithMsg, markdown_preview
 
 urlpatterns: list[URLPattern | URLResolver] = [
     path("", DashboardDispatch.as_view(), name="dispatch"),
@@ -106,24 +105,8 @@ urlpatterns: list[URLPattern | URLResolver] = [
             ]
         ),
     ),
-    # for markdown upload & preview
-    path(
-        "markdownx/",
-        include(
-            [
-                path(
-                    "markdownify/",
-                    login_required(MarkdownifyView.as_view()),
-                    name="markdownx_markdownify",
-                ),
-                path(
-                    "upload/",
-                    login_required(ImageUploadView.as_view()),
-                    name="markdownx_upload",
-                ),
-            ]
-        ),
-    ),
+    # for markdown preview
+    path("markdown/preview/", markdown_preview, name="markdown_preview"),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

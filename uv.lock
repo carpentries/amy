@@ -34,7 +34,6 @@ dependencies = [
     { name = "django-filter" },
     { name = "django-flags" },
     { name = "django-formset-js-improved" },
-    { name = "django-markdownx" },
     { name = "django-recaptcha" },
     { name = "django-rest-knox" },
     { name = "django-reversion" },
@@ -94,7 +93,6 @@ requires-dist = [
     { name = "django-filter", specifier = ">=24.3,<25.0" },
     { name = "django-flags", specifier = ">=5.0.13,<6.0.0" },
     { name = "django-formset-js-improved", specifier = ">=0.5.0.3,<0.6.0.0" },
-    { name = "django-markdownx", specifier = ">=4.0.7,<5.0.0" },
     { name = "django-recaptcha", specifier = ">=4.0.0,<5.0.0" },
     { name = "django-rest-knox", specifier = ">=5.0.2,<6.0.0" },
     { name = "django-reversion", specifier = ">=5.1.0,<6.0.0" },
@@ -664,20 +662,6 @@ dependencies = [
     { name = "django" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/d1/1a/c834ae2044ea529f41f471d2ff07d81cee6f260eda04db6b6703fb0d8960/django-jquery-js-3.1.1.tar.gz", hash = "sha256:308e6472801f89be7c02fa3d06bea6470cfbcab8287db80c64b1093717b8eea9", size = 111923, upload-time = "2016-12-31T01:02:03.798Z" }
-
-[[package]]
-name = "django-markdownx"
-version = "4.0.9"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "django" },
-    { name = "markdown" },
-    { name = "pillow" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/4a/80/e4ff7b93b7518efe7fbe9b18ac5735b53fae943063df6fbef53bc454e045/django-markdownx-4.0.9.tar.gz", hash = "sha256:f82949beaddcaf5cbe765f580b1bf062b3aa5eea94633fdbbb6466514311a907", size = 32649, upload-time = "2025-04-23T12:13:32.864Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/1a/76/53574402650befe1ee7b7bb2ddf49b2862a2a080c8042ff3c853922363bb/django_markdownx-4.0.9-py2.py3-none-any.whl", hash = "sha256:0e78759a8701073fee3e4883764a9bf1cdf3fe4c2941747acbe4f093f9285805", size = 42411, upload-time = "2025-04-23T12:13:31.554Z" },
-]
 
 [[package]]
 name = "django-recaptcha"
