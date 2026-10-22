@@ -12,11 +12,13 @@ not related to internal AMY applications:
 * `account` - contains templates related to login/logout/password reset pages,
 * `bootstrap4` - contains templates and/or includes for widgets used by
   [Django Crispy Forms](https://github.com/django-crispy-forms/django-crispy-forms),
+* `certificates` - contains [Typst](https://typst.app/) templates (and their SVG
+  backgrounds) used to generate certificate PDFs,
 * `includes` - contains a bunch of reusable "components" - Django HTML templates,
 * `mailing` - contains templates used to generate emails automatically sent when users
   submit [external forms](./application_design.md#external-requests-forms),
-* `markdownx` - contains some overridden templates for
-  [django-markdown](https://neutronx.github.io/django-markdownx/) package.
+* `markdown` - contains the template for `MarkdownTextarea` widget (Markdown editor
+  with live preview rendered via HTMX).
 
 Usually, unsless the template is an includable, one template corresponds to one view,
 that's why they are grouped in per-application directories.
