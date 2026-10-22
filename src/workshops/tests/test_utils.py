@@ -13,6 +13,7 @@ from src.workshops.utils.consents import archive_least_recent_active_consents
 from src.workshops.utils.dates import human_daterange
 from src.workshops.utils.emails import match_notification_email
 from src.workshops.utils.feature_flags import feature_flag_enabled
+from src.workshops.utils.markdown import render_markdown
 from src.workshops.utils.metadata import (
     datetime_decode,
     datetime_match,
@@ -638,3 +639,33 @@ class TestSafeNextOrDefaultURL(TestCase):
         url = safe_next_or_default_url(next_url, default_url)
         # Assert
         self.assertEqual(url, "/")  # Safe fallback
+
+
+class TestRenderMarkdown(TestCase):
+    def test_renders_markdown(self) -> None:
+        # Act
+        result = render_markdown("**bold** [link](https://example.org)")
+        # Assert
+        self.assertEqual(
+            result,
+            '<p><strong>bold</strong> <a href="https://example.org" rel="noopener noreferrer">link</a></p>',
+        )
+
+    def test_removes_scripts(self) -> None:
+        # Act
+        result = render_markdown("text <script>alert(1)</script>")
+        # Assert
+        self.assertNotIn("<script", result)
+        self.assertNotIn("alert(1)", result)
+
+    def test_removes_event_handlers(self) -> None:
+        # Act
+        result = render_markdown('<img src="x" onerror="alert(1)">')
+        # Assert
+        self.assertNotIn("onerror", result)
+
+    def test_removes_javascript_links(self) -> None:
+        # Act
+        result = render_markdown("[link](javascript:alert(1))")
+        # Assert
+        self.assertNotIn("javascript:", result)

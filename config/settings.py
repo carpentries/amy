@@ -578,6 +578,11 @@ DEBUG_TOOLBAR_PANELS = [
 # https://django-contrib-comments.readthedocs.io/en/latest/settings.html
 COMMENTS_APP = "src.extcomments"
 
+# Django-markdownx
+# -----------------------------------------------------------------------------
+# https://neutronx.github.io/django-markdownx/customization/
+MARKDOWNX_MARKDOWNIFY_FUNCTION = "src.workshops.utils.markdown.render_markdown"
+
 # Django-Select2 settings
 # -----------------------------------------------------------------------------
 # https://django-select2.readthedocs.io/en/latest/django_select2.html
