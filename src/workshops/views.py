@@ -45,6 +45,7 @@ from django.http import (
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.decorators.http import require_POST
 from django.views.generic import View
 from django_stubs_ext import Annotations
 from flags.state import flag_enabled  # type: ignore[import-untyped]
@@ -158,7 +159,8 @@ from src.workshops.models import (
     TrainingRequirement,
 )
 from src.workshops.signals import create_comment_signal
-from src.workshops.utils.access import OnlyForAdminsMixin, admin_required
+from src.workshops.utils.access import OnlyForAdminsMixin, admin_required, login_required
+from src.workshops.utils.markdown import render_markdown
 from src.workshops.utils.merge import merge_objects
 from src.workshops.utils.pagination import get_pagination_items
 from src.workshops.utils.person_upload import (
@@ -2275,3 +2277,14 @@ def object_changes(request: AuthenticatedHttpRequest, version_id: int) -> HttpRe
         "comparable": len(action_list) >= 2,
     }
     return render(request, "workshops/object_diff.html", context)
+
+
+# ------------------------------------------------------------
+
+
+@login_required
+@require_POST
+def markdown_preview(request: HttpRequest) -> HttpResponse:
+    """Render Markdown sent by `MarkdownTextarea` widget's HTMX request."""
+    field = request.GET.get("field", "")
+    return HttpResponse(render_markdown(request.POST.get(field, "")))

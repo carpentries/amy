@@ -2,19 +2,19 @@ from datetime import UTC, datetime
 from typing import Any, cast
 
 from django import forms
-from markdownx.fields import MarkdownxFormField
 
 from src.emails.models import EmailTemplate, ScheduledEmail
 from src.emails.signals import SignalNameEnum
+from src.workshops.fields import MarkdownTextarea
 from src.workshops.forms import BootstrapHelper
 
 
 class EmailTemplateCreateForm(forms.ModelForm[EmailTemplate]):
-    body = MarkdownxFormField(
+    body = forms.CharField(
         label=EmailTemplate._meta.get_field("body").verbose_name,
         help_text=EmailTemplate._meta.get_field("body").help_text,
-        widget=forms.Textarea,
-    )  # type: ignore[no-untyped-call]
+        widget=MarkdownTextarea,
+    )
     signal = forms.CharField(
         help_text=EmailTemplate._meta.get_field("signal").help_text,
         widget=forms.Select(choices=SignalNameEnum.choices()),
@@ -55,11 +55,11 @@ class EmailTemplateUpdateForm(EmailTemplateCreateForm):
 
 
 class ScheduledEmailUpdateForm(forms.ModelForm[ScheduledEmail]):
-    body = MarkdownxFormField(
+    body = forms.CharField(
         label=ScheduledEmail._meta.get_field("body").verbose_name,
         help_text=ScheduledEmail._meta.get_field("body").help_text,
-        widget=forms.Textarea,
-    )  # type: ignore[no-untyped-call]
+        widget=MarkdownTextarea,
+    )
 
     class Meta:
         model = ScheduledEmail

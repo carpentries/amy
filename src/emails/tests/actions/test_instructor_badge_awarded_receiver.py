@@ -1,7 +1,7 @@
-import tempfile
 from datetime import UTC, date, datetime, timedelta
 from unittest.mock import ANY, MagicMock, patch
 
+from django.conf import settings
 from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
@@ -9,7 +9,6 @@ from src.emails.actions.instructor_badge_awarded import (
     generate_and_attach_certificate_pdf,
     generate_pdf,
     instructor_badge_awarded_receiver,
-    read_binary_file_and_replace_values,
 )
 from src.emails.models import EmailTemplate, ScheduledEmail, ScheduledEmailStatus
 from src.emails.schemas import ContextModel, ToHeaderModel
@@ -231,32 +230,28 @@ class TestInstructorBadgeAwardedReceiverIntegration(TestBase):
 
 
 class TestInstructorBadgeAwardedCertificates(TestCase):
-    def test_read_binary_file_and_replace_values(self) -> None:
+    template_path = settings.APPS_DIR / "templates" / "certificates" / "carpentries-instructor.typ"
+
+    def test_generate_pdf(self) -> None:
         # Arrange
-        with tempfile.NamedTemporaryFile(delete_on_close=False) as fp:
-            fp.write(b"<h1>Hello, {{personal}} {{family}}</h1>")
-            fp.close()
-
-            # Act
-            result = read_binary_file_and_replace_values(
-                fp.name,
-                {
-                    b"{{personal}}": b"John",
-                    b"{{family}}": b"Smith",
-                },
-            )
-
-        # Assert
-        self.assertEqual(result, b"<h1>Hello, John Smith</h1>")
-
-    @patch("src.emails.actions.instructor_badge_awarded.cairosvg.svg2pdf")
-    def test_generate_certificate(self, mock_svg2pdf: MagicMock) -> None:
-        # Arrange
-        svg_file = b"Test file"
+        inputs = {"name": "John Smith", "date": "01 January 2026", "signature": "Signer", "carpentries": "Carpentry."}
         # Act
-        generate_pdf(svg_file)
+        result = generate_pdf(str(self.template_path), inputs)
         # Assert
-        mock_svg2pdf.assert_called_once_with(svg_file, write_to=ANY, dpi=90)
+        self.assertTrue(result.startswith(b"%PDF-"))
+
+    def test_generate_pdf__inputs_are_not_evaluated_as_markup(self) -> None:
+        # Arrange
+        inputs = {
+            "name": '#panic("injected") <svg> & *bold*',
+            "date": '#read("/etc/passwd")',
+            "signature": "$x^2$",
+            "carpentries": "Carpentry.",
+        }
+        # Act
+        result = generate_pdf(str(self.template_path), inputs)
+        # Assert - compilation would fail if `#panic` or `#read` were evaluated
+        self.assertTrue(result.startswith(b"%PDF-"))
 
     @patch("src.emails.actions.instructor_badge_awarded.logger")
     def test_generate_and_attach_certificate_pdf__no_sender(self, mock_logger: MagicMock) -> None:
