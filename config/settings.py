@@ -662,7 +662,7 @@ FLAGS = {
 
 # Instructor Certificates
 # -----------------------------------------------------------------------------
-CERTIFICATE_SIGNATURE = "SherAaron Hurt (Director of Workshops and Instruction)"
+CERTIFICATE_SIGNATURE = "SherAaron Hurt (Interim Executive Director)"
 
 
 # To silence the Django 6.0 warning about URLField assume_https default changing
