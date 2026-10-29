@@ -1,6 +1,6 @@
 {% load state %}
 {% load utils %}
-{% load eventbrite %}
+{% load event_registration_url %}
 <table class="table table-striped">
   <tbody>
     <tr><th>Submission date:</th>
@@ -34,7 +34,7 @@
 {% endif %}
     <tr><th>Event registration URL:</th>
         <td>{{ object.eventbrite_url|default:"&mdash;" }}
-        {% url_matches_eventbrite_format object.eventbrite_url as url_format_valid %}
+        {% url_matches_eventbrite_or_pretix_format object.eventbrite_url as url_format_valid %}
         {% if object.eventbrite_url and not url_format_valid %}
         <div class="alert alert-warning">
             This URL doesn't match known Pretix or Eventbrite URLs. Please use caution if copying this link.
