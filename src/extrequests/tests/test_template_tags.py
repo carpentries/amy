@@ -2,7 +2,7 @@ from datetime import date, timedelta
 
 from django.test import TestCase
 
-from src.extrequests.templatetags.eventbrite import url_matches_eventbrite_format
+from src.extrequests.templatetags.event_registration_url import url_matches_eventbrite_or_pretix_format
 from src.extrequests.templatetags.request_membership import (
     membership_active,
     membership_alert_type,
@@ -107,7 +107,7 @@ class TestUrlMatchesEventbriteFormat(TestCase):
         url = "https://www.eventbrite.com/e/online-instructor-training-7-8-november-2023-tickets-711575811407?aff=oddtdtcreator"  # noqa: E501
 
         # Act
-        result = url_matches_eventbrite_format(url)
+        result = url_matches_eventbrite_or_pretix_format(url)
 
         # Assert
         self.assertTrue(result)
@@ -117,7 +117,7 @@ class TestUrlMatchesEventbriteFormat(TestCase):
         url = "www.eventbrite.com/e/711575811407"
 
         # Act
-        result = url_matches_eventbrite_format(url)
+        result = url_matches_eventbrite_or_pretix_format(url)
 
         # Assert
         self.assertTrue(result)
@@ -127,7 +127,7 @@ class TestUrlMatchesEventbriteFormat(TestCase):
         url = "https://www.eventbrite.co.uk/e/711575811407"
 
         # Act
-        result = url_matches_eventbrite_format(url)
+        result = url_matches_eventbrite_or_pretix_format(url)
 
         # Assert
         self.assertTrue(result)
@@ -137,7 +137,7 @@ class TestUrlMatchesEventbriteFormat(TestCase):
         url = "https://www.eventbrite.fr/e/711575811407"
 
         # Act
-        result = url_matches_eventbrite_format(url)
+        result = url_matches_eventbrite_or_pretix_format(url)
 
         # Assert
         self.assertTrue(result)
@@ -148,7 +148,7 @@ class TestUrlMatchesEventbriteFormat(TestCase):
         url = "https://www.eventbrite.com/myevent?eid=711575811407"
 
         # Act
-        result = url_matches_eventbrite_format(url)
+        result = url_matches_eventbrite_or_pretix_format(url)
 
         # Assert
         self.assertFalse(result)
@@ -159,7 +159,7 @@ class TestUrlMatchesEventbriteFormat(TestCase):
         url = "https://carpentries.org/instructor-training/123123123123/"
 
         # Act
-        result = url_matches_eventbrite_format(url)
+        result = url_matches_eventbrite_or_pretix_format(url)
 
         # Assert
         self.assertFalse(result)
@@ -170,7 +170,7 @@ class TestUrlMatchesEventbriteFormat(TestCase):
         url = ""
 
         # Act
-        result = url_matches_eventbrite_format(url)
+        result = url_matches_eventbrite_or_pretix_format(url)
 
         # Assert
         self.assertFalse(result)

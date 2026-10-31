@@ -293,6 +293,18 @@ EVENTBRITE_URL_PATTERN = re.compile(
     r"($|\?)",  # end of string or beginning of query (?)
 )
 
+# regex to cover known forms of Pretix URL that trainees could provide
+# TODO: Come up with correct regex.
+PRETIX_URL_PATTERN = re.compile(
+    r"^(https?:\/\/)?"  # optional https://
+    r"www\.pretix\."
+    r"(com|co\.uk|[a-z]{2})"  # possible domains - .com, .co.uk, 2-letter country domain
+    r"\/e\/"  # /e/ should always be present at start of path
+    r"[a-z0-9\-]+"  # optional event-name
+    r"\d{10,}"  # event ID
+    r"($|\?)",  # end of string or beginning of query (?)
+)
+
 
 def get_eventbrite_id_from_url_or_return_input(url: str) -> str:
     """Given the URL for an Eventbrite event, returns that event's ID.

@@ -1,7 +1,7 @@
 
 Dear {{object.personal}} {{object.family}},
 
-Thank you for creating your profile for The Carpentries Instructor Training program. We're excited to have you as part of our community!  Please be sure you have registered for an event via Eventbrite (https://carpentries.github.io/instructor-training/training_calendar). You will receive more information approximately one week before your scheduled training. 
+Thank you for creating your profile for The Carpentries Instructor Training program. We're excited to have you as part of our community!  Please be sure you have registered for an event via Eventbrite (https://carpentries.github.io/instructor-training/training_calendar). You will receive more information approximately one week before your scheduled training.
 
 In the meantime, please get involved!
 Join our discussion email list: https://carpentries.topicbox.com/groups/discuss
@@ -31,7 +31,7 @@ Registration Code: {{ object.member_code|default:"&mdash;" }}
 {% if object.member_code_override %}
 Continue with registration code marked as invalid: {{object.member_code_override|yesno}}
 {% endif %}
-Eventbrite URL: {{ object.eventbrite_url }}
+Event registration URL: {{ object.eventbrite_url }}
 Person: {{object.personal}} {{object.middle}} {{object.family}} &lt;{{object.email}}&gt;
 Github: {{ object.github|default:"---" }}
 Occupation: {{ object.get_occupation_display }} {{ object.occupation_other }}
