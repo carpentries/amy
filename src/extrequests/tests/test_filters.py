@@ -67,7 +67,7 @@ class TestTrainingRequestFilter(TestBase):
             person=self.ironman,
             review_process="preapproved",
             member_code=self.membership.registration_code or "",
-            eventbrite_url="https://www.eventbrite.com/e/711575811407",
+            event_registration_url="https://www.eventbrite.com/e/711575811407",
             personal="Tony",
             family="Stark",
             email="me@stark.com",

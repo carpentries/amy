@@ -288,14 +288,34 @@ EVENTBRITE_URL_PATTERN = re.compile(
     r"www\.eventbrite\."
     r"(com|co\.uk|[a-z]{2})"  # possible domains - .com, .co.uk, 2-letter country domain
     r"\/e\/"  # /e/ should always be present at start of path
-    r"[a-z0-9\-]+"  # optional event-name
-    r"\d{10,}"  # event ID
+    r"([a-z0-9\-]+-)?"  # optional event-name, separated from the ID with a hyphen
+    r"(?P<event_id>\d{10,})"  # event ID
+    r"($|\?)",  # end of string or beginning of query (?)
+)
+
+# regex to cover known forms of Pretix URL that trainees could provide
+# https://pretix.carpentries.org/community-events/welcome-sessions/845/
+# where the path segments before the event number (organizer, event series) are subject to change,
+# plus a possible query at the end
+# and considering the development server at test-pretix.terrier-vibe.ts.net
+PRETIX_URL_PATTERN = re.compile(
+    r"^(https?:\/\/)?"  # optional https://
+    r"(pretix\.carpentries\.org|test-pretix\.terrier-vibe\.ts\.net)\/"  # production or development server
+    r"([a-zA-Z0-9.\-_]+\/)+"  # one or more slug segments, e.g. organizer/event-series/
+    r"(?P<event_id>\d+)\/?"  # event number with optional trailing slash
     r"($|\?)",  # end of string or beginning of query (?)
 )
 
 
-def get_eventbrite_id_from_url_or_return_input(url: str) -> str:
-    """Given the URL for an Eventbrite event, returns that event's ID.
+def get_event_id_from_pretix_or_eventbrite_url_or_return_input(url: str) -> str:
+    """Given the URL for a Pretix or Eventbrite event, returns that event's ID.
     If the ID can't be found, returns the input URL."""
+    # Pretix is preferred over Eventbrite, so it's checked first
+    for pattern in (PRETIX_URL_PATTERN, EVENTBRITE_URL_PATTERN):
+        if match := re.search(pattern, url):
+            return match.group("event_id")
+
+    # fall back to any Eventbrite-like ID, e.g. from admin URLs like
+    # https://www.eventbrite.com/myevent?eid=123456789012
     match = re.search(EVENTBRITE_ID_PATTERN, url)
     return match.group() if match else url
