@@ -1,11 +1,11 @@
-from collections.abc import Iterable
+from collections.abc import Iterable, Iterator, Mapping
 from typing import Any
 
 from django import forms
 from django.db.models import QuerySet
 from django.db.models.fields import BLANK_CHOICE_DASH
 
-from src.consents.models import Consent, Term, TermOption, TermOptionChoices
+from src.consents.models import BaseConsent, Consent, Term, TermOption, TermOptionChoices
 from src.workshops.forms import BootstrapHelper, WidgetOverrideMixin
 from src.workshops.models import Person
 
@@ -17,6 +17,46 @@ OPTION_DISPLAY = {
 
 def option_display_value(option: TermOption) -> str:
     return option.content or OPTION_DISPLAY[TermOptionChoices(option.option_type)]
+
+
+def create_consent_field(
+    term: Term,
+    consent: BaseConsent | None = None,
+    *,
+    label: str | None = None,
+    required: bool | None = None,
+) -> forms.ChoiceField:
+    """Build a select field with the term's options. The current consent (if any) is
+    used as the initial value. By default the label is the term's content and the field
+    is required for non-optional terms."""
+    options = [(opt.pk, option_display_value(opt)) for opt in term.options]
+    initial = consent.term_option_id if consent else None
+    attrs = {"class": "border border-warning"} if initial is None else {}
+
+    return forms.ChoiceField(
+        choices=BLANK_CHOICE_DASH + options,  # type: ignore[operator]
+        label=term.content if label is None else label,
+        required=term.required_type != Term.OPTIONAL_REQUIRE_TYPE if required is None else required,
+        initial=initial,
+        help_text=term.help_text or "",
+        widget=forms.Select(attrs=attrs),
+    )
+
+
+def changed_consents[C: BaseConsent](
+    terms: Iterable[Term],
+    cleaned_data: Mapping[str, Any],
+    current_consents: Mapping[int, C],
+) -> Iterator[tuple[Term, str, C | None]]:
+    """Yield `(term, selected option ID, current consent)` for every term whose answer
+    (a form field named after the term's slug) differs from the current consent.
+    Terms left blank are skipped. `current_consents` maps term IDs to active consents."""
+    for term in terms:
+        option_id = cleaned_data.get(term.slug)
+        consent = current_consents.get(term.pk)
+        if not option_id or (consent and option_id == str(consent.term_option_id)):
+            continue
+        yield term, option_id, consent
 
 
 class BaseTermConsentsForm(WidgetOverrideMixin, forms.ModelForm[Consent]):
@@ -54,34 +94,12 @@ class BaseTermConsentsForm(WidgetOverrideMixin, forms.ModelForm[Consent]):
             for consent in Consent.objects.filter(archived_at=None, term__in=self.terms, person=person)
         }
         for term in self.terms:
-            self.fields[term.slug] = self.create_options_field(term)
-
-    def create_options_field(self, term: Term) -> forms.ChoiceField:
-        consent = self.term_id_by_consent.get(term.pk, None)
-        options = [(opt.pk, option_display_value(opt)) for opt in term.options]
-        required = term.required_type != Term.OPTIONAL_REQUIRE_TYPE
-        initial = consent.term_option_id if consent else None
-        attrs = {"class": "border border-warning"} if initial is None else {}
-
-        field = forms.ChoiceField(
-            choices=BLANK_CHOICE_DASH + options,  # type: ignore
-            label=term.content,
-            required=required,
-            initial=initial,
-            help_text=term.help_text,
-            widget=forms.Select(attrs=attrs),
-        )
-        return field
+            self.fields[term.slug] = create_consent_field(term, self.term_id_by_consent.get(term.pk))
 
     def save(self, *args: Any, **kwargs: Any) -> None:  # type: ignore
         person = self.cleaned_data["person"]
         new_consents: list[Consent] = []
-        for term in self.terms:
-            option_id = self.cleaned_data.get(term.slug)
-            consent = self.term_id_by_consent.get(term.pk)
-            has_changed = option_id != str(consent.term_option_id) if consent else True
-            if not option_id or not has_changed:
-                continue
+        for term, option_id, consent in changed_consents(self.terms, self.cleaned_data, self.term_id_by_consent):
             if consent:
                 consent.archive()
             new_consents.append(Consent(person=person, term_option_id=option_id, term_id=term.pk))
