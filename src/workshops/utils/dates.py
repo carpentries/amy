@@ -1,3 +1,4 @@
+import calendar
 from datetime import date, datetime
 
 
@@ -38,3 +39,20 @@ def human_daterange(
 
     else:
         return f"{date_left:{nothing_common_left}}{separator}{date_right:{nothing_common_right}}"
+
+
+def rollover_end_date(previous_end: date) -> date:
+    """Calculate end date of a rolled-over agreement (membership or partnership): one year after
+    the previous agreement's end.
+
+    If the previous agreement ended on the last day of a month, the new one ends on the last day
+    of the same month a year later. This correctly handles leap years, e.g.:
+    * 2024-02-29 -> 2025-02-28 (new agreement 2024-03-01 - 2025-02-28),
+    * 2023-02-28 -> 2024-02-29 (new agreement 2023-03-01 - 2024-02-29).
+    """
+    year = previous_end.year + 1
+    last_day_previous = calendar.monthrange(previous_end.year, previous_end.month)[1]
+    last_day_new = calendar.monthrange(year, previous_end.month)[1]
+    if previous_end.day == last_day_previous:
+        return date(year, previous_end.month, last_day_new)
+    return date(year, previous_end.month, min(previous_end.day, last_day_new))
