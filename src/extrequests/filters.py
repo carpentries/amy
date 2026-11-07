@@ -9,7 +9,7 @@ from django.http import QueryDict
 from django.utils.datastructures import MultiValueDict
 
 from src.extrequests.models import SelfOrganisedSubmission, WorkshopInquiryRequest
-from src.extrequests.utils import get_eventbrite_id_from_url_or_return_input
+from src.extrequests.utils import get_event_id_from_pretix_or_eventbrite_url_or_return_input
 from src.offering.models import Benefit
 from src.workshops.fields import Select2Widget
 from src.workshops.filters import (
@@ -196,7 +196,7 @@ class TrainingRequestFilter(AMYFilterSet):
             int(value)
         except ValueError:
             # otherwise, try to extract an ID from the input
-            value = get_eventbrite_id_from_url_or_return_input(value)
+            value = get_event_id_from_pretix_or_eventbrite_url_or_return_input(value)
 
         return queryset.filter(eventbrite_url__icontains=value)
 

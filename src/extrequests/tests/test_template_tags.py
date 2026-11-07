@@ -164,6 +164,43 @@ class TestUrlMatchesEventbriteFormat(TestCase):
         # Assert
         self.assertFalse(result)
 
+    def test_pretix_url(self) -> None:
+        # Arrange
+        urls = [
+            "https://pretix.carpentries.org/community-events/welcome-sessions/845/",
+            "https://pretix.carpentries.org/community-events/welcome-sessions/845",
+            "pretix.carpentries.org/community-events/welcome-sessions/845/",
+            "https://pretix.carpentries.org/other-organizer/instructor-training/12/?voucher=ABC",
+            "https://pretix.carpentries.org/single-segment/845/",
+        ]
+
+        for url in urls:
+            with self.subTest(url=url):
+                # Act
+                result = url_matches_eventbrite_or_pretix_format(url)
+
+                # Assert
+                self.assertTrue(result)
+
+    def test_pretix_url__invalid(self) -> None:
+        """Pretix URLs without an event number, or on other domains, should fail."""
+        # Arrange
+        urls = [
+            "https://pretix.carpentries.org/community-events/welcome-sessions/",
+            "https://pretix.carpentries.org/845/",
+            "https://pretix.carpentries.org/community-events/welcome-sessions/845/checkout/",
+            "https://pretix.eu/community-events/welcome-sessions/845/",
+            "https://pretix.carpentries.org.evil.com/community-events/welcome-sessions/845/",
+        ]
+
+        for url in urls:
+            with self.subTest(url=url):
+                # Act
+                result = url_matches_eventbrite_or_pretix_format(url)
+
+                # Assert
+                self.assertFalse(result)
+
     def test_empty_string(self) -> None:
         """Empty string should fail."""
         # Arrange
