@@ -706,6 +706,7 @@ class TestEventRegistrationUrlPatternsEventIdGroup(TestCase):
             "https://pretix.carpentries.org/community-events/welcome-sessions/845/",
             "https://pretix.carpentries.org/community-events/welcome-sessions/845",
             "pretix.carpentries.org/other-organizer/2026/845/?voucher=ABC",
+            "https://test-pretix.terrier-vibe.ts.net/community-events/welcome-sessions/845/",
         ]
 
         for url in urls:

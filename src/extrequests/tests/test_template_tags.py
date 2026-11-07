@@ -172,6 +172,7 @@ class TestUrlMatchesEventbriteFormat(TestCase):
             "pretix.carpentries.org/community-events/welcome-sessions/845/",
             "https://pretix.carpentries.org/other-organizer/instructor-training/12/?voucher=ABC",
             "https://pretix.carpentries.org/single-segment/845/",
+            "https://test-pretix.terrier-vibe.ts.net/community-events/welcome-sessions/845/",
         ]
 
         for url in urls:
@@ -191,6 +192,8 @@ class TestUrlMatchesEventbriteFormat(TestCase):
             "https://pretix.carpentries.org/community-events/welcome-sessions/845/checkout/",
             "https://pretix.eu/community-events/welcome-sessions/845/",
             "https://pretix.carpentries.org.evil.com/community-events/welcome-sessions/845/",
+            "https://test-pretix.terrier-vibe.ts.net.evil.com/community-events/welcome-sessions/845/",
+            "https://other.terrier-vibe.ts.net/community-events/welcome-sessions/845/",
         ]
 
         for url in urls:

@@ -297,9 +297,10 @@ EVENTBRITE_URL_PATTERN = re.compile(
 # https://pretix.carpentries.org/community-events/welcome-sessions/845/
 # where the path segments before the event number (organizer, event series) are subject to change,
 # plus a possible query at the end
+# and considering the development server at test-pretix.terrier-vibe.ts.net
 PRETIX_URL_PATTERN = re.compile(
     r"^(https?:\/\/)?"  # optional https://
-    r"pretix\.carpentries\.org\/"
+    r"(pretix\.carpentries\.org|test-pretix\.terrier-vibe\.ts\.net)\/"  # production or development server
     r"([a-zA-Z0-9.\-_]+\/)+"  # one or more slug segments, e.g. organizer/event-series/
     r"(?P<event_id>\d+)\/?"  # event number with optional trailing slash
     r"($|\?)",  # end of string or beginning of query (?)
