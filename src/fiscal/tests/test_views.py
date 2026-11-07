@@ -296,6 +296,23 @@ class TestPartnershipRollOver(TestBase):
         self.assertEqual(partnership2.account, self.partnership1.account)
 
     @override_settings(FLAGS={"SERVICE_OFFERING": [("boolean", True)]})
+    def test_rollover_initial_dates_leap_year(self) -> None:
+        """Regression test for #2614."""
+        # Arrange
+        self.partnership1.agreement_start = date(2023, 3, 1)
+        self.partnership1.agreement_end = date(2024, 2, 29)
+        self.partnership1.save()
+        url = reverse("partnership-roll-over", args=[self.partnership1.pk])
+
+        # Act
+        rv = self.client.get(url)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.context["form"].initial["agreement_start"], date(2024, 3, 1))
+        self.assertEqual(rv.context["form"].initial["agreement_end"], date(2025, 2, 28))
+
+    @override_settings(FLAGS={"SERVICE_OFFERING": [("boolean", True)]})
     def test_rollover_freezes_old_account_benefits(self) -> None:
         # Arrange
         AccountBenefit.objects.create(

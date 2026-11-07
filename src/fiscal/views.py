@@ -78,6 +78,7 @@ from src.workshops.base_views import (
 )
 from src.workshops.models import Award, Event, Member, MemberRole, Membership, Organization, Task
 from src.workshops.utils.access import OnlyForAdminsMixin
+from src.workshops.utils.dates import rollover_end_date
 
 REQUIRED_FLAG_NAME = "SERVICE_OFFERING"
 
@@ -762,11 +763,7 @@ class MembershipCreateRollOver(
             "public_status": self.membership.public_status,
             "variant": self.membership.variant,
             "agreement_start": self.membership.agreement_end + timedelta(days=1),
-            "agreement_end": date(
-                self.membership.agreement_end.year + 1,
-                self.membership.agreement_end.month,
-                self.membership.agreement_end.day,
-            ),
+            "agreement_end": rollover_end_date(self.membership.agreement_end),
             "contribution_type": self.membership.contribution_type,
             "registration_code": self.membership.registration_code,
             "workshops_without_admin_fee_per_agreement": self.membership.workshops_without_admin_fee_per_agreement,  # noqa
@@ -1333,11 +1330,7 @@ class PartnershipRollOver(
             "tier": self.partnership.tier,
             "credits": self.partnership.credits,
             "agreement_start": self.partnership.agreement_end + timedelta(days=1),
-            "agreement_end": date(
-                self.partnership.agreement_end.year + 1,
-                self.partnership.agreement_end.month,
-                self.partnership.agreement_end.day,
-            ),
+            "agreement_end": rollover_end_date(self.partnership.agreement_end),
             "agreement_link": self.partnership.agreement_link,
             "registration_code": self.partnership.registration_code,
             "public_status": self.partnership.public_status,

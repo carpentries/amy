@@ -10,7 +10,7 @@ from src.workshops.exceptions import InternalError
 from src.workshops.models import Event, Language, Organization, Person, WorkshopRequest
 from src.workshops.tests.base import TestBase
 from src.workshops.utils.consents import archive_least_recent_active_consents
-from src.workshops.utils.dates import human_daterange
+from src.workshops.utils.dates import human_daterange, rollover_end_date
 from src.workshops.utils.emails import match_notification_email
 from src.workshops.utils.feature_flags import feature_flag_enabled
 from src.workshops.utils.markdown import render_markdown
@@ -343,6 +343,23 @@ class TestHumanDaterange(TestBase):
                 left, right = v
                 output = human_daterange(left, right, **self.formats)
                 self.assertEqual(output, self.expected_outputs[i])
+
+
+class TestRolloverEndDate(TestCase):
+    def test_function(self) -> None:
+        data = [
+            # (previous end, expected new end)
+            (date(2023, 12, 31), date(2024, 12, 31)),
+            (date(2021, 3, 1), date(2022, 3, 1)),
+            (date(2024, 2, 29), date(2025, 2, 28)),  # leap -> non-leap
+            (date(2023, 2, 28), date(2024, 2, 29)),  # end of Feb in non-leap -> leap
+            (date(2024, 2, 28), date(2025, 2, 28)),  # not end of Feb in leap year
+            (date(2022, 2, 28), date(2023, 2, 28)),  # non-leap -> non-leap
+            (date(2024, 4, 30), date(2025, 4, 30)),
+        ]
+        for previous_end, expected in data:
+            with self.subTest(previous_end=previous_end):
+                self.assertEqual(rollover_end_date(previous_end), expected)
 
 
 class TestMatchingNotificationEmail(TestBase):
