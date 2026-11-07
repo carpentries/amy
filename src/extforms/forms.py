@@ -7,11 +7,10 @@ from urllib.parse import urlparse
 from crispy_forms.layout import HTML, Div, Layout
 from django import forms
 from django.core.exceptions import ValidationError
-from django.db.models.fields import BLANK_CHOICE_DASH
 from django.http import HttpRequest
 from django_recaptcha.fields import ReCaptchaField
 
-from src.consents.forms import option_display_value
+from src.consents.forms import changed_consents, create_consent_field
 from src.consents.models import Term, TrainingRequestConsent
 from src.extrequests.forms import (
     SelfOrganisedSubmissionBaseForm,
@@ -238,24 +237,7 @@ class TrainingRequestForm(forms.ModelForm[TrainingRequest]):
 
     def set_consent_fields(self, terms: Iterable[Term]) -> None:
         for term in terms:
-            self.fields[term.slug] = self.create_consent_field(term)
-
-    def create_consent_field(self, term: Term) -> forms.ChoiceField:
-        options = [(opt.pk, option_display_value(opt)) for opt in term.options]
-        label = term.training_request_content or term.content
-        required = term.required_type == Term.PROFILE_REQUIRE_TYPE
-        initial = None
-        attrs = {"class": "border border-warning"} if initial is None else {}
-
-        field = forms.ChoiceField(
-            choices=BLANK_CHOICE_DASH + options,  # type: ignore[operator]
-            label=label,
-            required=required,
-            initial=initial,
-            help_text=term.help_text or "",
-            widget=forms.Select(attrs=attrs),
-        )
-        return field
+            self.fields[term.slug] = create_consent_field(term, label=term.training_request_content or term.content)
 
     @feature_flag_enabled("ENFORCE_MEMBER_CODES")
     def validate_member_code(self, request: HttpRequest) -> None | dict[str, ValidationError]:
@@ -335,10 +317,7 @@ class TrainingRequestForm(forms.ModelForm[TrainingRequest]):
     def save(self, *args: Any, **kwargs: Any) -> TrainingRequest:
         training_request = super().save(*args, **kwargs)
         new_consents: list[TrainingRequestConsent] = []
-        for term in self.terms:
-            option_id = self.cleaned_data.get(term.slug)
-            if not option_id:
-                continue
+        for term, option_id, _ in changed_consents(self.terms, self.cleaned_data, {}):
             new_consents.append(
                 TrainingRequestConsent(
                     training_request=training_request,

@@ -20,7 +20,7 @@ from src.consents.models import (
     TermOptionChoices,
     TrainingRequestConsent,
 )
-from src.extrequests.forms import TrainingRequestsMergeForm
+from src.extrequests.forms import TrainingRequestsMergeForm, TrainingRequestUpdateForm
 from src.extrequests.views import _match_training_request_to_person
 from src.fiscal.models import Partnership, PartnershipTier
 from src.offering.models import Account, AccountBenefit, Benefit
@@ -2090,4 +2090,100 @@ class TestTrainingRequestMerging(TestBase):
         self.assertEqual(
             len(TrainingRequestConsent.objects.filter(training_request__in=[self.first_req, self.second_req])),
             0,
+        )
+
+
+class TestTrainingRequestUpdateConsents(TestBase):
+    """Regression tests for #2608: data privacy consent given in the training request
+    form wasn't shown (and couldn't be edited) in the admin edit form."""
+
+    def setUp(self) -> None:
+        self._setUpUsersAndLogin()
+        self.request = create_training_request(state="p", person=None)
+        self.privacy_policy_term = Term.objects.get_by_key(TermEnum.PRIVACY_POLICY)
+        self.agree = TermOption.objects.filter(term=self.privacy_policy_term).get_agree_term_option()
+        # Privacy policy is a required term and only has an "agree" option by default.
+        self.decline, _ = TermOption.objects.get_or_create(
+            term=self.privacy_policy_term, option_type=TermOptionChoices.DECLINE, archived_at=None
+        )
+
+    def test_deprecated_data_privacy_agreement_not_in_form(self) -> None:
+        form = TrainingRequestUpdateForm(instance=self.request)
+        self.assertNotIn("data_privacy_agreement", form.fields)
+
+    def test_consent_fields_initial_values(self) -> None:
+        # Arrange
+        TrainingRequestConsent.objects.create(
+            training_request=self.request, term=self.privacy_policy_term, term_option=self.agree
+        )
+
+        # Act
+        form = TrainingRequestUpdateForm(instance=self.request)
+
+        # Assert
+        self.assertEqual(form[self.privacy_policy_term.slug].initial, self.agree.pk)
+
+    def test_consent_fields_initial_values_skip_archived(self) -> None:
+        TrainingRequestConsent.objects.create(
+            training_request=self.request,
+            term=self.privacy_policy_term,
+            term_option=self.agree,
+            archived_at=datetime.now(UTC),
+        )
+        form = TrainingRequestUpdateForm(instance=self.request)
+        self.assertIsNone(form[self.privacy_policy_term.slug].initial)
+
+    def test_edit_view_shows_consent(self) -> None:
+        TrainingRequestConsent.objects.create(
+            training_request=self.request, term=self.privacy_policy_term, term_option=self.agree
+        )
+        rv = self.client.get(reverse("trainingrequest_edit", args=[self.request.pk]))
+        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.context["form"][self.privacy_policy_term.slug].value(), self.agree.pk)
+
+    def test_save_consents_changed(self) -> None:
+        # Arrange
+        old_consent = TrainingRequestConsent.objects.create(
+            training_request=self.request, term=self.privacy_policy_term, term_option=self.agree
+        )
+        form = TrainingRequestUpdateForm(instance=self.request)
+        form.cleaned_data = {term.slug: "" for term in form.terms}
+        form.cleaned_data[self.privacy_policy_term.slug] = str(self.decline.pk)
+
+        # Act
+        form.save_consents(self.request)
+
+        # Assert
+        old_consent.refresh_from_db()
+        self.assertTrue(old_consent.is_archived())
+        TrainingRequestConsent.objects.active().get(
+            training_request=self.request, term=self.privacy_policy_term, term_option=self.decline
+        )
+
+    def test_save_consents_unchanged(self) -> None:
+        # Arrange
+        consent = TrainingRequestConsent.objects.create(
+            training_request=self.request, term=self.privacy_policy_term, term_option=self.agree
+        )
+        form = TrainingRequestUpdateForm(instance=self.request)
+        form.cleaned_data = {term.slug: "" for term in form.terms}
+        form.cleaned_data[self.privacy_policy_term.slug] = str(self.agree.pk)
+
+        # Act
+        form.save_consents(self.request)
+
+        # Assert
+        consent.refresh_from_db()
+        self.assertTrue(consent.is_active())
+        self.assertEqual(TrainingRequestConsent.objects.filter(training_request=self.request).count(), 1)
+
+    def test_save_consents_new(self) -> None:
+        form = TrainingRequestUpdateForm(instance=self.request)
+        form.cleaned_data = {term.slug: "" for term in form.terms}
+        form.cleaned_data[self.privacy_policy_term.slug] = str(self.agree.pk)
+
+        form.save_consents(self.request)
+
+        TrainingRequestConsent.objects.active().get(
+            training_request=self.request, term=self.privacy_policy_term, term_option=self.agree
         )
