@@ -198,7 +198,7 @@ class TrainingRequestFilter(AMYFilterSet):
             # otherwise, try to extract an ID from the input
             value = get_event_id_from_pretix_or_eventbrite_url_or_return_input(value)
 
-        return queryset.filter(eventbrite_url__icontains=value)
+        return queryset.filter(event_registration_url__icontains=value)
 
 
 # ------------------------------------------------------------

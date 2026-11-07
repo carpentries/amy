@@ -2212,7 +2212,7 @@ class TrainingRequest(
         help_text="A member of our team will check the code and follow up with you if "
         "there are any problems that require your attention.",
     )
-    eventbrite_url = models.URLField(
+    event_registration_url = models.URLField(
         null=False,
         blank=True,
         default="",

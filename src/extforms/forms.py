@@ -74,7 +74,7 @@ class TrainingRequestForm(forms.ModelForm[TrainingRequest]):
             "family",
             "member_code",
             "member_code_override",
-            "eventbrite_url",
+            "event_registration_url",
             "email",
             "secondary_email",
             "github",
@@ -294,9 +294,9 @@ class TrainingRequestForm(forms.ModelForm[TrainingRequest]):
 
         return errors
 
-    def clean_eventbrite_url(self) -> str:
-        """Check that entered URL includes 'eventbrite' in the domain."""
-        event_registration_url = str(self.cleaned_data.get("eventbrite_url", ""))
+    def clean_event_registration_url(self) -> str:
+        """Check that entered URL includes 'pretix' or 'eventbrite' in the domain."""
+        event_registration_url = str(self.cleaned_data.get("event_registration_url", ""))
         hostname = urlparse(event_registration_url).hostname or ""
         # This is a looser check than `url_matches_eventbrite_or_pretix_format` because it only checks the hostname,
         # not the full URL format.

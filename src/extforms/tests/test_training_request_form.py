@@ -34,7 +34,7 @@ class TestTrainingRequestForm(TestBase):
             "review_process": "preapproved",
             "benefit": self.benefit.pk,
             "member_code": "coolprogrammers",
-            "eventbrite_url": "https://www.eventbrite.com/e/711576483417",
+            "event_registration_url": "https://www.eventbrite.com/e/711576483417",
             "personal": "John",
             "family": "Smith",
             "email": "john@smith.com",
@@ -489,11 +489,11 @@ class TestTrainingRequestForm(TestBase):
         self.assertIn(self.MEMBER_CODE_OVERRIDE_EMAIL_WARNING, msg.body)
         self.assertNotIn(settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"], msg.body)  # type: ignore[index]
 
-    def test_eventbrite_url_validation__none(self) -> None:
+    def test_event_registration_url_validation__none(self) -> None:
         """Should not error if no URL is entered."""
         # Arrange
         self.setUpMembership()
-        data = {"eventbrite_url": ""}
+        data = {"event_registration_url": ""}
 
         # Act
         rv = self.client.post(reverse("training_request"), data=data)
@@ -502,11 +502,11 @@ class TestTrainingRequestForm(TestBase):
         self.assertEqual(rv.status_code, 200)
         self.assertNotContains(rv, self.INVALID_EVENTBRITE_URL_ERROR)
 
-    def test_eventbrite_url_validation__invalid(self) -> None:
+    def test_event_registration_url_validation__invalid(self) -> None:
         """Should error if a non-Eventbrite and non-Pretix URL is entered."""
         # Arrange
         self.setUpMembership()
-        data = {"eventbrite_url": "https://google.com"}
+        data = {"event_registration_url": "https://google.com"}
 
         # Act
         rv = self.client.post(reverse("training_request"), data=data)
@@ -515,11 +515,11 @@ class TestTrainingRequestForm(TestBase):
         self.assertEqual(rv.status_code, 200)
         self.assertContains(rv, self.INVALID_EVENTBRITE_URL_ERROR)
 
-    def test_eventbrite_url_validation__valid(self) -> None:
+    def test_event_registration_url_validation__valid(self) -> None:
         """Should not error if an Eventbrite URL is entered."""
         # Arrange
         self.setUpMembership()
-        data = {"eventbrite_url": "https://www.eventbrite.com/e/711576483417"}
+        data = {"event_registration_url": "https://www.eventbrite.com/e/711576483417"}
 
         # Act
         rv = self.client.post(reverse("training_request"), data=data)
@@ -528,11 +528,11 @@ class TestTrainingRequestForm(TestBase):
         self.assertEqual(rv.status_code, 200)
         self.assertNotContains(rv, self.INVALID_EVENTBRITE_URL_ERROR)
 
-    def test_eventbrite_url_validation__valid_pretix(self) -> None:
+    def test_event_registration_url_validation__valid_pretix(self) -> None:
         """Should not error if a Pretix URL is entered."""
         # Arrange
         self.setUpMembership()
-        data = {"eventbrite_url": "https://pretix.eu/carpentries/event-slug/"}
+        data = {"event_registration_url": "https://pretix.eu/carpentries/event-slug/"}
 
         # Act
         rv = self.client.post(reverse("training_request"), data=data)
