@@ -1,0 +1,10 @@
+    <div class="markdown-editor row">
+      <div class="col">
+        <h3>Write</h3>
+        {% include 'django/forms/widgets/textarea.html' %}
+      </div>
+      <div class="col">
+        <h3>Preview</h3>
+        <div class="markdown-preview" id="{{ widget.attrs.id }}_preview"></div>
+      </div>
+    </div>

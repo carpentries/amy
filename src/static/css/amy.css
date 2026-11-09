@@ -208,7 +208,7 @@ form .form-check label, form .checkbox label {
     display: block;
 }
 
-.markdownx.row .col textarea {
+.markdown-editor.row .col textarea {
     width: 100%;
 }
 

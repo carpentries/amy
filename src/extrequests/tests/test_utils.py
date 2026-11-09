@@ -4,11 +4,13 @@ from django.test import TestCase
 
 from src.extrequests.tests.test_training_request import create_training_request
 from src.extrequests.utils import (
+    EVENTBRITE_URL_PATTERN,
+    PRETIX_URL_PATTERN,
     accept_training_request_and_match_to_event,
     get_account_benefit_from_partnership,
     get_account_benefit_or_none_from_code,
     get_account_benefit_warnings_after_match,
-    get_eventbrite_id_from_url_or_return_input,
+    get_event_id_from_pretix_or_eventbrite_url_or_return_input,
     get_membership_or_none_from_code,
     get_membership_warnings_after_match,
     get_partnership_or_none_from_code,
@@ -628,13 +630,13 @@ class TestGetMembershipWarningsAfterMatch(TestBase):
         self.assertListEqual(expected, result)
 
 
-class TestGetEventbriteIdFromUrl(TestCase):
+class TestGetEventIdFromPretixOrEventbriteUrl(TestCase):
     def test_long_url(self) -> None:
         # Arrange
         url = "https://www.eventbrite.com/e/online-instructor-training-7-8-november-2023-tickets-711575811407?aff=oddtdtcreator"  # noqa: E501
 
         # Act
-        result = get_eventbrite_id_from_url_or_return_input(url)
+        result = get_event_id_from_pretix_or_eventbrite_url_or_return_input(url)
 
         # Assert
         self.assertEqual(result, "711575811407")
@@ -644,7 +646,7 @@ class TestGetEventbriteIdFromUrl(TestCase):
         url = "https://www.eventbrite.com/e/711575811407"
 
         # Act
-        result = get_eventbrite_id_from_url_or_return_input(url)
+        result = get_event_id_from_pretix_or_eventbrite_url_or_return_input(url)
 
         # Assert
         self.assertEqual(result, "711575811407")
@@ -654,10 +656,67 @@ class TestGetEventbriteIdFromUrl(TestCase):
         url = "https://www.eventbrite.com/myevent?eid=711575811407"
 
         # Act
-        result = get_eventbrite_id_from_url_or_return_input(url)
+        result = get_event_id_from_pretix_or_eventbrite_url_or_return_input(url)
 
         # Assert
         self.assertEqual(result, "711575811407")
+
+    def test_pretix_url(self) -> None:
+        # Arrange
+        url = "https://pretix.carpentries.org/community-events/welcome-sessions/845/"
+
+        # Act
+        result = get_event_id_from_pretix_or_eventbrite_url_or_return_input(url)
+
+        # Assert
+        self.assertEqual(result, "845")
+
+    def test_no_id_returns_input(self) -> None:
+        # Arrange
+        url = "https://pretix.carpentries.org/community-events/welcome-sessions/"
+
+        # Act
+        result = get_event_id_from_pretix_or_eventbrite_url_or_return_input(url)
+
+        # Assert
+        self.assertEqual(result, url)
+
+
+class TestEventRegistrationUrlPatternsEventIdGroup(TestCase):
+    def test_eventbrite_event_id(self) -> None:
+        # Arrange
+        urls = [
+            "https://www.eventbrite.com/e/online-instructor-training-7-8-november-2023-tickets-711575811407?aff=oddtdtcreator",  # noqa: E501
+            "https://www.eventbrite.com/e/711575811407",
+            "www.eventbrite.co.uk/e/711575811407",
+        ]
+
+        for url in urls:
+            with self.subTest(url=url):
+                # Act
+                match = EVENTBRITE_URL_PATTERN.search(url)
+
+                # Assert
+                assert match is not None
+                self.assertEqual(match.group("event_id"), "711575811407")
+
+    def test_pretix_event_id(self) -> None:
+        # Arrange
+        urls = [
+            "https://pretix.carpentries.org/community-events/welcome-sessions/845/",
+            "https://pretix.carpentries.org/community-events/welcome-sessions/845",
+            "pretix.carpentries.org/other-organizer/2026/845/?voucher=ABC",
+            "https://test-pretix.terrier-vibe.ts.net/community-events/welcome-sessions/845/",
+        ]
+
+        for url in urls:
+            with self.subTest(url=url):
+                # Act
+                match = PRETIX_URL_PATTERN.search(url)
+
+                # Assert
+                assert match is not None
+                self.assertEqual(match.group("event_id"), "845")
 
 
 class TestGetAccountBenefitWarningsAfterMatch(TestBase):

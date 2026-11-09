@@ -8,7 +8,6 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Permission
 from django.urls import URLPattern, URLResolver, reverse
 from django.views.generic import RedirectView, View
-from markdownx.views import ImageUploadView, MarkdownifyView
 from rest_framework.views import APIView
 
 from config import urls
@@ -246,58 +245,48 @@ class TestViews(TestBase):
                     )
 
                 else:  # class based view
-                    is_markdownx_view = class_ is not None and (
-                        issubclass(class_, MarkdownifyView) or issubclass(class_, ImageUploadView)
+                    self.assertTrue(
+                        acl is None,
+                        "It looks like you used access control decorator on a class based view. Use mixin instead.",
                     )
 
-                    if is_markdownx_view:
-                        self.assertTrue(
-                            acl is not None,
-                            "Markdownx views must be decorated with `login_required`.",
-                        )
+                    is_model_admin = isinstance(model_admin, ModelAdmin)
+                    is_admin_site = isinstance(admin_site, AdminSite)
+                    is_api_view = class_ is not None and issubclass(class_, APIView)
+                    is_redirect_view = class_ is not None and issubclass(class_, RedirectView)
+                    is_view = class_ is not None and issubclass(class_, View)
+
+                    if is_model_admin or is_admin_site:
+                        pass  # ignore admin views
+                    elif is_api_view:
+                        pass  # ignore REST API views
+                    elif is_redirect_view:
+                        pass  # ignore pure redirect views
                     else:
-                        self.assertTrue(
-                            acl is None,
-                            "It looks like you used access control decorator on a class based view. Use mixin instead.",
+                        assert is_view
+                        assert class_
+
+                        mixins = set(class_.__mro__)
+                        desired_mixins = {
+                            OnlyForAdminsMixin,
+                            LoginNotRequiredMixin,
+                            LoginRequiredMixin,
+                        }
+                        found = mixins & desired_mixins
+
+                        self.assertNotEqual(
+                            len(found),
+                            0,
+                            f"The view {class_.__name__} ({url}) lacks access control mixin "
+                            "and is probably accessible to every user. If "
+                            "this is what you want, use "
+                            "LoginNotRequiredMixin.",
                         )
-
-                        is_model_admin = isinstance(model_admin, ModelAdmin)
-                        is_admin_site = isinstance(admin_site, AdminSite)
-                        is_api_view = class_ is not None and issubclass(class_, APIView)
-                        is_redirect_view = class_ is not None and issubclass(class_, RedirectView)
-                        is_view = class_ is not None and issubclass(class_, View)
-
-                        if is_model_admin or is_admin_site:
-                            pass  # ignore admin views
-                        elif is_api_view:
-                            pass  # ignore REST API views
-                        elif is_redirect_view:
-                            pass  # ignore pure redirect views
-                        else:
-                            assert is_view
-                            assert class_
-
-                            mixins = set(class_.__mro__)
-                            desired_mixins = {
-                                OnlyForAdminsMixin,
-                                LoginNotRequiredMixin,
-                                LoginRequiredMixin,
-                            }
-                            found = mixins & desired_mixins
-
-                            self.assertNotEqual(
-                                len(found),
-                                0,
-                                f"The view {class_.__name__} ({url}) lacks access control mixin "
-                                "and is probably accessible to every user. If "
-                                "this is what you want, use "
-                                "LoginNotRequiredMixin.",
-                            )
-                            self.assertEqual(
-                                len(found),
-                                1,
-                                "You have more than one access control mixin defined in this view.",
-                            )
+                        self.assertEqual(
+                            len(found),
+                            1,
+                            "You have more than one access control mixin defined in this view.",
+                        )
 
     def test_all_cbv_permissions_exist(self) -> None:
         """

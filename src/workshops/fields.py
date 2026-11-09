@@ -1,10 +1,12 @@
 from collections.abc import Mapping, Sequence
 from typing import Any, Protocol, cast
+from urllib.parse import urlencode
 
 import pytz
 from django import forms
 from django.core.validators import EmailValidator, MaxLengthValidator, RegexValidator
 from django.db import models
+from django.urls import reverse
 from django.utils.safestring import SafeString, mark_safe
 from django_select2.forms import HeavySelect2Widget as DS2_HeavySelect2Widget
 from django_select2.forms import (
@@ -220,6 +222,27 @@ class TomSelectWidget(forms.Select):
         default_attrs = {"class": "tom-select"}
         kwargs.setdefault("attrs", {}).update(default_attrs)
         super().__init__(*args, **kwargs)
+
+
+class MarkdownTextarea(forms.Textarea):
+    """Textarea with a live Markdown preview rendered server-side via HTMX."""
+
+    template_name = "markdown/widget.html"
+
+    def get_context(self, name: str, value: Any, attrs: dict[str, Any] | None) -> dict[str, Any]:
+        context = super().get_context(name, value, attrs)
+        widget_attrs = context["widget"]["attrs"]
+        widget_attrs.setdefault("id", f"id_{name}")
+        widget_attrs.update(
+            {
+                "hx-post": f"{reverse('markdown_preview')}?{urlencode({'field': name})}",
+                "hx-trigger": "load, input changed delay:300ms",
+                "hx-target": f"#{widget_attrs['id']}_preview",
+                "hx-params": name,
+                "hx-sync": "this:replace",
+            }
+        )
+        return context
 
 
 class Select2MultipleWidget(Select2BootstrapMixin, DS2_Select2MultipleWidget):  # type: ignore

@@ -7,8 +7,11 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import Case, When
 from django.http import HttpRequest
+from django.utils import timezone
 from flags.state import flag_enabled  # type: ignore[import-untyped]
 
+from src.consents.forms import changed_consents, create_consent_field
+from src.consents.models import Term, TrainingRequestConsent
 from src.extrequests.models import (
     DataVariant,
     SelfOrganisedSubmission,
@@ -1321,7 +1324,10 @@ class TrainingRequestUpdateForm(forms.ModelForm[TrainingRequest]):
         # `tasks` is maintained by matching/unmatching, not edited by hand - and with
         # `exclude = ()` it would otherwise render every Task in the database as a
         # plain <select multiple>, since there's no lookup view behind it.
-        exclude = ("tasks",)
+        # `data_privacy_agreement` is deprecated: the training request form no longer
+        # sets it. Data privacy consent is stored as `TrainingRequestConsent` and is
+        # edited via the consent fields added in `__init__` (#2608).
+        exclude = ("tasks", "data_privacy_agreement")
         widgets = {
             "occupation": forms.RadioSelect(),
             "domains": forms.CheckboxSelectMultiple(),
@@ -1339,12 +1345,52 @@ class TrainingRequestUpdateForm(forms.ModelForm[TrainingRequest]):
         self.request_http = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
 
+        # Same terms as in the training request form (`TrainingRequestForm`).
+        self.terms = list(
+            Term.objects.prefetch_active_options().filter(required_type=Term.PROFILE_REQUIRE_TYPE).order_by("slug")
+        )
+        self.current_consents: dict[int, TrainingRequestConsent] = (
+            {
+                consent.term_id: consent
+                for consent in TrainingRequestConsent.objects.active().filter(training_request=self.instance)
+            }
+            if self.instance.pk
+            else {}
+        )
+        for term in self.terms:
+            # Not required: older training requests may not have any consents
+            # recorded, and that shouldn't prevent admins from editing them.
+            self.fields[term.slug] = create_consent_field(
+                term,
+                self.current_consents.get(term.pk),
+                label=term.training_request_content or term.content,
+                required=False,
+            )
+
     def clean(self) -> None:
         super().clean()
 
         errors = self.validate_member_code(request=self.request_http)
         if errors:
             raise ValidationError(errors)
+
+    def save(self, commit: bool = True) -> TrainingRequest:
+        training_request = super().save(commit=commit)
+        if commit:
+            self.save_consents(training_request)
+        return training_request
+
+    def save_consents(self, training_request: TrainingRequest) -> None:
+        to_archive: list[int] = []
+        to_create: list[TrainingRequestConsent] = []
+        for term, option_id, consent in changed_consents(self.terms, self.cleaned_data, self.current_consents):
+            if consent:
+                to_archive.append(consent.pk)
+            to_create.append(
+                TrainingRequestConsent(training_request=training_request, term_id=term.pk, term_option_id=option_id)
+            )
+        TrainingRequestConsent.objects.filter(pk__in=to_archive).update(archived_at=timezone.now())
+        TrainingRequestConsent.objects.bulk_create(to_create)
 
     @feature_flag_enabled("ENFORCE_MEMBER_CODES")
     def validate_member_code(self, request: HttpRequest) -> None | dict[str, ValidationError]:

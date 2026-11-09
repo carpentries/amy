@@ -289,9 +289,9 @@ class Command(BaseCommand):
 
         occupation = choice(TrainingRequest.OCCUPATION_CHOICES)[0]
         underrepresented_choices = TrainingRequest.UNDERREPRESENTED_CHOICES
-        eventbrite_url = ""
+        event_registration_url = ""
         if registration_code and randbool(0.5):
-            eventbrite_url = f"https://eventbrite.com/fake-{self.faker.random_number(digits=12, fix_len=True)}"
+            event_registration_url = f"https://eventbrite.com/fake-{self.faker.random_number(digits=12, fix_len=True)}"
         req = TrainingRequest.objects.create(
             state=state,
             person=person_or_None,
@@ -299,7 +299,7 @@ class Command(BaseCommand):
             review_process="preapproved" if registration_code else "open",
             member_code=registration_code,
             member_code_override=override_invalid_code,
-            eventbrite_url=eventbrite_url,
+            event_registration_url=event_registration_url,
             personal=person.personal,
             middle="",
             family=person.family,

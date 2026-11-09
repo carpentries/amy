@@ -823,8 +823,10 @@ def _match_training_request_to_person(
 
     # Create new style consents based on the training request consents used in the
     # training request form.
-    training_request_consents = TrainingRequestConsent.objects.filter(training_request=training_request).select_related(
-        "term_option", "term"
+    training_request_consents = (
+        TrainingRequestConsent.objects.active()
+        .filter(training_request=training_request)
+        .select_related("term_option", "term")
     )
     for consent in training_request_consents:
         try:
@@ -887,9 +889,9 @@ class TrainingRequestDetails(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDet
         context["title"] = f"Training request #{req.pk}"
         context["consents"] = {
             consent.term.key: consent
-            for consent in TrainingRequestConsent.objects.select_related("term", "term_option").filter(
-                training_request=req
-            )
+            for consent in TrainingRequestConsent.objects.active()
+            .select_related("term", "term_option")
+            .filter(training_request=req)
         }
         context["consents_content"] = {term.key: term.content for term in Term.objects.filter(slug__in=self.TERM_SLUGS)}
         return context
@@ -1049,15 +1051,15 @@ def trainingrequests_merge(request: AuthenticatedHttpRequest) -> HttpResponse:
         "form": form,
         "obj_a_consents": {
             consent.term.key: consent
-            for consent in TrainingRequestConsent.objects.select_related("term", "term_option").filter(
-                training_request=obj_a
-            )
+            for consent in TrainingRequestConsent.objects.active()
+            .select_related("term", "term_option")
+            .filter(training_request=obj_a)
         },
         "obj_b_consents": {
             consent.term.key: consent
-            for consent in TrainingRequestConsent.objects.select_related("term", "term_option").filter(
-                training_request=obj_b
-            )
+            for consent in TrainingRequestConsent.objects.active()
+            .select_related("term", "term_option")
+            .filter(training_request=obj_b)
         },
     }
     return render(request, "requests/trainingrequests_merge.html", context)

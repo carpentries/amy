@@ -7,7 +7,6 @@ from django.urls import reverse
 from django.views.generic.detail import SingleObjectMixin
 from flags.views import FlaggedViewMixin  # type: ignore[import-untyped]
 from jinja2 import DebugUndefined, Environment, TemplateError
-from markdownx.utils import markdownify
 
 from src.emails.controller import EmailController
 from src.emails.filters import EmailTemplateFilter, ScheduledEmailFilter
@@ -45,6 +44,7 @@ from src.workshops.base_views import (
     AMYUpdateView,
 )
 from src.workshops.utils.access import OnlyForAdminsMixin
+from src.workshops.utils.markdown import render_markdown
 
 
 class EmailTemplateList(OnlyForAdminsMixin, FlaggedViewMixin, PermissionRequiredMixin, AMYListView[EmailTemplate]):  # type: ignore[misc]
@@ -67,7 +67,7 @@ class EmailTemplateDetails(OnlyForAdminsMixin, FlaggedViewMixin, PermissionRequi
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["title"] = f'Email template "{self.object}"'
-        context["rendered_body"] = markdownify(self.object.body)  # type: ignore
+        context["rendered_body"] = render_markdown(self.object.body)
 
         signal = find_signal_by_name(self.object.signal, ALL_SIGNALS)
 
@@ -180,9 +180,9 @@ class ScheduledEmailDetails(
             context["rendered_context"] = f"Unable to render context: {exc}"
 
         try:
-            context["rendered_body"] = markdownify(jinjanify(engine, self.object.body, body_context))  # type: ignore
+            context["rendered_body"] = render_markdown(jinjanify(engine, self.object.body, body_context))
         except (TemplateError, AttributeError, ValueError, TypeError) as exc:
-            context["rendered_body"] = markdownify(f"Unable to render template: {exc}")  # type: ignore
+            context["rendered_body"] = render_markdown(f"Unable to render template: {exc}")
 
         try:
             context["rendered_subject"] = jinjanify(engine, self.object.subject, body_context)

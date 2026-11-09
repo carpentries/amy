@@ -1523,6 +1523,19 @@ class TestMembershipCreateRollOver(TestBase):
         self.assertEqual(last_membership.rolled_from_membership, self.membership)
         self.assertEqual(last_membership.rolled_to_membership, None)
 
+    def test_membership_rollover_initial_dates_leap_year(self) -> None:
+        """Regression test for #2614."""
+        self.setUpMembership()
+        self.membership.agreement_start = date(2023, 3, 1)
+        self.membership.agreement_end = date(2024, 2, 29)
+        self.membership.save()
+
+        rv = self.client.get(reverse("membership_create_roll_over", args=[self.membership.pk]))
+
+        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.context["form"].initial["agreement_start"], date(2024, 3, 1))
+        self.assertEqual(rv.context["form"].initial["agreement_end"], date(2025, 2, 28))
+
     def test_membership_rollover_negative_remaining_values(self) -> None:
         """If current membership has used more seats/workshops than allowed, and
         its remaining values are negative, the roll-over form should have max values

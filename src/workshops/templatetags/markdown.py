@@ -1,9 +1,8 @@
-from typing import cast
-
 from django import template
 from django.template.defaultfilters import stringfilter
-from django.utils.safestring import SafeString, mark_safe
-from markdownx.utils import markdownify
+from django.utils.safestring import SafeString
+
+from src.workshops.utils.markdown import render_markdown
 
 register = template.Library()
 
@@ -11,4 +10,4 @@ register = template.Library()
 @register.filter()
 @stringfilter
 def mkdown(value: str) -> SafeString:
-    return mark_safe(cast(str, markdownify(value)))  # type: ignore[no-untyped-call]
+    return render_markdown(value)

@@ -17,7 +17,7 @@ from src.consents.models import Consent, Term, TermEnum
 from src.trainings.models import Involvement
 from src.workshops.consts import IATA_AIRPORTS
 from src.workshops.filters import filter_taught_workshops
-from src.workshops.forms import PersonForm, PersonsMergeForm
+from src.workshops.forms import PersonForm, PersonPasswordForm, PersonsMergeForm
 from src.workshops.mixins import GenderMixin
 from src.workshops.models import (
     Award,
@@ -681,6 +681,123 @@ class TestPersonPassword(TestBase):
         user = self.admin
         rv = self.client.get(reverse("person_password", args=[user.pk]))
         assert rv.status_code == 403
+
+    def test_force_password_change_field_shown_only_to_superuser(self) -> None:
+        # Act
+        self.client.login(username="admin", password="admin")
+        admin_form = self.client.get(reverse("person_password", args=[self.user.pk])).context["form"]
+        self.client.login(username="user", password="user")
+        user_form = self.client.get(reverse("person_password", args=[self.user.pk])).context["form"]
+
+        # Assert
+        self.assertIsInstance(admin_form, PersonPasswordForm)
+        self.assertIn("force_password_change_on_login", admin_form.fields)
+        self.assertNotIn("force_password_change_on_login", user_form.fields)
+
+    def test_superuser_forces_password_change_for_other_user(self) -> None:
+        # Arrange
+        self.client.login(username="admin", password="admin")
+        data = {
+            "new_password1": "new_password",
+            "new_password2": "new_password",
+            "force_password_change_on_login": "on",
+        }
+
+        # Act
+        rv = self.client.post(reverse("person_password", args=[self.user.pk]), data)
+
+        # Assert
+        self.assertRedirects(rv, reverse("person_details", args=[self.user.pk]), fetch_redirect_response=False)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password("new_password"))
+        self.assertTrue(self.user.force_password_change_on_login)
+
+    def test_superuser_sets_password_without_forcing_change(self) -> None:
+        # Arrange
+        self.user.force_password_change_on_login = True
+        self.user.save()
+        self.client.login(username="admin", password="admin")
+        data = {"new_password1": "new_password", "new_password2": "new_password"}
+
+        # Act
+        self.client.post(reverse("person_password", args=[self.user.pk]), data)
+
+        # Assert
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.force_password_change_on_login)
+
+    def test_superuser_cannot_force_password_change_on_themselves(self) -> None:
+        # Arrange
+        self.admin.force_password_change_on_login = True
+        self.admin.save()
+        self.client.login(username="admin", password="admin")
+        data = {
+            "new_password1": "new_password",
+            "new_password2": "new_password",
+            "force_password_change_on_login": "on",
+        }
+
+        # Act
+        self.client.post(reverse("person_password", args=[self.admin.pk]), data)
+
+        # Assert
+        self.admin.refresh_from_db()
+        self.assertFalse(self.admin.force_password_change_on_login)
+
+    def test_user_password_change_clears_flag(self) -> None:
+        # Arrange
+        self.user.force_password_change_on_login = True
+        self.user.save()
+        self.client.login(username="user", password="user")
+        data = {
+            "old_password": "user",
+            "new_password1": "new_password",
+            "new_password2": "new_password",
+        }
+
+        # Act
+        rv = self.client.post(reverse("person_password", args=[self.user.pk]), data)
+
+        # Assert
+        self.assertRedirects(rv, reverse("person_details", args=[self.user.pk]), fetch_redirect_response=False)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password("new_password"))
+        self.assertFalse(self.user.force_password_change_on_login)
+
+    def test_invalid_password_change_keeps_flag(self) -> None:
+        # Arrange
+        self.user.force_password_change_on_login = True
+        self.user.save()
+        self.client.login(username="user", password="user")
+        data = {
+            "old_password": "wrong",
+            "new_password1": "new_password",
+            "new_password2": "new_password",
+        }
+
+        # Act
+        rv = self.client.post(reverse("person_password", args=[self.user.pk]), data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.force_password_change_on_login)
+
+    def test_unsafe_next_url_ignored(self) -> None:
+        # Arrange
+        self.client.login(username="user", password="user")
+        url = reverse("person_password", args=[self.user.pk])
+        data = {
+            "old_password": "user",
+            "new_password1": "new_password",
+            "new_password2": "new_password",
+        }
+
+        # Act
+        rv = self.client.post(f"{url}?{urlencode({'next': 'https://evil.example.com/'})}", data)
+
+        # Assert
+        self.assertRedirects(rv, reverse("person_details", args=[self.user.pk]), fetch_redirect_response=False)
 
 
 class TestPersonMerging(TestBase):

@@ -4,6 +4,7 @@ from src.workshops.consts import COUNTRIES, IATA_AIRPORTS
 from src.workshops.fields import (
     AirportSelect2Widget,
     BlueSkyHandleField,
+    MarkdownTextarea,
     MastodonHandleField,
     NullableGithubUsernameField,
     OrcidField,
@@ -230,3 +231,23 @@ class TestAirportSelect2Widget(TestBase):
         result = self.widget.optgroups("airport_iata", [iata_code])
 
         self.assertEqual(result, [(None, [expected_option], 0)])
+
+
+class TestMarkdownTextarea(TestBase):
+    def test_htmx_attributes(self) -> None:
+        # Arrange
+        widget = MarkdownTextarea()
+        # Act
+        attrs = widget.get_context("comment", "", {"id": "id_comment"})["widget"]["attrs"]
+        # Assert
+        self.assertEqual(attrs["hx-post"], "/markdown/preview/?field=comment")
+        self.assertEqual(attrs["hx-target"], "#id_comment_preview")
+        self.assertEqual(attrs["hx-params"], "comment")
+
+    def test_renders_preview_container(self) -> None:
+        # Arrange
+        widget = MarkdownTextarea()
+        # Act
+        html = widget.render("comment", "", {"id": "id_comment"})
+        # Assert
+        self.assertIn('<div class="markdown-preview" id="id_comment_preview"></div>', html)

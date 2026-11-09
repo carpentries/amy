@@ -7,11 +7,10 @@ from urllib.parse import urlparse
 from crispy_forms.layout import HTML, Div, Layout
 from django import forms
 from django.core.exceptions import ValidationError
-from django.db.models.fields import BLANK_CHOICE_DASH
 from django.http import HttpRequest
 from django_recaptcha.fields import ReCaptchaField
 
-from src.consents.forms import option_display_value
+from src.consents.forms import changed_consents, create_consent_field
 from src.consents.models import Term, TrainingRequestConsent
 from src.extrequests.forms import (
     SelfOrganisedSubmissionBaseForm,
@@ -74,7 +73,7 @@ class TrainingRequestForm(forms.ModelForm[TrainingRequest]):
             "family",
             "member_code",
             "member_code_override",
-            "eventbrite_url",
+            "event_registration_url",
             "email",
             "secondary_email",
             "github",
@@ -238,24 +237,7 @@ class TrainingRequestForm(forms.ModelForm[TrainingRequest]):
 
     def set_consent_fields(self, terms: Iterable[Term]) -> None:
         for term in terms:
-            self.fields[term.slug] = self.create_consent_field(term)
-
-    def create_consent_field(self, term: Term) -> forms.ChoiceField:
-        options = [(opt.pk, option_display_value(opt)) for opt in term.options]
-        label = term.training_request_content or term.content
-        required = term.required_type == Term.PROFILE_REQUIRE_TYPE
-        initial = None
-        attrs = {"class": "border border-warning"} if initial is None else {}
-
-        field = forms.ChoiceField(
-            choices=BLANK_CHOICE_DASH + options,  # type: ignore[operator]
-            label=label,
-            required=required,
-            initial=initial,
-            help_text=term.help_text or "",
-            widget=forms.Select(attrs=attrs),
-        )
-        return field
+            self.fields[term.slug] = create_consent_field(term, label=term.training_request_content or term.content)
 
     @feature_flag_enabled("ENFORCE_MEMBER_CODES")
     def validate_member_code(self, request: HttpRequest) -> None | dict[str, ValidationError]:
@@ -294,12 +276,15 @@ class TrainingRequestForm(forms.ModelForm[TrainingRequest]):
 
         return errors
 
-    def clean_eventbrite_url(self) -> str:
-        """Check that entered URL includes 'eventbrite' in the domain."""
-        eventbrite_url = str(self.cleaned_data.get("eventbrite_url", ""))
-        if eventbrite_url and "eventbrite" not in (urlparse(eventbrite_url).hostname or ""):
-            raise ValidationError("Must be an Eventbrite URL.")
-        return eventbrite_url
+    def clean_event_registration_url(self) -> str:
+        """Check that entered URL includes 'pretix' or 'eventbrite' in the domain."""
+        event_registration_url = str(self.cleaned_data.get("event_registration_url", ""))
+        hostname = urlparse(event_registration_url).hostname or ""
+        # This is a looser check than `url_matches_eventbrite_or_pretix_format` because it only checks the hostname,
+        # not the full URL format.
+        if event_registration_url and not ("eventbrite" in hostname or "pretix" in hostname):
+            raise ValidationError("Must be a Pretix or Eventbrite URL.")
+        return event_registration_url
 
     def clean(self) -> None:
         super().clean()
@@ -335,10 +320,7 @@ class TrainingRequestForm(forms.ModelForm[TrainingRequest]):
     def save(self, *args: Any, **kwargs: Any) -> TrainingRequest:
         training_request = super().save(*args, **kwargs)
         new_consents: list[TrainingRequestConsent] = []
-        for term in self.terms:
-            option_id = self.cleaned_data.get(term.slug)
-            if not option_id:
-                continue
+        for term, option_id, _ in changed_consents(self.terms, self.cleaned_data, {}):
             new_consents.append(
                 TrainingRequestConsent(
                     training_request=training_request,

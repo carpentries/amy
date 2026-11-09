@@ -1,9 +1,8 @@
 import logging
 from datetime import date, datetime
-from io import BytesIO
 from typing import Any, Unpack
 
-import cairosvg
+import typst
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpRequest
@@ -272,19 +271,10 @@ instructor_badge_awarded_cancel_receiver = InstructorBadgeAwardedCancelReceiver(
 instructor_badge_awarded_cancel_signal.connect(instructor_badge_awarded_cancel_receiver)
 
 
-def read_binary_file_and_replace_values(file_path: str, replacements: dict[bytes, bytes]) -> bytes:
-    with open(file_path, "rb") as f:
-        byte_content = f.read()
-        for key, value in replacements.items():
-            byte_content = byte_content.replace(key, value)
-    return byte_content
-
-
-def generate_pdf(svg_file: bytes) -> bytes:
-    file_obj = BytesIO()
-    cairosvg.svg2pdf(svg_file, write_to=file_obj, dpi=90)  # type: ignore[no-untyped-call]
-    file_obj.seek(0)
-    return file_obj.read()
+def generate_pdf(template_path: str, inputs: dict[str, str]) -> bytes:
+    """Compile a Typst template to PDF. `inputs` are available in the template as
+    `sys.inputs` and are always treated as plain text, not as Typst markup."""
+    return typst.compile(template_path, sys_inputs=inputs)
 
 
 def generate_and_attach_certificate_pdf(
@@ -305,11 +295,11 @@ def generate_and_attach_certificate_pdf(
         )
         return
 
-    # Parameters for the SVG file
+    # Parameters for the certificate template
     full_name = sender.generic_relation.person.full_name
     award_date = date.strftime(sender.generic_relation.awarded, r"%d %B %Y")
     signature = settings.CERTIFICATE_SIGNATURE
-    file_path = settings.APPS_DIR / "templates" / "certificates" / "carpentries-instructor.svg"
+    file_path = settings.APPS_DIR / "templates" / "certificates" / "carpentries-instructor.typ"
     hpcc_enabled = request is not None and bool(flag_enabled("HPCC", request=request))
     carpentries = (
         "Carpentry, Software Carpentry, and High Performance Computing Carpentry."
@@ -317,19 +307,16 @@ def generate_and_attach_certificate_pdf(
         else "Carpentry, and Software Carpentry."
     )
 
-    # Prepare SVG file in memory.
-    svg_file = read_binary_file_and_replace_values(
-        file_path=str(file_path),
-        replacements={
-            b"{{name}}": bytes(full_name, encoding="utf-8"),
-            b"{{date}}": bytes(award_date, encoding="utf-8"),
-            b"{{signature}}": bytes(signature, encoding="utf-8"),
-            b"{{carpentries}}": bytes(carpentries, encoding="utf-8"),
+    # Generate PDF from the Typst template (in memory).
+    content = generate_pdf(
+        str(file_path),
+        inputs={
+            "name": full_name,
+            "date": award_date,
+            "signature": signature,
+            "carpentries": carpentries,
         },
     )
-
-    # Generate PDF out of SVG (in memory).
-    content = generate_pdf(svg_file)
 
     # Attach to email.
     EmailController.add_attachment(sender, filename="certificate.pdf", content=content)

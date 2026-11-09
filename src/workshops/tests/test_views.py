@@ -55,3 +55,40 @@ class TestChangesLogView(TestBase):
         # check that links point to the correct versions
         expected = f'<a href="/workshops/version/{version.pk}/">{version}</a>'
         self.assertContains(rv, expected, html=True)
+
+
+class TestMarkdownPreviewView(TestBase):
+    def setUp(self) -> None:
+        super().setUp()
+        self._setUpUsersAndLogin()
+
+    def test_renders_sanitized_markdown(self) -> None:
+        # Act
+        rv = self.client.post(
+            f"{reverse('markdown_preview')}?field=comment",
+            {"comment": "**bold** <script>alert(1)</script>"},
+        )
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.content.decode(), "<p><strong>bold</strong> </p>")
+
+    def test_missing_field(self) -> None:
+        # Act
+        rv = self.client.post(reverse("markdown_preview"), {"comment": "**bold**"})
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.content.decode(), "")
+
+    def test_get_not_allowed(self) -> None:
+        # Act
+        rv = self.client.get(f"{reverse('markdown_preview')}?field=comment")
+        # Assert
+        self.assertEqual(rv.status_code, 405)
+
+    def test_login_required(self) -> None:
+        # Arrange
+        self.client.logout()
+        # Act
+        rv = self.client.post(f"{reverse('markdown_preview')}?field=comment", {"comment": "text"})
+        # Assert
+        self.assertEqual(rv.status_code, 302)

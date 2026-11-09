@@ -8,7 +8,6 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db.models import Model
 from django.dispatch import receiver
 from django.urls import reverse
-from markdownx.fields import MarkdownxFormField
 
 from src.fiscal.fields import FlexibleSplitArrayField
 from src.fiscal.models import Consortium, MembershipTask, Partnership, PartnershipTier
@@ -17,6 +16,7 @@ from src.offering.models import AccountBenefit
 # this is used instead of Django Autocomplete Light widgets
 # see issue #1330: https://github.com/swcarpentry/amy/issues/1330
 from src.workshops.fields import (
+    MarkdownTextarea,
     ModelSelect2MultipleWidget,
     ModelSelect2Widget,
     Select2Widget,
@@ -68,12 +68,12 @@ class OrganizationForm(forms.ModelForm[Organization]):
 
 
 class OrganizationCreateForm(OrganizationForm):
-    comment = MarkdownxFormField(
+    comment = forms.CharField(
         label="Comment",
         help_text="This will be added to comments after the organization is created.",
-        widget=forms.Textarea,
+        widget=MarkdownTextarea,
         required=False,
-    )  # type: ignore
+    )
 
     class Meta(OrganizationForm.Meta):
         fields = OrganizationForm.Meta.fields.copy()
@@ -214,10 +214,10 @@ class MembershipForm(forms.ModelForm[Membership]):
 
 
 class MembershipCreateForm(MembershipForm):
-    comment = MarkdownxFormField(  # type: ignore
+    comment = forms.CharField(
         label="Comment",
         help_text="This will be added to comments after the membership is created.",
-        widget=forms.Textarea,
+        widget=MarkdownTextarea,
         required=False,
     )
 
@@ -482,16 +482,16 @@ class MembershipExtensionForm(forms.Form):
         required=False,
         help_text="Number of days the agreement will be extended.",
     )
-    comment = MarkdownxFormField(
+    comment = forms.CharField(
         label="Comment",
         help_text=(
             "This will be added to comments after the membership is extended. Beginning"
             " of the comment will be prefixed with information about length of the "
             "extension."
         ),
-        widget=forms.Textarea,
+        widget=MarkdownTextarea,
         required=False,
-    )  # type: ignore
+    )
 
     helper = BootstrapHelper()
 
@@ -642,16 +642,16 @@ class PartnershipExtensionForm(forms.Form):
         required=False,
         help_text="Number of days the agreement will be extended.",
     )
-    comment = MarkdownxFormField(
+    comment = forms.CharField(
         label="Comment",
         help_text=(
             "This will be added to comments after the partnership is extended. Beginning"
             " of the comment will be prefixed with information about length of the "
             "extension."
         ),
-        widget=forms.Textarea,
+        widget=MarkdownTextarea,
         required=False,
-    )  # type: ignore
+    )
 
     helper = BootstrapHelper()
 
@@ -685,15 +685,15 @@ class PartnershipCreditsExtensionForm(forms.Form):
         required=False,
         help_text="Number of credits added.",
     )
-    comment = MarkdownxFormField(
+    comment = forms.CharField(
         label="Comment",
         help_text=(
             "This will be added to comments after the partnership is amended. Beginning"
             " of the comment will be prefixed with information about the credits."
         ),
-        widget=forms.Textarea,
+        widget=MarkdownTextarea,
         required=False,
-    )  # type: ignore
+    )
 
     helper = BootstrapHelper()
 

@@ -1,11 +1,12 @@
 import re
 from collections import defaultdict
 from datetime import UTC, date, datetime
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import HTML, Button, Div, Field, Layout, Submit
 from django import forms
+from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.models import Permission
 from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
@@ -16,7 +17,6 @@ from django.urls import reverse
 from django_comments.models import Comment
 from django_countries import Countries
 from django_countries.fields import CountryField
-from markdownx.fields import MarkdownxFormField
 
 from src.communityroles.models import CommunityRole
 from src.dashboard.models import Continent
@@ -26,6 +26,7 @@ from src.dashboard.models import Continent
 from src.workshops.consts import ACCOUNT_BENEFIT_FILTER_WHITELIST
 from src.workshops.fields import (
     AirportSelect2Widget,
+    MarkdownTextarea,
     ModelSelect2MultipleWidget,
     ModelSelect2Widget,
     RadioSelectWithOther,
@@ -409,12 +410,12 @@ class EventForm(forms.ModelForm[Event]):
         ),
     )  # type: ignore
 
-    comment = MarkdownxFormField(
+    comment = forms.CharField(
         label="Comment",
         help_text="Any content in here will be added to comments after this event is saved.",
-        widget=forms.Textarea,
+        widget=MarkdownTextarea,
         required=False,
-    )  # type: ignore
+    )
 
     instructors_pre = forms.URLField(
         label="Assessment survey for instructors:",
@@ -654,12 +655,12 @@ class EventForm(forms.ModelForm[Event]):
 
 
 class EventCreateForm(EventForm):
-    comment = MarkdownxFormField(
+    comment = forms.CharField(
         label="Comment",
         help_text="This will be added to comments after the event is created.",
-        widget=forms.Textarea,
+        widget=MarkdownTextarea,
         required=False,
-    )  # type: ignore
+    )
 
 
 class EventCategoryForm(forms.ModelForm[EventCategory]):
@@ -878,12 +879,12 @@ class PersonForm(forms.ModelForm[Person]):
 
 
 class PersonCreateForm(PersonForm):
-    comment = MarkdownxFormField(
+    comment = forms.CharField(
         label="Comment",
         help_text="This will be added to comments after the person is created.",
-        widget=forms.Textarea,
+        widget=MarkdownTextarea,
         required=False,
-    )  # type: ignore
+    )
 
     class Meta(PersonForm.Meta):
         # remove 'username' field as it's being populated after form save
@@ -891,6 +892,27 @@ class PersonCreateForm(PersonForm):
         fields = PersonForm.Meta.fields.copy()
         fields.remove("username")
         fields.append("comment")
+
+
+# `SetPasswordForm` is generic only in django-stubs; it's not subscriptable at runtime.
+if TYPE_CHECKING:
+    PersonSetPasswordForm = SetPasswordForm[Person]
+else:
+    PersonSetPasswordForm = SetPasswordForm
+
+
+class PersonPasswordForm(PersonSetPasswordForm):
+    force_password_change_on_login = forms.BooleanField(
+        label="Force password change on next login",
+        required=False,
+    )
+
+    def save(self, commit: bool = True) -> Person:
+        user = super().save(commit)
+        user.force_password_change_on_login = self.cleaned_data["force_password_change_on_login"]
+        if commit:
+            user.save()
+        return user
 
 
 class PersonPermissionsForm(forms.ModelForm[Person]):
