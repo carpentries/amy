@@ -13,6 +13,25 @@ Then paste output from that script here.
 
 -----------------------------------------------------------------
 
+## v4.12 - 2026-11-09
+
+### Features
+* fix(#2614): Correctly handle leap-years in partnership or membership rollover - [#3070](https://github.com/carpentries/amy/pull/3070) by @pbanaszkiewicz
+* fix(#3068): Fix mixin order in ConsentsUpdate and unsafe ?next redirect - [#3069](https://github.com/carpentries/amy/pull/3069) by @pbanaszkiewicz
+* feat(#2608): Fix consents in training request edit / accepts - [#3067](https://github.com/carpentries/amy/pull/3067) by @pbanaszkiewicz
+* chore(deps): Bump oauthlib from 4.0.0 to 4.0.1 - [#3066](https://github.com/carpentries/amy/pull/3066) by @dependabot[bot]
+* [#3052] Eventbrite URL validation with Pretix URLs - [#3065](https://github.com/carpentries/amy/pull/3065) by @pbanaszkiewicz
+* chore(deps): Bump filelock from 3.25.0 to 4.2.1 - [#3061](https://github.com/carpentries/amy/pull/3061) by @dependabot[bot]
+* [#3058] Remove Pillow, CairoSVG and django-markdownx from dependencies - [#3059](https://github.com/carpentries/amy/pull/3059) by @pbanaszkiewicz
+* feat(#2691): Add ordering to membership lookup used in training requests match form - [#3057](https://github.com/carpentries/amy/pull/3057) by @pbanaszkiewicz
+* chore(deps): Bump pillow from 12.3.0 to 13.0.0 - [#3056](https://github.com/carpentries/amy/pull/3056) by @dependabot[bot]
+* chore(deps): Bump virtualenv from 21.7.13 to 21.14.9 - [#3055](https://github.com/carpentries/amy/pull/3055) by @dependabot[bot]
+* chore(deps): Bump djangorestframework from 3.17.2 to 3.18.2 - [#3054](https://github.com/carpentries/amy/pull/3054) by @dependabot[bot]
+* feat(#3046): Document how to create a user who can log in - [#3053](https://github.com/carpentries/amy/pull/3053) by @pbanaszkiewicz
+* feat(#3045): Force user to change password - [#3049](https://github.com/carpentries/amy/pull/3049) by @pbanaszkiewicz
+* feat(#2612): Update README instructions (clearer upgrade instructions, no more theme customisation) - [#3048](https://github.com/carpentries/amy/pull/3048) by @pbanaszkiewicz
+* feat(#3043): Auto-generate assessment survey link when event is saved and it has a slug - [#3044](https://github.com/carpentries/amy/pull/3044) by @pbanaszkiewicz
+
 ## v4.11 - 2026-10-03
 
 ### Bugfixes
