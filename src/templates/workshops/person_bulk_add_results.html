@@ -67,6 +67,13 @@
       {% endif %}
       </td>
       <td>
+      {% if entry.notes %}
+          <ul class="list-unstyled small text-muted">
+          {% for note in entry.notes %}
+              <li>{{ note }}</li>
+          {% endfor %}
+          </ul>
+      {% endif %}
       {% if entry.info %}
           <ul>
           {% for info in entry.info %}

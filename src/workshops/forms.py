@@ -54,6 +54,7 @@ from src.workshops.models import (
     Task,
 )
 from src.workshops.signals import create_comment_signal
+from src.workshops.utils.pretix import PretixEventRef, PretixURLError, parse_pretix_event_url
 
 # this makes it possible for Select2 autocomplete widget to fit in low-width sidebar
 SELECT2_SIDEBAR = {
@@ -361,6 +362,23 @@ class BulkUploadCSVForm(forms.Form):
     upload and training request manual score bulk upload."""
 
     file = forms.FileField()
+
+
+class PretixAttendanceForm(forms.Form):
+    """Points to a Pretix event whose check-ins should be imported as learner tasks."""
+
+    pretix_url = forms.CharField(
+        label="Pretix event URL",
+        max_length=500,
+        help_text="Public URL of the event in Pretix, e.g. https://pretix.carpentries.org/organizer/event/. "
+        "For an event series, include the date ID: https://pretix.carpentries.org/organizer/event/123/.",
+    )
+
+    def clean_pretix_url(self) -> PretixEventRef:
+        try:
+            return parse_pretix_event_url(self.cleaned_data["pretix_url"])
+        except PretixURLError as exc:
+            raise ValidationError(str(exc)) from exc
 
 
 class EventForm(forms.ModelForm[Event]):

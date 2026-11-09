@@ -1,0 +1,5 @@
+{% load feature_flags %}
+{% flag_enabled 'PRETIX_ATTENDANCE' as PRETIX_ATTENDANCE_ENABLED %}
+{% if PRETIX_ATTENDANCE_ENABLED and perms.workshops.add_person and perms.workshops.change_person and perms.workshops.add_task %}
+<p><a href="{% url 'event_pretix_attendance' event.slug %}" class="btn btn-outline-primary">Import attendance from Pretix</a></p>
+{% endif %}

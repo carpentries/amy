@@ -137,6 +137,16 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
         # 'errors' may be an empty list, which evaluates to False
         self.assertFalse(good_data[0]["errors"])
 
+    def test_verify_without_email_doesnt_match_person_without_email(self) -> None:
+        """Regression: `Person.objects.get(email=None)` used to match a person with no email."""
+        Person.objects.create(personal="No", family="Email", username="no_email")
+        data = self.make_data()
+        data[0]["email"] = None
+        has_errors = verify_upload_person_task(data, match=True)
+        self.assertFalse(has_errors, data[0]["errors"])
+        self.assertFalse(data[0]["person_exists"])
+        self.assertEqual(data[0]["personal"], "John")
+
     def test_verify_event_doesnt_exist(self) -> None:
         bad_data = self.make_data()
         bad_data[0]["event"] = "no-such-event"
