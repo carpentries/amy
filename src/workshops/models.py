@@ -86,7 +86,7 @@ class OrganizationManager(models.Manager["Organization"]):
         "software-carpentry.org",
         "datacarpentry.org",
         "librarycarpentry.org",
-        "hpccarpentry.org",
+        "hpc-carpentry.org",
         # Instructor Training organisation
         "carpentries.org",
         # Collaborative Lesson Development Training organisation
@@ -3125,7 +3125,7 @@ class WorkshopRequest(
     DC_LESSONS_LINK = '<a href="http://www.datacarpentry.org/lessons/">Data Carpentry lessons page</a>'
     LC_LESSONS_LINK = '<a href="https://librarycarpentry.org/lessons/">Library Carpentry lessons page</a>'
     HPCC_LESSONS_LINK = (
-        '<a href="https://hpcccarpentry.org/lessons">High Performance Computing Carpentry lessons page</a>'
+        '<a href="https://hpc-carpentry.org/lessons">High Performance Computing Carpentry lessons page</a>'
     )
     INQUIRY_FORM = reverse_lazy("workshop_inquiry")
     requested_workshop_types = models.ManyToManyField(
