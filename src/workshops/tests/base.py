@@ -502,7 +502,7 @@ class TestBase(SuperuserMixin, TestCase):
                     fullname="Collaborative Lesson Development Training",
                 ),
                 Organization(
-                    domain="hpccarpentry.org",
+                    domain="hpc-carpentry.org",
                     fullname="HPC Carpentry",
                 ),
             ],
