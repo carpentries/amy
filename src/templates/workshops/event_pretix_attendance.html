@@ -1,0 +1,19 @@
+{% extends "base_nav.html" %}
+
+{% load crispy_forms_tags %}
+
+{% block content %}
+<p>
+  This fetches attendees who <strong>checked in</strong> to the Pretix event and adds them as
+  <code>learner</code> tasks to <a href="{{ event.get_absolute_url }}">{{ event }}</a>.
+  Nothing is saved yet: on the next page you can review the attendees, match them with existing
+  people and correct their details before confirming.
+</p>
+
+<form action="" method="post" id="main-form">
+  {% csrf_token %}
+  {{ form|crispy }}
+  <button type="submit" class="btn btn-primary">Fetch check-ins</button>
+  <a href="{{ event.get_absolute_url }}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}

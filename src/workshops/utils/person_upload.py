@@ -30,6 +30,8 @@ class PersonTaskEntry(TypedDict):
     existing_person_id: NotRequired[int | None]
     person_exists: NotRequired[bool]
     similar_persons: NotRequired[list[tuple[int, str]]]
+    # Read-only details about the data source (e.g. Pretix order and check-ins), shown during review.
+    notes: NotRequired[list[str]]
 
 
 def upload_person_task_csv(
@@ -138,11 +140,12 @@ def verify_upload_person_task(data: list[PersonTaskEntry], match: bool = False) 
 
         # try to match with first similar person
         if match is True:
+            # Without the `email` check, `get(email=None)` would match any person with no email.
             try:
-                person = Person.objects.get(email=email)
+                person = Person.objects.get(email=email) if email else None
             except (Person.DoesNotExist, Person.MultipleObjectsReturned):
                 person = None
-            else:
+            if person:
                 info.append("Existing record for person will be used.")
                 person_id = person.pk
 
@@ -156,11 +159,7 @@ def verify_upload_person_task(data: list[PersonTaskEntry], match: bool = False) 
                 info.append("Existing record for person will be used.")
 
         elif not person_id:
-            try:
-                Person.objects.get(email=email)
-            except (Person.DoesNotExist, Person.MultipleObjectsReturned):
-                pass
-            else:
+            if email and Person.objects.filter(email=email).exists():
                 errors.append("Person with this email address already exists.")
 
             try:

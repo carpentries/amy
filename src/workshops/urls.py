@@ -93,6 +93,11 @@ urlpatterns = [
                 path("assign/", views.EventAssign.as_view(), name="event_assign"),
                 path("edit/", views.EventUpdate.as_view(), name="event_edit"),
                 path("delete/", views.EventDelete.as_view(), name="event_delete"),
+                path(
+                    "pretix-attendance/",
+                    views.EventPretixAttendance.as_view(),
+                    name="event_pretix_attendance",
+                ),
             ]
         ),
     ),

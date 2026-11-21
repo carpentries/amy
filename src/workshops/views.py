@@ -2,7 +2,7 @@ import csv
 import datetime
 import io
 import logging
-from functools import partial
+from functools import cached_property, partial
 from typing import Annotated, Any, TypedDict, cast
 
 from django.conf import settings
@@ -49,6 +49,7 @@ from django.views.decorators.http import require_POST
 from django.views.generic import View
 from django_stubs_ext import Annotations
 from flags.state import flag_enabled  # type: ignore[import-untyped]
+from flags.views import FlaggedViewMixin  # type: ignore[import-untyped]
 from github.GithubException import GithubException
 from reversion.models import Revision, Version
 from reversion_compare.forms import SelectDiffForm
@@ -142,6 +143,7 @@ from src.workshops.forms import (
     PersonSetPasswordForm,
     PersonsMergeForm,
     PersonsSelectionForm,
+    PretixAttendanceForm,
     TaskForm,
     WorkshopStaffForm,
 )
@@ -168,6 +170,12 @@ from src.workshops.utils.person_upload import (
     create_uploaded_persons_tasks,
     upload_person_task_csv,
     verify_upload_person_task,
+)
+from src.workshops.utils.pretix import (
+    PretixError,
+    PretixEventRef,
+    attendees_to_person_task_entries,
+    fetch_attendance,
 )
 from src.workshops.utils.urls import safe_next_or_default_url
 from src.workshops.utils.usernames import create_username
@@ -362,6 +370,7 @@ def person_bulk_add_confirmation(request: AuthenticatedHttpRequest) -> HttpRespo
                     "role": role,
                     "errors": [],  # reset here
                     "info": [],
+                    "notes": persons_tasks[k].get("notes", []),
                 }
             )
 
@@ -1287,6 +1296,58 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView[Eve
                 )
 
         return res
+
+
+class EventPretixAttendance(
+    OnlyForAdminsMixin,
+    FlaggedViewMixin,  # type: ignore[misc]
+    PermissionRequiredMixin,
+    AMYFormView[PretixAttendanceForm],
+):
+    """Fetch check-ins of a Pretix event and send them to the person bulk-add confirmation
+    page, where an admin can review them before learner tasks are created."""
+
+    flag_name = "PRETIX_ATTENDANCE"
+    permission_required = ["workshops.add_person", "workshops.change_person", "workshops.add_task"]
+    form_class = PretixAttendanceForm
+    template_name = "workshops/event_pretix_attendance.html"
+
+    @cached_property
+    def event(self) -> Event:
+        return get_object_or_404(Event, slug=self.kwargs["slug"])
+
+    @property
+    def title(self) -> str:  # type: ignore[override]
+        return f"Import attendance from Pretix for {self.event}"
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context["event"] = self.event
+        return context
+
+    def form_valid(self, form: PretixAttendanceForm) -> HttpResponse:
+        event_ref: PretixEventRef = form.cleaned_data["pretix_url"]
+        try:
+            attendance = fetch_attendance(event_ref)
+        except PretixError as exc:
+            form.add_error(None, str(exc))
+            return self.form_invalid(form)
+
+        attendees = attendance.attendees
+        if not attendees:
+            messages.warning(self.request, "No checked-in attendees found for this Pretix event.")
+            return self.render_to_response(self.get_context_data(form=form))
+
+        # Re-use the person bulk-add confirmation page for reviewing, matching and saving the data.
+        self.request.session["bulk-add-people"] = attendees_to_person_task_entries(
+            attendees, self.event.slug, attendance.session_blocks
+        )
+        self.request.session["bulk-add-people-match"] = True
+        messages.info(
+            self.request,
+            f"Found {len(attendees)} checked-in attendee(s) in Pretix. Review them below before confirming.",
+        )
+        return redirect("person_bulk_add_confirmation")
 
 
 class EventDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView[Event, EventForm]):

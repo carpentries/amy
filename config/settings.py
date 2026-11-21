@@ -45,6 +45,8 @@ env = environ.Env(
     ),
     AMY_SITE_BANNER=(str, "local"),  # should be "local", "testing", or "production"
     AMY_EMAIL_ATTACHMENTS_S3_BUCKET_NAME=(str, "carpentries-amy-email-attachments-staging"),
+    AMY_PRETIX_URL=(str, "https://pretix.carpentries.org"),
+    AMY_PRETIX_API_TOKEN=(str, ""),
 )
 
 # OS environment variables take precedence over variables from .env
@@ -658,12 +660,23 @@ FLAGS = {
     "HPCC": [
         {"condition": "boolean", "value": True},
     ],
+    # ------------
+    # Enable importing event attendance (learner tasks) from Pretix check-ins.
+    "PRETIX_ATTENDANCE": [
+        {"condition": "anonymous", "value": False, "required": True},
+        {"condition": "parameter", "value": "enable_pretix_attendance=true"},
+        {"condition": "session", "value": "enable_pretix_attendance"},
+    ],
 }
 
 # Instructor Certificates
 # -----------------------------------------------------------------------------
 CERTIFICATE_SIGNATURE = "SherAaron Hurt (Interim Executive Director)"
 
+# Pretix (event registration system) - used to read attendance (check-ins).
+# -----------------------------------------------------------------------------
+PRETIX_URL = env("AMY_PRETIX_URL")
+PRETIX_API_TOKEN = env("AMY_PRETIX_API_TOKEN")
 
 # To silence the Django 6.0 warning about URLField assume_https default changing
 FORMS_URLFIELD_ASSUME_HTTPS = True
