@@ -47,6 +47,7 @@ env = environ.Env(
     AMY_EMAIL_ATTACHMENTS_S3_BUCKET_NAME=(str, "carpentries-amy-email-attachments-staging"),
     AMY_PRETIX_URL=(str, "https://pretix.carpentries.org"),
     AMY_PRETIX_API_TOKEN=(str, ""),
+    AMY_PRETIX_PROXY=(str, ""),
 )
 
 # OS environment variables take precedence over variables from .env
@@ -677,6 +678,8 @@ CERTIFICATE_SIGNATURE = "SherAaron Hurt (Interim Executive Director)"
 # -----------------------------------------------------------------------------
 PRETIX_URL = env("AMY_PRETIX_URL")
 PRETIX_API_TOKEN = env("AMY_PRETIX_API_TOKEN")
+# Optional HTTP(S) proxy for Pretix API calls only, e.g. a Tailscale sidecar ("http://localhost:1055").
+PRETIX_PROXY = env("AMY_PRETIX_PROXY")
 
 # To silence the Django 6.0 warning about URLField assume_https default changing
 FORMS_URLFIELD_ASSUME_HTTPS = True

@@ -284,6 +284,15 @@ class TestPretixClient(SimpleTestCase):
         with self.assertRaises(PretixConfigurationError):
             PretixClient(base_url=BASE_URL, token="")
 
+    def test_no_proxy_by_default(self) -> None:
+        client = PretixClient(base_url=BASE_URL, token="secret")
+        self.assertEqual(client.session.proxies, {})
+
+    @override_settings(PRETIX_PROXY="http://localhost:1055")
+    def test_proxy_configured(self) -> None:
+        client = PretixClient(base_url=BASE_URL, token="secret")
+        self.assertEqual(client.session.proxies, {"http": "http://localhost:1055", "https": "http://localhost:1055"})
+
     def test_pagination_and_auth_header(self) -> None:
         client = PretixClient(base_url=BASE_URL, token="secret")
         with requests_mock.Mocker() as mock:
