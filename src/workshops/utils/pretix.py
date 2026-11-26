@@ -134,6 +134,8 @@ class PretixClient:
         self.timeout = timeout
         self.session = requests.Session()
         self.session.headers.update({"Authorization": f"Token {self.token}", "Accept": "application/json"})
+        if settings.PRETIX_PROXY:
+            self.session.proxies.update({"http": settings.PRETIX_PROXY, "https": settings.PRETIX_PROXY})
 
     def _event_url(self, event_ref: PretixEventRef) -> str:
         return f"{self.base_url}/api/v1/organizers/{event_ref.organizer}/events/{event_ref.event}/"
